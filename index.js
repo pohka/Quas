@@ -16,7 +16,18 @@ function test(){
         children : [
           {
             tag : "a",
-            con : "test",
+            con : "Okr",
+            class : "active",
+            href : "#"
+          },
+          {
+            tag : "a",
+            con : "Builder",
+            href : "#"
+          },
+          {
+            tag : "a",
+            con : "API",
             href : "#"
           }
         ]
@@ -26,6 +37,35 @@ function test(){
   Okr.buildAndAppend("body" ,{
     tag : "div",
     class : "body-con",
-    con : "hello world"
+    children : [
+      {
+        tag : "div",
+        class : "title",
+        children : [
+          {
+            tag : "h1",
+            con : "Okr"
+          },
+          {
+            tag : "p",
+            con : "Converts JSON to HTML"
+          },
+          Okr.makeList({
+            tag : "ul"
+            },
+            [
+              "item 1",
+              "item 2"
+          ]),
+          Okr.makeTable(
+            {},
+            [
+              ["heading 1", "heading 2"],
+              ["row 1", "column 2"]
+            ]
+          )
+        ]
+      }
+    ]
   });
 }

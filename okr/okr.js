@@ -46,6 +46,56 @@ class Okr{
     var res = Okr.build(kv);
     $(sel).append(res);
   }
+
+  static makeList(kv, items){
+    if(kv["children"] == undefined){
+      kv["children"] = [];
+    }
+    for(var i in items){
+      kv["children"].push({
+        tag : "li",
+        con : items[i]
+      });
+    }
+    return kv;
+  }
+
+  static makeTable(kv, rows){
+    if(kv["children"] == undefined){
+      kv["children"] = [];
+    }
+    kv["tag"] = "table";
+
+    //headings row
+    var headings = {
+      tag : "tr",
+      children : []
+    };
+    for(var c=0; c < rows[0].length; c++){
+      headings["children"].push({
+        tag : "th",
+        con : rows[0][c]
+      });
+    }
+    kv["children"].push(headings);
+
+    //data rows
+    for(var r=1; r < rows.length; r++){
+      var row = {
+        tag : "tr",
+        children : []
+      };
+      for(var c in rows[r]){
+        row["children"].push({
+          tag : "td",
+          con : rows[r][c]
+        });
+      }
+
+      kv["children"].push(row);
+    }
+    return kv;
+  }
 }
 
 Okr.identifiers = ["id", "class", "src", "href", "frameborder", "type", "alt"];
