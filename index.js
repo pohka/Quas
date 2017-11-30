@@ -1,8 +1,8 @@
 $(document).ready(function() {
-  var curPage = location.pathname;//.split("/").pop();
-  console.log("curpage:" + curPage);
+  //var curPage = location.pathname;//.split("/").pop();
+  //console.log("curpage:" + curPage);
   setPages();
-  navbar(curPage);
+  navbar();
   test();
 });
 
@@ -10,7 +10,7 @@ function setPages(){
   Okr.pages = [
     {
       name : "Okr",
-      page : "/index.html"
+      page : "index.html"
     },
     {
       name : "Builder",
@@ -24,8 +24,6 @@ function setPages(){
 }
 
 function test(){
-
-
   Okr.buildAndAppend("body" ,{
     tag : "div",
     class : "body-con",
@@ -62,37 +60,14 @@ function test(){
   });
 }
 
-function navbar(curPage){
-  var navChildren = [];
-  for(var i in Okr.pages){
-    var cls = "";
-    var page = Okr.pages[i]["page"];
-    if(
-        curPage == page ||
-        curPage == "/" + page ||
-        curPage == page.replace(".html", "") ||
-        (curPage == "/" && (page == "/index" || page == "/index.html"))
-      )
-      cls = "active";
-
-    navChildren.push({
-      tag : "a",
-      con : Okr.pages[i]["name"],
-      class : cls,
-      href  : Okr.pages[i]["page"]
-    });
-  }
-
+function navbar(){
   Okr.buildAndAppend("html", {
     tag : "nav",
-    data : {
-        type : "fast"
-    },
     children : [
       {
         tag : "div",
         class : "nav-items",
-        children : navChildren
+        children : Okr.makeNavItems()
       }
     ]
   });

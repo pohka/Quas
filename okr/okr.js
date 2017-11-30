@@ -96,6 +96,42 @@ class Okr{
     }
     return kv;
   }
+
+  static makeNavItems(){
+    var curPage = Okr.getCurrentPageName();
+    var navChildren = [];
+    for(var i in Okr.pages){
+      var cls = "";
+      var pageName = Okr.pages[i]["name"];
+      if(curPage == pageName )
+        cls = "active";
+
+      navChildren.push({
+        tag : "a",
+        con : Okr.pages[i]["name"],
+        class : cls,
+        href  : Okr.pages[i]["page"]
+      });
+    }
+    return navChildren;
+  }
+
+  //returns the name of the current page in Okr.pages
+  static getCurrentPageName(){
+    var curPage = location.pathname;
+    for(var i in Okr.pages){
+      var page = Okr.pages[i]["page"];
+      if(
+          curPage == page ||
+          curPage == "/" + page ||
+          curPage == page.replace(".html", "") ||
+          (curPage == "/" && (page == "/index" || page == "/index.html" || page == "index" || page == "index.html"))
+        ){
+        return Okr.pages[i]["name"];
+      }
+    }
+    Error.log("Current page not found");
+  }
 }
 
 Okr.identifiers = ["id", "class", "src", "href", "frameborder", "type", "alt"];
