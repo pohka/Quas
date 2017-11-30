@@ -124,6 +124,11 @@ class okr{
   //returns the name of the current page in okr.pages
   static getCurrentPageName(){
     var curPage = location.pathname;
+
+    //if not being run on a virtual host
+    if(window.location.hostname == ""){
+      curPage = curPage.split("/").pop()
+    }
     for(var i in okr.pages){
       var page = okr.pages[i]["page"];
       if(
@@ -135,7 +140,7 @@ class okr{
         return okr.pages[i]["name"];
       }
     }
-    Error.log("Current page not found");
+    console.log("Current page not found");
   }
 }
 
@@ -147,6 +152,7 @@ okr.idendifiersNoVal = ["autoplay", "loop", "controls", "allowfullscreen"];
 
 //tags that require no closing tag
 okr.noClosingTag = ["img", "source"];
+
 
 //pages that are used in the navbar
 okr.pages = [];

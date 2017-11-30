@@ -7,7 +7,7 @@
 }
 
 html{
-  font-family: 'Barlow', sans-serif;
+  font-family: 'Source Sans Pro', sans-serif;
   background: var(--bg);
 }
 
@@ -22,10 +22,14 @@ h1{
   text-align: center;
 }
 
+h2{
+  margin: 10px 0px;
+}
+
 table{
   width: 100%;
   text-align: left;
-  padding: 20px 0px;
+  padding: 10px 0px;
   table-layout: fixed;
 }
 
@@ -77,10 +81,11 @@ nav{
 .title{
   margin-top: 40px;
   text-align: center;
-  padding-top: 20px;
+  padding-bottom: 10px;
 }
 
 .body-con{
   width: 1000px;
+  padding-top: 40px;
   margin: auto;
 }

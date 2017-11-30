@@ -2,7 +2,7 @@ window.onload = function(){
   setPages();
   navbar();
   switch(okr.getCurrentPageName()){
-    case "okr" :  home();  break;
+    case "Okr" :  home();  break;
     case "API" :  api();   break;
   }
 }
@@ -23,7 +23,7 @@ function navbar(){
 function setPages(){
   okr.pages = [
     {
-      name : "okr",
+      name : "Okr",
       page : "index.html"
     },
     {
@@ -48,30 +48,38 @@ function home(){
         children : [
           {
             tag : "h1",
-            con : "okr"
+            con : "Okr"
           },
           {
             tag : "p",
             con : "Converts JSON to HTML"
-          },
-          okr.makeList({
-            tag : "ul"
-            },
-            [
-              "item 1",
-              "item 2"
-          ]),
-          okr.makeTable(
-            {},
-            [
-              ["heading 1", "heading 2"],
-              ["row 1", "column 2"]
-            ]
-          )
+          }
         ]
+      },
+      {
+        tag : "div",
+        class : "content"
       }
     ]
   });
+  okr.buildAndAppend(".content",
+    okr.makeList({
+      tag : "ul"
+      },
+      [
+        "item 1",
+        "item 2"
+    ])
+  );
+  okr.buildAndAppend(".content",
+    okr.makeTable(
+      {},
+      [
+        ["heading 1", "heading 2"],
+        ["row 1", "column 2"]
+      ]
+    )
+  );
 }
 
 function api(){
@@ -79,6 +87,10 @@ function api(){
     tag : "div",
     class : "body-con",
     children : [
+      {
+        tag : "h2",
+        con : "Okr"
+      },
       okr.makeTable({},
         [
           ["Function",  "Description", "Return Type"],
