@@ -101,3 +101,4 @@ class Okr{
 Okr.identifiers = ["id", "class", "src", "href", "frameborder", "type", "alt"];
 Okr.idendifiersNoVal = ["autoplay", "loop", "controls", "allowfullscreen"];
 Okr.noClosingTag = ["img", "source"];
+Okr.pages = [];
