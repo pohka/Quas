@@ -1,4 +1,5 @@
 class Okr{
+  //converts json to html string
   static build(kv){
     var res = "<" + kv["tag"];
 
@@ -42,11 +43,13 @@ class Okr{
     return res;
   }
 
+  //converts the json to a html string and then appends it to the selectors html
   static buildAndAppend(sel, kv){
     var res = Okr.build(kv);
     $(sel).append(res);
   }
 
+  //generates json for a list
   static makeList(kv, items){
     if(kv["children"] == undefined){
       kv["children"] = [];
@@ -60,6 +63,7 @@ class Okr{
     return kv;
   }
 
+  //generates json for a table
   static makeTable(kv, rows){
     if(kv["children"] == undefined){
       kv["children"] = [];
@@ -97,6 +101,7 @@ class Okr{
     return kv;
   }
 
+  //generate json for navbar items
   static makeNavItems(){
     var curPage = Okr.getCurrentPageName();
     var navChildren = [];
@@ -134,7 +139,14 @@ class Okr{
   }
 }
 
+//tag elements with a value
 Okr.identifiers = ["id", "class", "src", "href", "frameborder", "type", "alt"];
+
+//tag elements with no value
 Okr.idendifiersNoVal = ["autoplay", "loop", "controls", "allowfullscreen"];
+
+//tags that require no closing tag
 Okr.noClosingTag = ["img", "source"];
+
+//pages that are used in the navbar
 Okr.pages = [];
