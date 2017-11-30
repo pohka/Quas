@@ -1,116 +1,26 @@
 class Okr{
-  constructor(tag, kv) {
-    this.tag = tag;
-    this.children = [];
-    if(kv == undefined || kv == null)
-      this.kv = {};
-    else
-      this.kv = kv;
-  }
-
-  //adds a child Okr or an array of children Okr objects
-  add(okr){
-    if(okr instanceof Array){
-      for(var i in okr){
-        this.children.push(okr[i]);
-      }
-    }
-    else if(okr instanceof Okr){
-      this.children.push(okr);
-    }
-    else{
-      error.log("Not an instance Okr");
-    }
-  }
-
-  //adds data to this element
-  addData(key, val){
-    if(this.data == undefined)
-      this.data = {};
-
-    this.data[key] = val;
-  }
-
-  //adds a KV to this Okr
-  addKV(key, val){
-    if(this.kv[key] == undefined){
-      this.kv[key] = "";
-    }
-    if(this.kv[key] === "class"){
-      this.kv[key] += ", ";
-    }
-    this.kv[key] += val;
-  }
-
-  //sets a KV
-  setKV(key, val){
-    this.kv[key] += val;
-  }
-
-  //ads a list
-  addList(type, kv, items){
-    var list = new Okr(type, kv);
-    for(var i in items){
-      list.add(new Okr("li", {
-        con : items[i]
-      }));
-    }
-    this.add(list);
-  }
-
-  addTable(kv, rows){
-    var table = new Okr("table", kv);
-    var html = ""
-    for(var i in rows){
-      html += "<tr>";
-      for(var j in rows[i]){
-        if(i==0){
-          html += "<th>" + rows[i][j] + "</th>";
-        }
-        else {
-          html += "<td>" + rows[i][j] + "</td>";
-        }
-      }
-      html += "</tr>";
-    }
-    table.addKV("con", html);
-
-    this.add(table);
-  }
-
-  //appends the html of the given selector
-  static append(sel, okr){
-    $(sel).append(okr.get());
-  }
-
-  //sets the html of the given selector
-  static set(sel, okr){
-    $(sel).html(okr.get());
-  }
-
-  //returns this Obj as a html string
-  get(){
-    var res = "<" + this.tag;
+  static build(kv){
+    var res = "<" + kv["tag"];
 
     for(var i in Okr.identifiers){
       var key = Okr.identifiers[i];
-      if(this.kv[key] != undefined)
-        res += " " + key + "='" + this.kv[key] + "'";
+      if(kv[key] != undefined)
+        res += " " + key + "='" + kv[key] + "'";
     }
 
     for(var i in Okr.idendifiersNoVal){
       var key = Okr.idendifiersNoVal[i];
-      if(this.kv[key] != undefined)
+      if(kv[key] != undefined)
         res += " " + key;
     }
 
-    if(this.data != undefined){
-      for(var key in this.data){
-        res += " data-" + key + "= '" + this.data[key] + "'";
+    if(kv["data"] != undefined){
+      for(var key in kv["data"]){
+        res += " data-" + key + "= '" + kv["data"][key] + "'";
       }
     }
 
-    var requiresClosingTag = $.inArray(this.tag, Okr.noClosingTag);
+    var requiresClosingTag = $.inArray(kv["tag"], Okr.noClosingTag);
 
     if(requiresClosingTag != -1){
       res += "/>";
@@ -119,17 +29,22 @@ class Okr{
       res += ">";
     }
 
-    if(this.kv["con"] != undefined){
-      res += this.kv["con"];
+    if(kv["con"] != undefined){
+      res += kv["con"];
     }
-    for(var i in this.children){
-      res+=this.children[i].get();
+    for(var i in kv["children"]){
+      res+= Okr.build(kv["children"][i]);
     }
 
     if(requiresClosingTag == -1){
-      res += "</"+this.tag+">\n";
+      res += "</" + kv["tag"] + ">\n";
     }
     return res;
+  }
+
+  static buildAndAppend(sel, kv){
+    var res = Okr.build(kv);
+    $(sel).append(res);
   }
 }
 
