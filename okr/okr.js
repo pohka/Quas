@@ -1,16 +1,16 @@
-class Okr{
+class okr{
   //converts json to html string
   static build(kv){
     var res = "<" + kv["tag"];
 
-    for(var i in Okr.identifiers){
-      var key = Okr.identifiers[i];
+    for(var i in okr.identifiers){
+      var key = okr.identifiers[i];
       if(kv[key] != undefined)
         res += " " + key + "='" + kv[key] + "'";
     }
 
-    for(var i in Okr.idendifiersNoVal){
-      var key = Okr.idendifiersNoVal[i];
+    for(var i in okr.idendifiersNoVal){
+      var key = okr.idendifiersNoVal[i];
       if(kv[key] != undefined)
         res += " " + key;
     }
@@ -21,7 +21,7 @@ class Okr{
       }
     }
 
-    var requiresClosingTag = $.inArray(kv["tag"], Okr.noClosingTag);
+    var requiresClosingTag = $.inArray(kv["tag"], okr.noClosingTag);
 
     if(requiresClosingTag != -1){
       res += "/>";
@@ -34,7 +34,7 @@ class Okr{
       res += kv["con"];
     }
     for(var i in kv["children"]){
-      res+= Okr.build(kv["children"][i]);
+      res+= okr.build(kv["children"][i]);
     }
 
     if(requiresClosingTag == -1){
@@ -45,7 +45,7 @@ class Okr{
 
   //converts the json to a html string and then appends it to the selectors html
   static buildAndAppend(sel, kv){
-    var res = Okr.build(kv);
+    var res = okr.build(kv);
     $(sel).append(res);
   }
 
@@ -103,36 +103,36 @@ class Okr{
 
   //generate json for navbar items
   static makeNavItems(){
-    var curPage = Okr.getCurrentPageName();
+    var curPage = okr.getCurrentPageName();
     var navChildren = [];
-    for(var i in Okr.pages){
+    for(var i in okr.pages){
       var cls = "";
-      var pageName = Okr.pages[i]["name"];
+      var pageName = okr.pages[i]["name"];
       if(curPage == pageName )
         cls = "active";
 
       navChildren.push({
         tag : "a",
-        con : Okr.pages[i]["name"],
+        con : okr.pages[i]["name"],
         class : cls,
-        href  : Okr.pages[i]["page"]
+        href  : okr.pages[i]["page"]
       });
     }
     return navChildren;
   }
 
-  //returns the name of the current page in Okr.pages
+  //returns the name of the current page in okr.pages
   static getCurrentPageName(){
     var curPage = location.pathname;
-    for(var i in Okr.pages){
-      var page = Okr.pages[i]["page"];
+    for(var i in okr.pages){
+      var page = okr.pages[i]["page"];
       if(
           curPage == page ||
           curPage == "/" + page ||
           curPage == page.replace(".html", "") ||
           (curPage == "/" && (page == "/index" || page == "/index.html" || page == "index" || page == "index.html"))
         ){
-        return Okr.pages[i]["name"];
+        return okr.pages[i]["name"];
       }
     }
     Error.log("Current page not found");
@@ -140,13 +140,13 @@ class Okr{
 }
 
 //tag elements with a value
-Okr.identifiers = ["id", "class", "src", "href", "frameborder", "type", "alt"];
+okr.identifiers = ["id", "class", "src", "href", "frameborder", "type", "alt"];
 
 //tag elements with no value
-Okr.idendifiersNoVal = ["autoplay", "loop", "controls", "allowfullscreen"];
+okr.idendifiersNoVal = ["autoplay", "loop", "controls", "allowfullscreen"];
 
 //tags that require no closing tag
-Okr.noClosingTag = ["img", "source"];
+okr.noClosingTag = ["img", "source"];
 
 //pages that are used in the navbar
-Okr.pages = [];
+okr.pages = [];

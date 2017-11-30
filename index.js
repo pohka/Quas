@@ -1,15 +1,29 @@
-$(document).ready(function() {
-  //var curPage = location.pathname;//.split("/").pop();
-  //console.log("curpage:" + curPage);
+window.onload = function(){
   setPages();
   navbar();
-  test();
-});
+  switch(okr.getCurrentPageName()){
+    case "okr" :  home();  break;
+    case "API" :  api();   break;
+  }
+}
+
+function navbar(){
+  okr.buildAndAppend("html", {
+    tag : "nav",
+    children : [
+      {
+        tag : "div",
+        class : "nav-items",
+        children : okr.makeNavItems()
+      }
+    ]
+  });
+}
 
 function setPages(){
-  Okr.pages = [
+  okr.pages = [
     {
-      name : "Okr",
+      name : "okr",
       page : "index.html"
     },
     {
@@ -23,8 +37,8 @@ function setPages(){
   ];
 }
 
-function test(){
-  Okr.buildAndAppend("body" ,{
+function home(){
+  okr.buildAndAppend("body" ,{
     tag : "div",
     class : "body-con",
     children : [
@@ -34,20 +48,20 @@ function test(){
         children : [
           {
             tag : "h1",
-            con : "Okr"
+            con : "okr"
           },
           {
             tag : "p",
             con : "Converts JSON to HTML"
           },
-          Okr.makeList({
+          okr.makeList({
             tag : "ul"
             },
             [
               "item 1",
               "item 2"
           ]),
-          Okr.makeTable(
+          okr.makeTable(
             {},
             [
               ["heading 1", "heading 2"],
@@ -60,15 +74,17 @@ function test(){
   });
 }
 
-function navbar(){
-  Okr.buildAndAppend("html", {
-    tag : "nav",
+function api(){
+  okr.buildAndAppend("body", {
+    tag : "div",
+    class : "body-con",
     children : [
-      {
-        tag : "div",
-        class : "nav-items",
-        children : Okr.makeNavItems()
-      }
+      okr.makeTable({},
+        [
+          ["Function",  "Description", "Return Type"],
+          ["makeTable()", "Builds a table as a JSON object", "JSON"]
+        ]
+      )
     ]
   });
 }
