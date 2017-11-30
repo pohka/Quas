@@ -40,22 +40,22 @@ function setPages(){
 function home(){
   okr.buildAndAppend("body" ,{
     tag : "div",
-    class : "body-con",
+    class : "title",
     children : [
       {
-        tag : "div",
-        class : "title",
-        children : [
-          {
-            tag : "h1",
-            con : "Okr"
-          },
-          {
-            tag : "p",
-            con : "Converts JSON to HTML"
-          }
-        ]
+        tag : "h1",
+        con : "Okr"
       },
+      {
+        tag : "p",
+        con : "Generates JSON and converts it to HTML"
+      }
+    ]
+  });
+  okr.buildAndAppend("body" ,{
+    tag : "div",
+    class : "body-con",
+    children : [
       {
         tag : "div",
         class : "content"

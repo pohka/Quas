@@ -66,7 +66,7 @@ nav{
 }
 
 .nav-items a.active{
-  border-bottom: 2px solid var(--sec);
+  border-bottom: 3px solid var(--sec);
 }
 
 .nav-items a:hover{
@@ -81,7 +81,15 @@ nav{
 .title{
   margin-top: 40px;
   text-align: center;
-  padding-bottom: 10px;
+  padding-top: 100px;
+  height: 180px;
+  color: white;
+  text-shadow: -1px 2px 7px black;
+  font-size: 18px;
+  background-image: url("https://i.imgur.com/91efHrk.jpg");
+  background-size:     cover;
+  background-repeat:   no-repeat;
+  background-position: center center;
 }
 
 .body-con{
