@@ -1,5 +1,5 @@
 class bwe{
-  //converts json to html string
+  //builds a html string from the json
   static build(kv){
     var res = "<" + kv["tag"];
 
@@ -43,14 +43,14 @@ class bwe{
     return res;
   }
 
-  //converts the json to a html string and then appends it to the selectors html
-  static buildAndAppend(sel, kv){
+  //builds a html string from the json and appends it to the selector's html
+  static append(sel, kv){
     var res = bwe.build(kv);
     $(sel).append(res);
   }
 
   //generates json for a list
-  static makeList(kv, items){
+  static genList(kv, items){
     if(kv["children"] == undefined){
       kv["children"] = [];
     }
@@ -68,7 +68,7 @@ class bwe{
   }
 
   //generates json for a table
-  static makeTable(kv, rows){
+  static genTable(kv, rows){
     if(kv["children"] == undefined){
       kv["children"] = [];
     }
@@ -106,8 +106,8 @@ class bwe{
   }
 
   //generate json for navbar items
-  static makeNavItems(){
-    var curPage = bwe.getCurrentPageName();
+  static genNavItems(){
+    var curPage = bwe.getCurPage();
     var navChildren = [];
     for(var i in bwe.pages){
       var cls = "";
@@ -126,7 +126,7 @@ class bwe{
   }
 
   //returns the name of the current page in bwe.pages
-  static getCurrentPageName(){
+  static getCurPage(){
     var curPage = location.pathname;
 
     //if not being run on a virtual host
