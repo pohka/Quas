@@ -24,7 +24,7 @@ class bwe{
     var requiresClosingTag = $.inArray(kv["tag"], bwe.noClosingTag);
 
     if(requiresClosingTag != -1){
-      res += "/>";
+      res += ">";
     }
     else{
       res += ">";

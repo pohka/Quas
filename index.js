@@ -150,6 +150,17 @@ function builder(){
             placeholder : "JSON will be generated here"
           }
         ]
+      },
+      {
+        tag : "div",
+        class : "half-width",
+        children : [
+          {
+            tag : "textarea",
+            id : "builder-result",
+            placeholder : "result"
+          }
+        ]
       }
     ]
   });
@@ -207,7 +218,6 @@ function convertToJSON(html){
             childIndexes[childDepth] += 1;
           }
 
-
           var parent = tags[activeParentIndex];
           for(var c = 0; c < childDepth-1; c++){
             var index = childIndexes[c];
@@ -223,6 +233,15 @@ function convertToJSON(html){
          //console.log("id:" + parent["id"]);
          parent["children"].push(json);
 
+
+
+         if($.inArray(json["tag"], bwe.noClosingTag) == false){
+           //console.log("no closing: " + json["tag"]);
+           childIndexes[childDepth] = -1;
+           childDepth -= 1;
+           childIndexes[childDepth] += 1;
+           isClosing=false;
+         }
         }
       }
       //closing tag
@@ -266,6 +285,7 @@ function convertToJSON(html){
     }
   }
   $("#builder-json").val(JSON.stringify(tags[0]));
+  $("#builder-result").val(bwe.build(tags[0]));
 }
 
 
