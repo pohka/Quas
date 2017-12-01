@@ -125,5 +125,117 @@ function api(){
 }
 
 function builder(){
+  bwe.append("body", {
+    tag : "div",
+    class : "body-con",
+    children : [
+      {
+        tag : "div",
+        class : "half-width",
+        children : [
+          {
+            tag : "textarea",
+            id : "builder-html",
+            placeholder : "Paste HTML here"
+          }
+        ]
+      },
+      {
+        tag : "div",
+        class : "half-width",
+        children : [
+          {
+            tag : "textarea",
+            id : "builder-json",
+            placeholder : "JSON will be generated here"
+          }
+        ]
+      }
+    ]
+  });
+}
 
+$(document).on("change paste keyup", "#builder-html", function(){
+  convertToJSON($(this).val());
+});
+
+function convertToJSON(html){
+  var start = 0;
+  var openQuote = false;
+  var openSingleQuote = false;
+  var openDoubleQuote = false;
+  var isClosing = false;
+  var attr = "";
+  var ch;
+  var attrs = [];
+  var tags = [];
+  var activeParentIndex = 0;
+  var childDepth = 0;
+  for(var i=0; i<html.length; i++){
+    var ch = html.charAt(i);
+    if(ch === "<"){
+      start = i;
+      if(html.charAt(i+1) === "/"){
+        isClosing = true;
+      }
+    }
+    else if(ch === ">"){
+      var end = i;
+      if(attr !== ""){
+        attrs.push(attr);
+        attr = "";
+      }
+      var json = genFromAttrs(attrs);
+      if(isClosing){
+        tags.push(json);
+        isClosing = false;
+      }
+    }
+    else if(ch == "\'"){
+      openSingleQuote = !openSingleQuote
+      if(openDoubleQuote == false && openSingleQuote == true){
+        openQuote = true;
+      }
+      else if(openSingleQuote == false){
+        openQuote = false;
+      }
+    }
+    else if(ch == "\""){
+      openDoubleQuote = !openDoubleQuote;
+      if(openDoubleQuote == true && openSingleQuote == false){
+        openQuote = true;
+      }
+      else if(openDoubleQuote == false){
+        openQuote = false;
+      }
+    }
+    else if(!isClosing){
+      if(openQuote == false && ((ch == ' ') || (ch == '\t') || (ch == '\n'))){
+        if(attr !== ""){
+          attrs.push(attr);
+          attr = "";
+        }
+      }
+      else{
+        attr += ch;
+      }
+    }
+  }
+  $("#builder-json").val(JSON.stringify(tags[0]));
+}
+
+function genFromAttrs(attrs){
+  var json = {
+    tag : attrs[0]
+  };
+  for(var i=1; i<attrs.length; i++){
+    if(attrs[i].indexOf("=") >= 0){
+      var els = attrs[i].split("=");
+      json[els[0]] = els[1].replace(/"/g , "");
+    }
+    else{
+      json[attrs[i]] = "";
+    }
+  }
+  return json;
 }
