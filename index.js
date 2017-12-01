@@ -155,7 +155,7 @@ function builder(){
   });
 }
 
-$(document).on("change paste keyup", "#builder-html", function(){
+$(document).on("input", "#builder-html", function(){
   convertToJSON($(this).val());
 });
 
@@ -169,8 +169,9 @@ function convertToJSON(html){
   var ch;
   var attrs = [];
   var tags = [];
-  var activeParentIndex = 0;
-  var childDepth = 0;
+  var activeParentIndex = -1;
+  var childDepth = -1;
+  var childIndexes = [];
   for(var i=0; i<html.length; i++){
     var ch = html.charAt(i);
     if(ch === "<"){
@@ -186,11 +187,54 @@ function convertToJSON(html){
         attr = "";
       }
       var json = genFromAttrs(attrs);
-      if(isClosing){
-        tags.push(json);
-        isClosing = false;
+      attrs = [];
+      //opening tag
+      if(!isClosing){
+        childDepth += 1;
+        //root tag
+        if(childDepth == 0){
+          tags.push(json);
+          activeParentIndex += 1;
+        }
+        //child tag
+        else{
+          //add childIndex if it doesnt exist
+          if(childIndexes.length <= childDepth){
+            childIndexes.push(0);
+      //      console.log("adding");
+          }
+          else{
+            childIndexes[childDepth] += 1;
+          }
+
+
+          var parent = tags[activeParentIndex];
+          for(var c = 0; c < childDepth-1; c++){
+            var index = childIndexes[c];
+            if(!("children" in parent)){
+              parent["children"] = [];
+            }
+            parent = parent["children"][index];
+        //    console.log(childIndexes);
+          }
+          if(!parent.hasOwnProperty("children")){
+            parent["children"] = [];
+          }
+         //console.log("id:" + parent["id"]);
+         parent["children"].push(json);
+
+        }
+      }
+      //closing tag
+      else{
+      //  console.log("depth:" + childDepth);
+        childIndexes[childDepth] = -1;
+        childDepth -= 1;
+        childIndexes[childDepth] += 1;
+        isClosing=false;
       }
     }
+
     else if(ch == "\'"){
       openSingleQuote = !openSingleQuote
       if(openDoubleQuote == false && openSingleQuote == true){
@@ -224,6 +268,7 @@ function convertToJSON(html){
   $("#builder-json").val(JSON.stringify(tags[0]));
 }
 
+
 function genFromAttrs(attrs){
   var json = {
     tag : attrs[0]
@@ -238,4 +283,25 @@ function genFromAttrs(attrs){
     }
   }
   return json;
+}
+
+
+function getParent(root, depth){
+  if(depth == 1){
+
+  }
+  else {
+    if(!("children" in root)){
+      root["children"] = [];
+    }
+    return getParent(root["children"], depth-1);
+  }
+  for(var c = 0; c < childDepth-1; c++){
+    var index = childIndexes[activeParentIndex];
+    if(!("children" in parent)){
+      parent["children"] = [];
+    }
+    parent = parent["children"][index];
+    console.log("looking");
+  }
 }
