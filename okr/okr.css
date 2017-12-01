@@ -9,6 +9,7 @@
 html{
   font-family: 'Source Sans Pro', sans-serif;
   background: var(--bg);
+  overflow-y:scroll;
 }
 
 body{
@@ -24,6 +25,7 @@ h1{
 
 h2{
   margin: 10px 0px;
+  margin-top: 30px;
 }
 
 table{
@@ -96,4 +98,5 @@ nav{
   width: 1000px;
   padding-top: 40px;
   margin: auto;
+  padding-bottom: 100px;
 }

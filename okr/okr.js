@@ -54,6 +54,10 @@ class okr{
     if(kv["children"] == undefined){
       kv["children"] = [];
     }
+    if(kv["tag"] == undefined){
+      kv["tag"] = "ul";
+    }
+
     for(var i in items){
       kv["children"].push({
         tag : "li",
@@ -145,13 +149,33 @@ class okr{
 }
 
 //tag elements with a value
-okr.identifiers = ["id", "class", "src", "href", "frameborder", "type", "alt"];
+okr.identifiers = [
+  "accept", "accept-charset", "accesskey", "action", "alt", "autocomplete", "charset", "cite", "class",
+  "cols", "colspan", "content", "contenteditable", "coords", "data", "dir", "dirname", "draggable",
+  "enctype", "for", "form", "formaction", "headers", "height", "href", "hreflang", "http-equiv",
+  "id", "kind", "label", "lang", "list", "low", "max", "maxlength", "media", "method", "min", "name",
+  "onabort", "onbeforeunload", "onblur", "oncanplay", "oncanplaythrough", "onchange", "onclick",
+  "oncontextmenu", "oncopy", "oncut", "ondblclick", "ondrag", "ondragend", "ondragenter", "ondragleave",
+  "ondragover", "ondragstart", "ondrop", "ondurationchange", "onended", "onerror", "onfocus", "onhashchange",
+  "oninput", "oninvalid", "onkeydown", "onkeypress", "onkeyup", "onload", "onloadeddata", "onloadedmetadata",
+  "onloadstart", "onmousedown", "onmousemove", "onmouseout", "onmouseover", "onmouseup", "onpageshow",
+  "onpaste", "onpause", "onplay", "onplaying", "onprogress", "onratechange", "onreset", "onresize", "onscroll",
+  "onseeked", "onseeking", "onselect", "onsubmit", "ontimeupdate", "onunload", "onvolumechange", "onwaiting",
+  "optimum", "pattern", "placeholder", "poster", "preload", "rel", "rows", "rowspan", "shape", "size",
+  "span", "spellcheck", "src", "srcdoc", "srclang", "srcset", "start", "step", "style", "tabindex",
+  "target", "title", "type", "usemap", "value", "width", "wrap"
+];
 
 //tag elements with no value
-okr.idendifiersNoVal = ["autoplay", "loop", "controls", "allowfullscreen"];
+okr.idendifiersNoVal = [
+  "async", "autofocus", "autoplay", "checked", "controls",
+  "default", "defer", "disabled", "download", "hidden", "high",
+  "ismap", "loop", "multiple", "muted", "novalidate",
+  "readonly", "required", "reversed", "sandbox"
+];
 
 //tags that require no closing tag
-okr.noClosingTag = ["img", "source"];
+okr.noClosingTag = ["img", "source", "br", "hr", "area", "track", "link", "col", "meta", "base", "embed", "param"];
 
 
 //pages that are used in the navbar

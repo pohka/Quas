@@ -88,13 +88,35 @@ function api(){
     class : "body-con",
     children : [
       {
-        tag : "h2",
+        tag : "h1",
         con : "Okr"
+      },
+      {
+        tag : "h2",
+        con : "Functions"
       },
       okr.makeTable({},
         [
           ["Function",  "Description", "Return Type"],
-          ["makeTable()", "Builds a table as a JSON object", "JSON"]
+          ["build({ <br>&emsp; attr : val <br> });", "Converts a JSON object to a string", "string"],
+          ["buildAndAppend( 'selector', { <br>&emsp; attr : val <br> });", "Converts the JSON and then appends it to the selector's HTML", ""],
+          ["makeList({ <br>&emsp; attr : val <br>&emsp; }, <br>&emsp; ['item 1', 'item 2']<br>);", "Generates list items from a string array", "JSON"],
+          ["makeTable( { <br>&emsp; attr : val<br>&emsp; }, <br>&emsp; [<br>&emsp;&emsp; ['Heading 1', 'Heading 2'],<br>&emsp;&emsp; ['Column 1', 'Column 2']<br>]);", "Builds a table as a JSON object", "JSON"],
+          ["makeNavItems()", "Generates JSON for navbar items from Okr.pages", "JSON"],
+          ["getCurrentPageName()", "Returns the name of the current page name in Okr.pages", "string"]
+        ]
+      ),
+      {
+        tag : "h2",
+        con : "Variables"
+      },
+      okr.makeTable({},
+        [
+          ["Variable", "Description"],
+          ["identifiers", "Tag elements with a value"],
+          ["idendifiersNoVal", "Tag elements with no value"],
+          ["noClosingTag", "Tags that require no closing tag"],
+          ["pages", "Pages that are used in the navbar"]
         ]
       )
     ]
