@@ -161,6 +161,16 @@ function builder(){
             placeholder : "result"
           }
         ]
+      },
+      {
+        tag : "div",
+        con : "<h2>Know Issues with Builder</h2>",
+        children : [
+          bwe.genList({ tag : "ul" }, [
+            "Content tag doesn't convert",
+            "Data tags don't convert correctly"
+          ])
+        ]
       }
     ]
   });
@@ -192,7 +202,7 @@ function convertToJSON(html){
       }
     }
     else if(ch === ">"){
-      var end = i;
+    //  var end = i;
       if(attr !== ""){
         attrs.push(attr);
         attr = "";
@@ -242,15 +252,21 @@ function convertToJSON(html){
            childIndexes[childDepth] += 1;
            isClosing=false;
          }
+
         }
       }
       //closing tag
       else{
       //  console.log("depth:" + childDepth);
+       console.log(attrs);
+
+
         childIndexes[childDepth] = -1;
         childDepth -= 1;
         childIndexes[childDepth] += 1;
         isClosing=false;
+
+        //get content
       }
     }
 
@@ -274,6 +290,7 @@ function convertToJSON(html){
     }
     else if(!isClosing){
       if(openQuote == false && ((ch == ' ') || (ch == '\t') || (ch == '\n'))){
+        //console.log("attr:" + attr);
         if(attr !== ""){
           attrs.push(attr);
           attr = "";
@@ -282,6 +299,7 @@ function convertToJSON(html){
       else{
         attr += ch;
       }
+      //console.log("attr:" + attr);
     }
   }
   $("#builder-json").val(JSON.stringify(tags[0]));
@@ -298,8 +316,14 @@ function genFromAttrs(attrs){
       var els = attrs[i].split("=");
       json[els[0]] = els[1].replace(/"/g , "");
     }
-    else{
+    else if(bwe.idendifiersNoVal.indexOf(attrs[i]) != -1){
       json[attrs[i]] = "";
+    }
+    else{
+      if(!json.hasOwnProperty("con")){
+        json["con"] = "";
+      }
+      json["con"] += attrs[i];
     }
   }
   return json;
