@@ -1,29 +1,16 @@
 window.onload = function(){
   setPages();
   navbar();
-  switch(okr.getCurrentPageName()){
-    case "Okr" :  home();  break;
+  switch(bwe.getCurrentPageName()){
+    case "Bwe" :  home();  break;
     case "API" :  api();   break;
   }
 }
 
-function navbar(){
-  okr.buildAndAppend("html", {
-    tag : "nav",
-    children : [
-      {
-        tag : "div",
-        class : "nav-items",
-        children : okr.makeNavItems()
-      }
-    ]
-  });
-}
-
 function setPages(){
-  okr.pages = [
+  bwe.pages = [
     {
-      name : "Okr",
+      name : "Bwe",
       page : "index.html"
     },
     {
@@ -37,14 +24,27 @@ function setPages(){
   ];
 }
 
+function navbar(){
+  bwe.buildAndAppend("html", {
+    tag : "nav",
+    children : [
+      {
+        tag : "div",
+        class : "nav-items",
+        children : bwe.makeNavItems()
+      }
+    ]
+  });
+}
+
 function home(){
-  okr.buildAndAppend("body" ,{
+  bwe.buildAndAppend("body" ,{
     tag : "div",
     class : "title",
     children : [
       {
         tag : "h1",
-        con : "Okr"
+        con : "Bwe.js"
       },
       {
         tag : "p",
@@ -52,7 +52,7 @@ function home(){
       }
     ]
   });
-  okr.buildAndAppend("body" ,{
+  bwe.buildAndAppend("body" ,{
     tag : "div",
     class : "body-con",
     children : [
@@ -62,8 +62,8 @@ function home(){
       }
     ]
   });
-  okr.buildAndAppend(".content",
-    okr.makeList({
+  bwe.buildAndAppend(".content",
+    bwe.makeList({
       tag : "ul"
       },
       [
@@ -71,8 +71,8 @@ function home(){
         "item 2"
     ])
   );
-  okr.buildAndAppend(".content",
-    okr.makeTable(
+  bwe.buildAndAppend(".content",
+    bwe.makeTable(
       {},
       [
         ["heading 1", "heading 2"],
@@ -83,34 +83,34 @@ function home(){
 }
 
 function api(){
-  okr.buildAndAppend("body", {
+  bwe.buildAndAppend("body", {
     tag : "div",
     class : "body-con",
     children : [
       {
         tag : "h1",
-        con : "Okr"
+        con : "Bwe"
       },
       {
         tag : "h2",
         con : "Functions"
       },
-      okr.makeTable({},
+      bwe.makeTable({},
         [
           ["Function",  "Description", "Return Type"],
           ["build({ <br>&emsp; attr : val <br> });", "Converts a JSON object to a string", "string"],
           ["buildAndAppend( 'selector', { <br>&emsp; attr : val <br> });", "Converts the JSON and then appends it to the selector's HTML", ""],
           ["makeList({ <br>&emsp; attr : val <br>&emsp; }, <br>&emsp; ['item 1', 'item 2']<br>);", "Generates list items from a string array", "JSON"],
           ["makeTable( { <br>&emsp; attr : val<br>&emsp; }, <br>&emsp; [<br>&emsp;&emsp; ['Heading 1', 'Heading 2'],<br>&emsp;&emsp; ['Column 1', 'Column 2']<br>]);", "Builds a table as a JSON object", "JSON"],
-          ["makeNavItems()", "Generates JSON for navbar items from Okr.pages", "JSON"],
-          ["getCurrentPageName()", "Returns the name of the current page name in Okr.pages", "string"]
+          ["makeNavItems()", "Generates JSON for navbar items from bwe.pages", "JSON"],
+          ["getCurrentPageName()", "Returns the name of the current page name in bwe.pages", "string"]
         ]
       ),
       {
         tag : "h2",
         con : "Variables"
       },
-      okr.makeTable({},
+      bwe.makeTable({},
         [
           ["Variable", "Description"],
           ["identifiers", "Tag elements with a value"],

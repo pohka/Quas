@@ -1,16 +1,16 @@
-class okr{
+class bwe{
   //converts json to html string
   static build(kv){
     var res = "<" + kv["tag"];
 
-    for(var i in okr.identifiers){
-      var key = okr.identifiers[i];
+    for(var i in bwe.identifiers){
+      var key = bwe.identifiers[i];
       if(kv[key] != undefined)
         res += " " + key + "='" + kv[key] + "'";
     }
 
-    for(var i in okr.idendifiersNoVal){
-      var key = okr.idendifiersNoVal[i];
+    for(var i in bwe.idendifiersNoVal){
+      var key = bwe.idendifiersNoVal[i];
       if(kv[key] != undefined)
         res += " " + key;
     }
@@ -21,7 +21,7 @@ class okr{
       }
     }
 
-    var requiresClosingTag = $.inArray(kv["tag"], okr.noClosingTag);
+    var requiresClosingTag = $.inArray(kv["tag"], bwe.noClosingTag);
 
     if(requiresClosingTag != -1){
       res += "/>";
@@ -34,7 +34,7 @@ class okr{
       res += kv["con"];
     }
     for(var i in kv["children"]){
-      res+= okr.build(kv["children"][i]);
+      res+= bwe.build(kv["children"][i]);
     }
 
     if(requiresClosingTag == -1){
@@ -45,7 +45,7 @@ class okr{
 
   //converts the json to a html string and then appends it to the selectors html
   static buildAndAppend(sel, kv){
-    var res = okr.build(kv);
+    var res = bwe.build(kv);
     $(sel).append(res);
   }
 
@@ -107,25 +107,25 @@ class okr{
 
   //generate json for navbar items
   static makeNavItems(){
-    var curPage = okr.getCurrentPageName();
+    var curPage = bwe.getCurrentPageName();
     var navChildren = [];
-    for(var i in okr.pages){
+    for(var i in bwe.pages){
       var cls = "";
-      var pageName = okr.pages[i]["name"];
+      var pageName = bwe.pages[i]["name"];
       if(curPage == pageName )
         cls = "active";
 
       navChildren.push({
         tag : "a",
-        con : okr.pages[i]["name"],
+        con : bwe.pages[i]["name"],
         class : cls,
-        href  : okr.pages[i]["page"]
+        href  : bwe.pages[i]["page"]
       });
     }
     return navChildren;
   }
 
-  //returns the name of the current page in okr.pages
+  //returns the name of the current page in bwe.pages
   static getCurrentPageName(){
     var curPage = location.pathname;
 
@@ -133,15 +133,15 @@ class okr{
     if(window.location.hostname == ""){
       curPage = curPage.split("/").pop()
     }
-    for(var i in okr.pages){
-      var page = okr.pages[i]["page"];
+    for(var i in bwe.pages){
+      var page = bwe.pages[i]["page"];
       if(
           curPage == page ||
           curPage == "/" + page ||
           curPage == page.replace(".html", "") ||
           (curPage == "/" && (page == "/index" || page == "/index.html" || page == "index" || page == "index.html"))
         ){
-        return okr.pages[i]["name"];
+        return bwe.pages[i]["name"];
       }
     }
     console.log("Current page not found");
@@ -149,7 +149,7 @@ class okr{
 }
 
 //tag elements with a value
-okr.identifiers = [
+bwe.identifiers = [
   "accept", "accept-charset", "accesskey", "action", "alt", "autocomplete", "charset", "cite", "class",
   "cols", "colspan", "content", "contenteditable", "coords", "data", "dir", "dirname", "draggable",
   "enctype", "for", "form", "formaction", "headers", "height", "href", "hreflang", "http-equiv",
@@ -167,7 +167,7 @@ okr.identifiers = [
 ];
 
 //tag elements with no value
-okr.idendifiersNoVal = [
+bwe.idendifiersNoVal = [
   "async", "autofocus", "autoplay", "checked", "controls",
   "default", "defer", "disabled", "download", "hidden", "high",
   "ismap", "loop", "multiple", "muted", "novalidate",
@@ -175,8 +175,8 @@ okr.idendifiersNoVal = [
 ];
 
 //tags that require no closing tag
-okr.noClosingTag = ["img", "source", "br", "hr", "area", "track", "link", "col", "meta", "base", "embed", "param"];
+bwe.noClosingTag = ["img", "source", "br", "hr", "area", "track", "link", "col", "meta", "base", "embed", "param"];
 
 
 //pages that are used in the navbar
-okr.pages = [];
+bwe.pages = [];
