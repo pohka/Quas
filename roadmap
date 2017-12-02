@@ -1,0 +1,15 @@
+features
+-----------------
+-set() //build and set HTML
+-addChild(parent, child) // adds a child to the parent json object
+-addNavPage(name, page) //add a page to bwe.pages
+-children attr accepts javascript arrays
+-add child after/before a tag in children with a class or id identifier
+-finish builder and have it generate js formated object and not just a json string
+-li attr in genList
+-appendAttr() //checks to see if the attr already exists before appending
+
+
+Issues
+------------------
+-genNavItems() generates an extra undefined tag

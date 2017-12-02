@@ -106,7 +106,7 @@ class bwe{
   }
 
   //generate json for navbar items
-  static genNavItems(){
+  static genNavItems(itemAttrs, conAttrs){
     var curPage = bwe.getCurPage();
     var navChildren = [];
     for(var i in bwe.pages){
@@ -115,12 +115,50 @@ class bwe{
       if(curPage == pageName )
         cls = "active";
 
-      navChildren.push({
+      var item = {
         tag : "a",
         con : bwe.pages[i]["name"],
         class : cls,
         href  : bwe.pages[i]["page"]
-      });
+      };
+
+      if(itemAttrs != undefined){
+        for(var key in itemAttrs){
+          //create attr if it doesnt exist
+          if(!item.hasOwnProperty(key)){
+            if(key != "data" && key != "children"){
+              item[key] = "";
+            }
+            else {
+              item[key] = [];
+            }
+          }
+          if(key == "class"){
+            item[key] += " " +itemAttrs[key];
+          }
+          else{
+            item[key] += itemAttrs[key];
+          }
+        }
+
+        if(conAttrs != undefined){
+          if(!item.hasOwnProperty("children")){
+            item["children"] = [];
+          }
+
+          var con = {};
+          for(var key in conAttrs){
+            con[key] = conAttrs[key];
+          }
+          con["con"] = bwe.pages[i]["name"];
+          item["con"] = "";
+          item["children"].push(con);
+        }
+
+
+      }
+
+      navChildren.push(item);
     }
     return navChildren;
   }
@@ -175,7 +213,7 @@ bwe.idendifiersNoVal = [
 ];
 
 //tags that require no closing tag
-bwe.noClosingTag = ["img", "source", "br", "hr", "area", "track", "link", "col", "meta", "base", "embed", "param"];
+bwe.noClosingTag = ["img", "source", "br", "hr", "area", "track", "link", "col", "meta", "base", "embed", "param", "input"];
 
 
 //pages that are used in the navbar
