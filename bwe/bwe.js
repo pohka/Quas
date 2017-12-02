@@ -122,11 +122,13 @@ class bwe{
         href  : bwe.pages[i]["page"]
       };
 
+      //attributes of the each item
       if(itemAttrs != undefined){
         for(var key in itemAttrs){
           item = bwe.appendAttr(item, key, itemAttrs[key]);
         }
 
+        //attributes of content
         if(conAttrs != undefined){
 
           var con = {};
@@ -167,6 +169,9 @@ class bwe{
     console.log("Current page not found");
   }
 
+  //appends the value an attribute of an item,
+  //if it doesn't exist then it adds the attribute to the item
+  //returns json for the item
   static appendAttr(item, key, val){
     if(!item.hasOwnProperty(key)){
       if(key != "data" && key != "children"){

@@ -7,7 +7,6 @@ features
 -add child after/before a tag in children with a class or id identifier
 -finish builder and have it generate js formated object and not just a json string
 -li attr in genList
--appendAttr() //checks to see if the attr already exists before appending
 
 
 Issues
