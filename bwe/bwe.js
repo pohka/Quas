@@ -124,27 +124,10 @@ class bwe{
 
       if(itemAttrs != undefined){
         for(var key in itemAttrs){
-          //create attr if it doesnt exist
-          if(!item.hasOwnProperty(key)){
-            if(key != "data" && key != "children"){
-              item[key] = "";
-            }
-            else {
-              item[key] = [];
-            }
-          }
-          if(key == "class"){
-            item[key] += " " +itemAttrs[key];
-          }
-          else{
-            item[key] += itemAttrs[key];
-          }
+          item = bwe.appendAttr(item, key, itemAttrs[key]);
         }
 
         if(conAttrs != undefined){
-          if(!item.hasOwnProperty("children")){
-            item["children"] = [];
-          }
 
           var con = {};
           for(var key in conAttrs){
@@ -152,10 +135,9 @@ class bwe{
           }
           con["con"] = bwe.pages[i]["name"];
           item["con"] = "";
-          item["children"].push(con);
+          //item["children"].push(con);
+          item = bwe.appendAttr(item, "children", con);
         }
-
-
       }
 
       navChildren.push(item);
@@ -184,7 +166,30 @@ class bwe{
     }
     console.log("Current page not found");
   }
+
+  static appendAttr(item, key, val){
+    if(!item.hasOwnProperty(key)){
+      if(key != "data" && key != "children"){
+        item[key] = "";
+      }
+      else {
+        item[key] = [];
+      }
+    }
+    if(key == "data" || key == "children"){
+      item[key].push(val);
+    }
+    else if(key == "class"){
+      item[key] += " " + val;
+    }
+    else{
+      item[key] += val;
+    }
+    return item;
+  }
 }
+
+
 
 //tag elements with a value
 bwe.identifiers = [
