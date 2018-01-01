@@ -122,7 +122,7 @@ class bwe{
         href  : bwe.pages[i]["page"]
       };
 
-      //attributes of the each item
+      //attributes of each item
       if(itemAttrs != undefined){
         for(var key in itemAttrs){
           item = bwe.appendAttr(item, key, itemAttrs[key]);

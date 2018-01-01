@@ -1,14 +1,38 @@
-features
------------------
--set() //build and set HTML
--addChild(parent, child) // adds a child to the parent json object
--addNavPage(name, page) //add a page to bwe.pages
--children attr accepts javascript arrays
--add child after/before a tag in children with a class or id identifier
--finish builder and have it generate js formated object and not just a json string
--li attr in genList
-
-
 Issues
 ------------------
--genNavItems() generates an extra undefined tag
+-data attrs generate extra data tag with [object object], fix for this is in cdf2 project
+
+Remove
+-------------------
+-genNabItems()
+-getCurPage()
+-genList()
+
+functions
+--------------------
+-set(selector, json);
+-genList(ListTemplate, items);
+-genTable(TableData, [th,th], [[td,td],[td,td]]);
+-genFromTemplate(template, [json, json]);
+-addChild(parent, child);
+-addChild("before/after", selector, child);
+-addPage(name, uri, callback);
+-getChild(json, selector);
+-enableScroll(bool);
+-breakpoints();
+-htmlToJson(htmlString);
+-addModal(name, json);
+-toggleModal(name, bool);
+
+css
+--------------------
+-flexbox rather than inline-blocks
+-reuseable classes
+
+other
+-------------------
+-finish builder
+-mouse clicking (click somewhere else)
+-loading bar at top of pages
+-ajax
+-animation
