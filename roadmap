@@ -1,38 +1,39 @@
 Issues
-------------------
--data attrs generate extra data tag with [object object], fix for this is in cdf2 project
+----
+* data attrs generate extra data tag with [object object], fix for this is in cdf2 project
 
-Remove
--------------------
--genNabItems()
--getCurPage()
--genList()
+Remove These Functions
+---
+* genNabItems()
+* getCurPage()
+* genList()
 
-functions
---------------------
--set(selector, json);
--genList(ListTemplate, items);
--genTable(TableData, [th,th], [[td,td],[td,td]]);
--genFromTemplate(template, [json, json]);
--addChild(parent, child);
--addChild("before/after", selector, child);
--addPage(name, uri, callback);
--getChild(json, selector);
--enableScroll(bool);
--breakpoints();
--htmlToJson(htmlString);
--addModal(name, json);
--toggleModal(name, bool);
+New Functions
+---
+* set(selector, json);
+* genList(ListTemplate, items);
+* genTable(TableData, [th,th], [[td,td],[td,td]]);
+* genFromTemplate(template, [json, json]);
+* addChild(parent, child);
+* addChild("before/after", selector, child);
+* addPage(name, uri, callback);
+* getChild(json, selector);
+* enableScroll(bool);
+* breakpoints();
+* htmlToJson(htmlString);
+* addModal(name, json);
+* toggleModal(name, bool);
 
-css
---------------------
--flexbox rather than inline-blocks
--reuseable classes
+CSS
+----
+* flexbox rather than inline* blocks
+* reuseable classes
 
-other
--------------------
--finish builder
--mouse clicking (click somewhere else)
--loading bar at top of pages
--ajax
--animation
+Other
+---
+* lazy image loading
+* finish builder
+* mouse clicking (click somewhere else)
+* loading bar at top of pages
+* ajax
+* animation
