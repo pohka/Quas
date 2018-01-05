@@ -1,12 +1,78 @@
 class Bwe{
   constructor(sel, data){
     this.sel = sel;
-    this.data = data;
+    if(data.constructor !== Array)
+      this.data = [data];
+    else this.data = data;
   }
 
   render(){
-    let res = Bwe.build(this.data);
-    $(this.sel).append(res);
+    Bwe.set(this.sel, this.data);
+  }
+}
+
+//sets the dom element
+Bwe.set = function(sel, data){
+  for(let index in data){
+    let d = data[index];
+    var el = document.createElement(d.tag);
+    if(d.con !== ""){
+      let c = document.createTextNode(d["con"]);
+      el.appendChild(c);
+    }
+    for(let key in d){
+      if(key !== "con" && key !== "data" && key !== "tag" && key !== "children"){
+        el.setAttribute(key, d[key]);
+      }
+      else if(key === "data" && d.data !== undefined){
+        for(let i in d.data){
+          el.setAttribute("data-" + i, d.data[i]);
+        }
+      }
+    }
+
+    let s = Bwe.sel(sel);
+    s.appendChild(el);
+  }
+}
+
+//return the selector for the document element
+Bwe.sel = function(str){
+  let ch = str.charAt(0);
+  if(ch === "."){
+    let els =  document.getElementsByClassName(str.substr(1,str.length-1));
+    if(els.length > 0)
+      return els[0];
+  }
+  else if(ch === "#"){
+    return document.getElementById(str.substr(1,str.length-1));
+  }
+  else if(str === "html"){
+    return document.documentElement;
+  }
+  else if(str === "body"){
+    return document.body;
+  }
+  else{
+    let els = document.getElementsByTagName(str);
+    if(els.length > 0)
+      return els[0];
+  }
+}
+
+//call the callback for each dom element
+Bwe.each = function(str, callback){
+  let els;
+  if(sel.charAt(0) === "."){
+    els = document.getElementsByClassName(str.substr(1,str.length-1));
+  }
+  else{
+    els = document.getElementsByTagName(str)
+  }
+  if(els.length > 0){
+    for(let i in els){
+      callback(els[i]);
+    }
   }
 }
 
@@ -65,7 +131,7 @@ Bwe.build = function(tags){
 
 
 //converts a html string to json
-Bwe.convertToJSON = function(html){
+Bwe.html2json = function(html){
   var start = 0;
   var openQuote = false;
   var openSingleQuote = false;

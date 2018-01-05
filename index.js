@@ -1,9 +1,24 @@
 window.onload = function(){
-    builder();
+  //  builder();
+  test();
+}
+
+function test(){
+  let a = new Bwe("body",{
+    tag : "div",
+    id : "thisone",
+    class : "myclass",
+    other : "otherval",
+    data : {
+      url : "abc.com",
+    },
+    con : "content",
+  });
+  a.render();
 }
 
 function builder(){
-  let a = new Bwe("body", {
+  let bwe = new Bwe("body", {
     tag : "div",
     class : "body-con",
     children : [
@@ -42,32 +57,9 @@ function builder(){
       },
     ]
   });
-  a.render();
+  bwe.render();
 }
 
 $(document).on("input", "#builder-html", function(){
-  Bwe.convertToJSON($(this).val());
+  Bwe.html2json($(this).val());
 });
-
-
-
-
-function getParent(root, depth){
-  if(depth == 1){
-
-  }
-  else {
-    if(!("children" in root)){
-      root["children"] = [];
-    }
-    return getParent(root["children"], depth-1);
-  }
-  for(var c = 0; c < childDepth-1; c++){
-    var index = childIndexes[activeParentIndex];
-    if(!("children" in parent)){
-      parent["children"] = [];
-    }
-    parent = parent["children"][index];
-    console.log("looking");
-  }
-}
