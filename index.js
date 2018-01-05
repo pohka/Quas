@@ -167,8 +167,7 @@ function builder(){
         con : "<h2>Know Issues with Builder</h2>",
         children : [
           bwe.genList({ tag : "ul" }, [
-            "Content tag doesn't convert",
-            "Data tags don't convert correctly"
+            "n/a"
           ])
         ]
       }
@@ -186,23 +185,27 @@ function convertToJSON(html){
   var openSingleQuote = false;
   var openDoubleQuote = false;
   var isClosing = false;
-  var attr = "";
-  var ch;
-  var attrs = [];
-  var tags = [];
+  let readContent = false;
+  var attr = ""; //characters of the current atttribute
+  var ch; //the current character
+  var attrs = []; //all the parsed attributes
+  var tags = []; //a list json objects for tags
   var activeParentIndex = -1;
   var childDepth = -1;
   var childIndexes = [];
+  let content = "";
   for(var i=0; i<html.length; i++){
     var ch = html.charAt(i);
     if(ch === "<"){
       start = i;
       if(html.charAt(i+1) === "/"){
         isClosing = true;
+        tags[tags.length-1]["con"] = content
+        content = "";
+        readContent=false;
       }
     }
     else if(ch === ">"){
-    //  var end = i;
       if(attr !== ""){
         attrs.push(attr);
         attr = "";
@@ -211,6 +214,7 @@ function convertToJSON(html){
       attrs = [];
       //opening tag
       if(!isClosing){
+        readContent = true;
         childDepth += 1;
         //root tag
         if(childDepth == 0){
@@ -222,7 +226,6 @@ function convertToJSON(html){
           //add childIndex if it doesnt exist
           if(childIndexes.length <= childDepth){
             childIndexes.push(0);
-      //      console.log("adding");
           }
           else{
             childIndexes[childDepth] += 1;
@@ -235,41 +238,31 @@ function convertToJSON(html){
               parent["children"] = [];
             }
             parent = parent["children"][index];
-        //    console.log(childIndexes);
           }
           if(!parent.hasOwnProperty("children")){
             parent["children"] = [];
           }
-         //console.log("id:" + parent["id"]);
          parent["children"].push(json);
 
-
-
          if($.inArray(json["tag"], bwe.noClosingTag) == false){
-           //console.log("no closing: " + json["tag"]);
            childIndexes[childDepth] = -1;
            childDepth -= 1;
            childIndexes[childDepth] += 1;
            isClosing=false;
          }
-
         }
       }
       //closing tag
       else{
-      //  console.log("depth:" + childDepth);
-       console.log(attrs);
-
-
         childIndexes[childDepth] = -1;
         childDepth -= 1;
         childIndexes[childDepth] += 1;
         isClosing=false;
-
-        //get content
       }
     }
-
+    else if(readContent){
+      content += ch;
+    }
     else if(ch == "\'"){
       openSingleQuote = !openSingleQuote
       if(openDoubleQuote == false && openSingleQuote == true){
@@ -290,7 +283,6 @@ function convertToJSON(html){
     }
     else if(!isClosing){
       if(openQuote == false && ((ch == ' ') || (ch == '\t') || (ch == '\n'))){
-        //console.log("attr:" + attr);
         if(attr !== ""){
           attrs.push(attr);
           attr = "";
@@ -299,11 +291,12 @@ function convertToJSON(html){
       else{
         attr += ch;
       }
-      //console.log("attr:" + attr);
     }
   }
-  $("#builder-json").val(JSON.stringify(tags[0]));
-  $("#builder-result").val(bwe.build(tags[0]));
+  let str = JSON.stringify(tags);
+  str = str.substr(1,str.length-2);
+  $("#builder-json").val(str);
+  $("#builder-result").val(bwe.build(tags));
 }
 
 
@@ -312,11 +305,20 @@ function genFromAttrs(attrs){
     tag : attrs[0]
   };
   for(var i=1; i<attrs.length; i++){
-    if(attrs[i].indexOf("=") >= 0){
+    if(attrs[i].indexOf("=") > -1){
       var els = attrs[i].split("=");
-      json[els[0]] = els[1].replace(/"/g , "");
+      if(els[0].indexOf("data-") > -1){
+        let key = els[0].replace("data-", "");
+        if(json["data"] === undefined){
+          json["data"] = {};
+        }
+        json["data"][key] = els[1];
+      }
+      else{
+        json[els[0]] = els[1].replace(/"/g , "");
+      }
     }
-    else if(bwe.idendifiersNoVal.indexOf(attrs[i]) != -1){
+    else if(bwe.idendifiersNoVal.indexOf(attrs[i]) > -1){
       json[attrs[i]] = "";
     }
     else{
@@ -325,6 +327,7 @@ function genFromAttrs(attrs){
       }
       json["con"] += attrs[i];
     }
+  //  console.log(attrs[i]);
   }
   return json;
 }

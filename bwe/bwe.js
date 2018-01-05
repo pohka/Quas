@@ -1,44 +1,53 @@
 class bwe{
   //builds a html string from the json
-  static build(kv){
-    var res = "<" + kv["tag"];
-
-    for(var i in bwe.identifiers){
-      var key = bwe.identifiers[i];
-      if(kv[key] != undefined)
-        res += " " + key + "='" + kv[key] + "'";
+  static build(tags){
+    if(tags.constructor !== Array){
+      var tags = [tags];
     }
+    let res = "";
+    for(let tag in tags){
+      let kv = tags[tag];
+      res += "<" + kv["tag"];
 
-    for(var i in bwe.idendifiersNoVal){
-      var key = bwe.idendifiersNoVal[i];
-      if(kv[key] != undefined)
-        res += " " + key;
-    }
-
-    if(kv["data"] != undefined){
-      for(var key in kv["data"]){
-        res += " data-" + key + "= '" + kv["data"][key] + "'";
+      for(var i in bwe.identifiers){
+        var key = bwe.identifiers[i];
+        if(kv[key] != undefined && key!=="data"){
+          res += " " + key + "='" + kv[key] + "'";
+        }
       }
-    }
 
-    var requiresClosingTag = $.inArray(kv["tag"], bwe.noClosingTag);
+      for(var i in bwe.idendifiersNoVal){
+        var key = bwe.idendifiersNoVal[i];
+        if(kv[key] != undefined){
+          res += " " + key;
+        }
+      }
 
-    if(requiresClosingTag != -1){
-      res += ">";
-    }
-    else{
-      res += ">";
-    }
+      if(kv["data"] != undefined){
+        for(var key in kv["data"]){
+            res += " data-" + key + "='" + kv["data"][key] + "'";
+        }
+      }
 
-    if(kv["con"] != undefined){
-      res += kv["con"];
-    }
-    for(var i in kv["children"]){
-      res+= bwe.build(kv["children"][i]);
-    }
+      var requiresClosingTag = $.inArray(kv["tag"], bwe.noClosingTag);
 
-    if(requiresClosingTag == -1){
-      res += "</" + kv["tag"] + ">\n";
+      if(requiresClosingTag != -1){
+        res += ">";
+      }
+      else{
+        res += ">";
+      }
+
+      if(kv["con"] != undefined){
+        res += kv["con"];
+      }
+      for(var i in kv["children"]){
+        res+= bwe.build(kv["children"][i]);
+      }
+
+      if(requiresClosingTag == -1){
+        res += "</" + kv["tag"] + ">\n";
+      }
     }
     return res;
   }
