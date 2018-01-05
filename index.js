@@ -1,6 +1,6 @@
 window.onload = function(){
-  //  builder();
-  test();
+    builder();
+  //test();
 }
 
 function test(){
@@ -13,6 +13,12 @@ function test(){
       url : "abc.com",
     },
     con : "content",
+    children : [
+      {
+        tag : "div",
+        con : "child 1",
+      }
+    ]
   });
   a.render();
 }

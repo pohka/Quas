@@ -6,33 +6,47 @@ class Bwe{
     else this.data = data;
   }
 
+  //returns the element for this object
+  getSel(){
+    return Bwe.sel(this.sel);
+  }
+
+  //render the html
   render(){
-    Bwe.set(this.sel, this.data);
+    for(let i in this.data){
+      Bwe.addEl(this.getSel(), this.data[i], 1);
+    }
   }
 }
 
-//sets the dom element
-Bwe.set = function(sel, data){
-  for(let index in data){
-    let d = data[index];
-    var el = document.createElement(d.tag);
-    if(d.con !== ""){
-      let c = document.createTextNode(d["con"]);
-      el.appendChild(c);
-    }
-    for(let key in d){
-      if(key !== "con" && key !== "data" && key !== "tag" && key !== "children"){
-        el.setAttribute(key, d[key]);
-      }
-      else if(key === "data" && d.data !== undefined){
-        for(let i in d.data){
-          el.setAttribute("data-" + i, d.data[i]);
-        }
-      }
-    }
+//add to a dom element and all of it's children
+Bwe.addEl = function(s, d){
+  if(s === undefined){
+    return;
+  }
 
-    let s = Bwe.sel(sel);
-    s.appendChild(el);
+  let el = document.createElement(d.tag);
+  if(d.con !== undefined){
+    let c = document.createTextNode(d["con"]);
+    el.appendChild(c);
+  }
+  for(let key in d){
+    if(key !== "con" && key !== "data" && key !== "tag" && key !== "children"){
+      el.setAttribute(key, d[key]);
+    }
+    else if(key === "data"){
+      for(let i in d.data){
+        el.setAttribute("data-" + i, d.data[i]);
+      }
+    }
+  }
+  s.appendChild(el);
+  
+  //recussion for children
+  if(d.children !== undefined){
+    for(var i=0; i < d.children.length; i++){
+      Bwe.addEl(el , d.children[i]);
+    }
   }
 }
 
