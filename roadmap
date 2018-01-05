@@ -1,12 +1,7 @@
 Issues
 ----
-* data attrs generate extra data tag with [object object], fix for this is in cdf2 project
+* N/A
 
-Remove These Functions
----
-* genNabItems()
-* getCurPage()
-* genList()
 
 New Functions
 ---
