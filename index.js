@@ -2,7 +2,6 @@ window.onload = function(){
   //  builder();
   test();
 
-
   let field = Bwe.getEl("#myinput");
   let val = field.attr("id")
   console.log("val:" + val);
@@ -10,7 +9,7 @@ window.onload = function(){
   console.log("text:" + text);
   let json = field.elData();
   console.log(json);
-  field.del();
+  //field.del();
 
   Bwe.getEl("#thisone").html({
     tag : "div",
@@ -31,16 +30,26 @@ function test(){
       {
         tag : "div",
         id : "test",
-        con : "child 1",
+        con : "test",
       },
       {
         tag : "input",
         id : "myinput",
+        class : "myclass",
         value : "text",
         placeholder : "enter text",
+        data : {
+          url : "cdf.com"
+        }
       }
     ]
   });
+
+  a.addChild({
+    tag : "div",
+    con : "i am from addChild",
+  }, "url:cdf.com", false);
+
   a.render("body");
 }
 
@@ -85,8 +94,9 @@ function builder(){
     ]
   });
   bwe.render();
+
 }
 
-$(document).on("input", "#builder-html", function(){
-  Bwe.html2json($(this).val());
-});
+// $(document).on("input", "#builder-html", function(){
+//   Bwe.html2json($(this).val());
+// });

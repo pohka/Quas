@@ -1,9 +1,57 @@
 //library
 class Bwe{
   constructor(data){
-    if(data.constructor !== Array)
-      this.data = [data];
-    else this.data = data;
+    //if(data.constructor !== Array)
+    //  this.data = [data];
+    //else this.data = data;
+    this.data=data;
+  }
+
+  //adds a child to the children of this object
+  //if the selector is defined then it will insert it after that child
+  //if before is true then it will insert it before the selector
+  //sel = key:val; will add after child with matching data type
+  addChild(child, sel, before){
+    if(this.data.children === undefined){
+      this.data.children = [];
+    }
+    switch(sel){
+      case undefined  : this.data.children.push(child); break;
+      case "first"    : this.data.children.splice(0, 0, child); break;
+      default         :
+        let ch = sel.charAt(0);
+        let str = sel.substr(1);
+        let key;
+        let isData = false;
+        switch(ch){
+          case "#" : key = "id";    break;
+          case "." : key = "class"; break;
+          default  :
+            let a = sel.split(":");
+            key = a[0];
+            str = a[1];
+            isData = true;
+            break;
+        }
+
+        for(let i=0; i<this.data.children.length; i++){
+          let c;
+          if(!isData){
+            c = this.data.children[i];
+          }
+          else{
+            c = this.data.children[i].data;
+          }
+
+          if(c!=undefined && c[key] !== undefined && c[key]=== str){
+            if(!before) i++;
+
+            this.data.children.splice(i, 0, child);
+            return;
+          }
+        }
+        this.data.children.push(child);
+    }
   }
 
   //render the html
@@ -13,10 +61,7 @@ class Bwe{
       el = sel;
     else
       el = Bwe.sel(sel);
-
-    for(let i in this.data){
-      Bwe.addEl(el, this.data[i], type);
-    }
+      Bwe.addEl(el, this.data, type);
   }
 }
 
@@ -355,8 +400,6 @@ Bwe.makeFromAttrs = function(attrs){
   }
   return json;
 }
-
-
 
 //tag elements with a value
 Bwe.identifiers = [
