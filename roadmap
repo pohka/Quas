@@ -5,7 +5,6 @@ Issues
 
 New Functions
 ---
-* set(selector, json);
 * genList(ListTemplate, items);
 * genTable(TableData, [th,th], [[td,td],[td,td]]);
 * genFromTemplate(template, [json, json]);
@@ -15,7 +14,6 @@ New Functions
 * getChild(json, selector);
 * enableScroll(bool);
 * breakpoints();
-* htmlToJson(htmlString);
 * addModal(name, json);
 * toggleModal(name, bool);
 

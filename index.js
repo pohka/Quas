@@ -1,25 +1,32 @@
 window.onload = function(){
   //  builder();
   test();
-  let field = Bwe.getEl("#test");
+
+
+  let field = Bwe.getEl("#myinput");
   let val = field.attr("id")
   console.log("val:" + val);
   let text = Bwe.getEl("#thisone").text();
   console.log("text:" + text);
   let json = field.elData();
   console.log(json);
+  field.del();
+
+  Bwe.getEl("#thisone").html({
+    tag : "div",
+    con : "i was added"
+  }, "append");
 }
 
 function test(){
-  let a = new Bwe("body",{
+  let a = new Bwe({
     tag : "div",
     id : "thisone",
     class : "myclass",
-    other : "otherval",
     data : {
       url : "abc.com",
     },
-    con : "content",
+    con : "content is here",
     children : [
       {
         tag : "div",
@@ -34,8 +41,7 @@ function test(){
       }
     ]
   });
-  a.render();
-//  console.log(a.attr("value"))s;
+  a.render("body");
 }
 
 function builder(){

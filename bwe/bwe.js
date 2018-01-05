@@ -1,19 +1,26 @@
+//library
 class Bwe{
-  constructor(sel, data){
-    this.sel = sel;
+  constructor(data){
     if(data.constructor !== Array)
       this.data = [data];
     else this.data = data;
   }
 
   //render the html
-  render(){
+  render(sel, type){
+    let el;
+    if(sel.constructor !== String)
+      el = sel;
+    else
+      el = Bwe.sel(sel);
+
     for(let i in this.data){
-      Bwe.addEl(Bwe.sel(this.sel), this.data[i]);
+      Bwe.addEl(el, this.data[i], type);
     }
   }
 }
 
+//wrapper class for a dom element
 class Element{
   constructor(el){
     this.el = el;
@@ -35,15 +42,28 @@ class Element{
     wrap.appendChild(this.el.cloneNode(true));
     return Bwe.makeData(wrap.innerHTML);
   }
+
+  //removes this element
+  del(){
+    this.el.remove();
+  }
+
+  //appen or set the html2json
+  //types: set/append/prepend (undefined=set)
+  html(json, type){
+    if(type === undefined)
+      type = "set";
+    new Bwe(json).render(this.el, type);
+  }
 }
 
 //returns the element for this object
-Bwe.getEl = function(str){
+Bwe.getEl = function(str, type){
   return new Element(Bwe.sel(str));
 }
 
 //add to a dom element and all of it's children
-Bwe.addEl = function(s, d){
+Bwe.addEl = function(s, d, type){
   if(s === undefined){
     return;
   }
@@ -63,7 +83,26 @@ Bwe.addEl = function(s, d){
       }
     }
   }
-  s.appendChild(el);
+
+  if(type === "prepend"){
+    let first = s.firstElementChild;
+    if(first !== undefined){
+      let tmp = s.innerHTML;
+      s.innerHTML = "";
+      s.appendChild(el);
+      s.innerHTML += tmp;
+    }
+    else {
+      s.appendChild(el);
+    }
+  }
+  else{
+    if(type === "set"){
+      s.innerHTML = "";
+    }
+    s.appendChild(el);
+  }
+
 
   //recussion for children
   if(d.children !== undefined){
@@ -177,7 +216,7 @@ Bwe.makeData = function(html){
   let readContent = false;
   var attr = ""; //characters of the current atttribute
   var ch; //the current character
-  var attrs = []; //all the parsed attributes
+  var attrs = []; //all the parsed attributes as strings
   var tags = []; //a list json objects for tags
   var activeParentIndex = -1;
   var childDepth = -1;
@@ -199,7 +238,7 @@ Bwe.makeData = function(html){
         attrs.push(attr);
         attr = "";
       }
-      var json = Bwe.genFromAttrs(attrs);
+      var json = Bwe.makeFromAttrs(attrs);
       attrs = [];
       //opening tag
       if(!isClosing){
@@ -285,8 +324,8 @@ Bwe.makeData = function(html){
   return tags;
 }
 
-
-Bwe.genFromAttrs = function(attrs){
+//makes a json object from attribute strings
+Bwe.makeFromAttrs = function(attrs){
   var json = {
     tag : attrs[0]
   };
