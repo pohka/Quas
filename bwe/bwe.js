@@ -6,17 +6,40 @@ class Bwe{
     else this.data = data;
   }
 
-  //returns the element for this object
-  getSel(){
-    return Bwe.sel(this.sel);
-  }
-
   //render the html
   render(){
     for(let i in this.data){
-      Bwe.addEl(this.getSel(), this.data[i], 1);
+      Bwe.addEl(Bwe.sel(this.sel), this.data[i]);
     }
   }
+}
+
+class Element{
+  constructor(el){
+    this.el = el;
+  }
+
+  //returns an attribute for this element
+  attr(key){
+    return this.el.getAttribute(key);
+  }
+
+  //returns the text content of the element
+  text(){
+    return this.el.textContent;
+  }
+
+  //returns the json data for this element
+  elData(){
+    let wrap = document.createElement('div');
+    wrap.appendChild(this.el.cloneNode(true));
+    return Bwe.makeData(wrap.innerHTML);
+  }
+}
+
+//returns the element for this object
+Bwe.getEl = function(str){
+  return new Element(Bwe.sel(str));
 }
 
 //add to a dom element and all of it's children
@@ -41,7 +64,7 @@ Bwe.addEl = function(s, d){
     }
   }
   s.appendChild(el);
-  
+
   //recussion for children
   if(d.children !== undefined){
     for(var i=0; i < d.children.length; i++){
@@ -145,7 +168,7 @@ Bwe.build = function(tags){
 
 
 //converts a html string to json
-Bwe.html2json = function(html){
+Bwe.makeData = function(html){
   var start = 0;
   var openQuote = false;
   var openSingleQuote = false;
@@ -259,10 +282,7 @@ Bwe.html2json = function(html){
       }
     }
   }
-  let str = JSON.stringify(tags);
-  str = str.substr(1,str.length-2);
-  $("#builder-json").val(str);
-  $("#builder-result").val(Bwe.build(tags));
+  return tags;
 }
 
 
