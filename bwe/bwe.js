@@ -121,6 +121,10 @@ Bwe.addEl = function(s, d, type){
   for(let key in d){
     if(key !== "con" && key !== "data" && key !== "tag" && key !== "children"){
       el.setAttribute(key, d[key]);
+      if(key === "onclick"){
+        el.onclick = d[key];
+      }
+
     }
     else if(key === "data"){
       for(let i in d.data){
@@ -399,6 +403,47 @@ Bwe.makeFromAttrs = function(attrs){
     }
   }
   return json;
+}
+
+
+
+
+//toggle users ability to scroll
+Bwe.scrollable = function(enabled){
+  if(enabled === undefined){
+    enabled = !Bwe.isScrollable;
+  }
+  if(enabled){
+    if (window.removeEventListener)
+      window.removeEventListener('DOMMouseScroll', preventDefault, false);
+    window.onmousewheel = document.onmousewheel = null;
+    window.onwheel = null;
+    window.ontouchmove = null;
+    document.onkeydown = null;
+  }
+  else{
+    if (window.addEventListener) // older FF
+        window.addEventListener('DOMMouseScroll', preventDefault, false);
+    window.onwheel = preventDefault; // modern standard
+    window.onmousewheel = document.onmousewheel = preventDefault; // older browsers, IE
+    window.ontouchmove  = preventDefault; // mobile
+    document.onkeydown  = preventDefaultForScrollKeys;
+  }
+  Bwe.isScrollable = enabled;
+}
+Bwe.isScrollable = true;
+var keys = {37: 1, 38: 1, 39: 1, 40: 1};
+function preventDefault(e) {
+ e = e || window.event;
+ if (e.preventDefault)
+     e.preventDefault();
+ e.returnValue = false;
+}
+function preventDefaultForScrollKeys(e) {
+   if (keys[e.keyCode]) {
+       preventDefault(e);
+       return false;
+   }
 }
 
 //tag elements with a value

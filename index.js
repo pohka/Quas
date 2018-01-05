@@ -31,6 +31,15 @@ function test(){
         tag : "div",
         id : "test",
         con : "test",
+        style : "height:1000px",
+      },
+      {
+        tag : "button",
+        con : "toggle scroll",
+        onclick : function(){
+          console.log("scrollable:" + !Bwe.isScrollable);
+          Bwe.scrollable();
+        },
       },
       {
         tag : "input",

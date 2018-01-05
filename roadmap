@@ -8,10 +8,7 @@ New Functions
 * genList(ListTemplate, items);
 * genTable(TableData, [th,th], [[td,td],[td,td]]);
 * genFromTemplate(template, [json, json]);
-* addChild(parent, child);
-* addChild("before/after", selector, child);
 * addPage(name, uri, callback);
-* getChild(json, selector);
 * enableScroll(bool);
 * breakpoints();
 * addModal(name, json);
