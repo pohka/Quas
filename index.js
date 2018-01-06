@@ -114,6 +114,21 @@ function test(){
   let b = a.clone();
   b.data = { tag : "div", txt : "meme"};
   //b.render("body", "set");
+
+  Bwe.ajax({
+    url : "php/test.php",
+    type : "POST",
+    data : {
+      key : "value",
+      other : "two"
+    },
+    success : function(result){
+      console.log("sucess - " + result);
+    },
+    error : function(msg, errorCode){
+      console.log(errorCode +" : " + msg);
+    }
+  });
 }
 
 function builder(){

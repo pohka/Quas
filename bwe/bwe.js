@@ -550,6 +550,30 @@ class Bwe{
          return false;
      }
   }
+
+  //ajax requests
+  static ajax(req){
+    var xmlhttp = new XMLHttpRequest();
+    xmlhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+          if(req.success!==undefined)
+            req.success(this.responseText);
+        }
+        else if(this.readyState == 4){
+          if(req.error !== undefined){
+            req.error(this.statusText, this.status);
+          }
+        }
+    };
+    let str = req.url + "?";
+    let i = 0;
+    for(let key in req.data){
+      str += key + "=" + req.data[key] + "&"
+    }
+    str = str.slice(0,-1);
+    xmlhttp.open(req.type, str, true);
+    xmlhttp.send();
+  }
 }
 Bwe.isScrollable = true;
 Bwe.scrollKeys = {37: 1, 38: 1, 39: 1, 40: 1};
