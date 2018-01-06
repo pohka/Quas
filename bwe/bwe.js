@@ -210,19 +210,25 @@ class Bwe{
       el.appendChild(c);
     }
     for(let key in d){
-      if( key !== "txt" && key !== "data" && key !== "tag" &&
-          key !== "children" && key!="on"){
-          el.setAttribute(key, d[key]);
+      if(key === "css"){
+        let v = "";
+        for(let i in d.css){
+          v += i + ":" + d.css[i] + ";";
+        }
+        el.setAttribute("style", v);
+      }
+      else if(key === "on"){
+        for(let evnt in d[key]){
+          el.addEventListener(evnt, d[key][evnt]);
+        }
       }
       else if(key === "data"){
         for(let i in d.data){
           el.setAttribute("data-" + i, d.data[i]);
         }
       }
-      else if(key === "on"){
-        for(let evnt in d[key]){
-          el.addEventListener(evnt, d[key][evnt]);
-        }
+      else if(key !== "txt" && key !== "tag" && key !== "children"){
+          el.setAttribute(key, d[key]);
       }
     }
 
@@ -570,8 +576,7 @@ class Bwe{
     for(let key in req.data){
       str += key + "=" + req.data[key] + "&"
     }
-    str = str.slice(0,-1);
-    xmlhttp.open(req.type, str, true);
+    xmlhttp.open(req.type, str.slice(0,-1), true);
     xmlhttp.send();
   }
 }

@@ -31,7 +31,9 @@ function test(){
         tag : "div",
         id : "test",
         txt : "test",
-        style : "height:1000px",
+        css : {
+          height : "1000px",
+        }
       },
       {
         tag : "button",
@@ -42,7 +44,7 @@ function test(){
             Bwe.scrollable();
           },
           mouseover : function(){
-            //console.log("GOOD scrolling");
+            console.log("mouse over");
           },
         },
       },
