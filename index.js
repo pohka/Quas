@@ -36,9 +36,14 @@ function test(){
       {
         tag : "button",
         con : "toggle scroll",
-        onclick : function(){
-          console.log("scrollable:" + !Bwe.isScrollable);
-          Bwe.scrollable();
+        on : {
+          click : function(){
+            console.log("scrollable:" + !Bwe.isScrollable);
+            Bwe.scrollable();
+          },
+          mouseover : function(){
+            console.log("GOOD scrolling");
+          },
         },
       },
       {

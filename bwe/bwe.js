@@ -93,6 +93,10 @@ class Element{
     this.el.remove();
   }
 
+  addClass(){
+    console.log(this.el.className);
+  }
+
   //appen or set the html2json
   //types: set/append/prepend (undefined=set)
   html(json, type){
@@ -109,6 +113,7 @@ Bwe.getEl = function(str, type){
 
 //add to a dom element and all of it's children
 Bwe.addEl = function(s, d, type){
+  //s is the parent element
   if(s === undefined){
     return;
   }
@@ -119,16 +124,18 @@ Bwe.addEl = function(s, d, type){
     el.appendChild(c);
   }
   for(let key in d){
-    if(key !== "con" && key !== "data" && key !== "tag" && key !== "children"){
-      el.setAttribute(key, d[key]);
-      if(key === "onclick"){
-        el.onclick = d[key];
-      }
-
+    if( key !== "con" && key !== "data" && key !== "tag" &&
+        key !== "children" && key!="on"){
+        el.setAttribute(key, d[key]);
     }
     else if(key === "data"){
       for(let i in d.data){
         el.setAttribute("data-" + i, d.data[i]);
+      }
+    }
+    else if(key === "on"){
+      for(let evnt in d[key]){
+        el.addEventListener(evnt, d[key][evnt]);
       }
     }
   }
@@ -151,7 +158,6 @@ Bwe.addEl = function(s, d, type){
     }
     s.appendChild(el);
   }
-
 
   //recussion for children
   if(d.children !== undefined){
@@ -406,8 +412,6 @@ Bwe.makeFromAttrs = function(attrs){
 }
 
 
-
-
 //toggle users ability to scroll
 Bwe.scrollable = function(enabled){
   if(enabled === undefined){
@@ -452,17 +456,12 @@ Bwe.identifiers = [
   "cols", "colspan", "content", "contenteditable", "coords", "data", "dir", "dirname", "draggable",
   "enctype", "for", "form", "formaction", "headers", "height", "href", "hreflang", "http-equiv",
   "id", "kind", "label", "lang", "list", "low", "max", "maxlength", "media", "method", "min", "name",
-  "onabort", "onbeforeunload", "onblur", "oncanplay", "oncanplaythrough", "onchange", "onclick",
-  "oncontextmenu", "oncopy", "oncut", "ondblclick", "ondrag", "ondragend", "ondragenter", "ondragleave",
-  "ondragover", "ondragstart", "ondrop", "ondurationchange", "onended", "onerror", "onfocus", "onhashchange",
-  "oninput", "oninvalid", "onkeydown", "onkeypress", "onkeyup", "onload", "onloadeddata", "onloadedmetadata",
-  "onloadstart", "onmousedown", "onmousemove", "onmouseout", "onmouseover", "onmouseup", "onpageshow",
-  "onpaste", "onpause", "onplay", "onplaying", "onprogress", "onratechange", "onreset", "onresize", "onscroll",
   "onseeked", "onseeking", "onselect", "onsubmit", "ontimeupdate", "onunload", "onvolumechange", "onwaiting",
   "optimum", "pattern", "placeholder", "poster", "preload", "rel", "rows", "rowspan", "shape", "size",
   "span", "spellcheck", "src", "srcdoc", "srclang", "srcset", "start", "step", "style", "tabindex",
   "target", "title", "type", "usemap", "value", "width", "wrap"
 ];
+
 
 //tag elements with no value
 Bwe.idendifiersNoVal = [
@@ -470,6 +469,16 @@ Bwe.idendifiersNoVal = [
   "default", "defer", "disabled", "download", "hidden", "high",
   "ismap", "loop", "multiple", "muted", "novalidate",
   "readonly", "required", "reversed", "sandbox"
+];
+
+//event listeners
+Bwe.events = [
+  "beforeunload", "blur", "canplay", "canplaythrough", "change", "click",
+  "ctextmenu", "copy", "cut", "dblclick", "drag", "dragend", "dragenter", "dragleave",
+  "dragover", "dragstart", "drop", "duratichange", "ended", "error", "focus", "hashchange",
+  "input", "invalid", "keydown", "keypress", "keyup", "load", "loadeddata", "loadedmetadata",
+  "loadstart", "mousedown", "mousemove", "mouseout", "mouseover", "mouseup", "pageshow",
+  "paste", "pause", "play", "playing", "progress", "ratechange", "reset", "resize", "scroll"
 ];
 
 //tags that require no closing tag
