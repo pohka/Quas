@@ -6,9 +6,7 @@ Issues
 New Functions
 ---
 * genFromTemplate(template, [json, json]);
-* addPage(name, uri, callback);
 * breakpoints();
-* addModal(name, json);
 
 CSS
 ----

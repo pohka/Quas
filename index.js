@@ -87,8 +87,6 @@ function test(){
     let url = el.data("url");
     if(url!==null)
       console.log(el.visible());
-     //= false;
-    //console.log();
   });
 
   let c = Bwe.getEl("#myinput");
