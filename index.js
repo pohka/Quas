@@ -85,9 +85,8 @@ function test(){
   a.render("body");
 
   let b = a.clone();
-  //b.data = {};
-
-  a.render("body");
+  b.data = { tag : "div", txt : "meme"};
+  b.render("body", "set");
 }
 
 function builder(){

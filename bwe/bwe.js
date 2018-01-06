@@ -52,7 +52,7 @@ class Comp{
 
   //deep copy of this object
   clone(){
-    return new Bwe(Bwe.clone(this.data));
+    return new Comp(Bwe.clone(this.data));
   }
 
   //render the html
