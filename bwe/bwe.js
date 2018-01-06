@@ -1,5 +1,4 @@
-//library
-class Bwe{
+class Comp{
   constructor(data){
     this.data=data;
   }
@@ -108,418 +107,422 @@ class Element{
   }
 }
 
-//returns the element for this object
-Bwe.getEl = function(str, type){
-  return new Element(Bwe.sel(str));
-}
-
-//add to a dom element and all of it's children
-Bwe.addEl = function(s, d, type){
-  //s is the parent element
-  if(s === undefined){
-    return;
+class Bwe{
+  //returns the element for this object
+  static getEl(str, type){
+    return new Element(Bwe.sel(str));
   }
 
-  let el = document.createElement(d.tag);
-  if(d.txt !== undefined){
-    let c = document.createTextNode(d["txt"]);
-    el.appendChild(c);
-  }
-  for(let key in d){
-    if( key !== "con" && key !== "data" && key !== "tag" &&
-        key !== "children" && key!="on"){
-        el.setAttribute(key, d[key]);
+  //add to a dom element and all of it's children
+  static addEl(s, d, type){
+    //s is the parent element
+    if(s === undefined){
+      return;
     }
-    else if(key === "data"){
-      for(let i in d.data){
-        el.setAttribute("data-" + i, d.data[i]);
+
+    let el = document.createElement(d.tag);
+    if(d.txt !== undefined){
+      let c = document.createTextNode(d["txt"]);
+      el.appendChild(c);
+    }
+    for(let key in d){
+      if( key !== "con" && key !== "data" && key !== "tag" &&
+          key !== "children" && key!="on"){
+          el.setAttribute(key, d[key]);
       }
-    }
-    else if(key === "on"){
-      for(let evnt in d[key]){
-        el.addEventListener(evnt, d[key][evnt]);
+      else if(key === "data"){
+        for(let i in d.data){
+          el.setAttribute("data-" + i, d.data[i]);
+        }
       }
-    }
-  }
-
-  if(type === "prepend"){
-    let first = s.firstElementChild;
-    if(first !== undefined){
-      let tmp = s.innerHTML;
-      s.innerHTML = "";
-      s.appendChild(el);
-      s.innerHTML += tmp;
-    }
-    else {
-      s.appendChild(el);
-    }
-  }
-  else{
-    if(type === "set"){
-      s.innerHTML = "";
-    }
-    s.appendChild(el);
-  }
-
-  //recussion for children
-  if(d.children !== undefined){
-    for(var i=0; i < d.children.length; i++){
-      Bwe.addEl(el , d.children[i]);
-    }
-  }
-}
-
-//return the selector for the document element
-Bwe.sel = function(str){
-  let ch = str.charAt(0);
-  if(ch === "."){
-    let els =  document.getElementsByClassName(str.substr(1,str.length-1));
-    if(els.length > 0)
-      return els[0];
-  }
-  else if(ch === "#"){
-    return document.getElementById(str.substr(1,str.length-1));
-  }
-  else if(str === "html"){
-    return document.documentElement;
-  }
-  else if(str === "body"){
-    return document.body;
-  }
-  else{
-    let els = document.getElementsByTagName(str);
-    if(els.length > 0)
-      return els[0];
-  }
-}
-
-//call the callback for each dom element
-Bwe.each = function(str, callback){
-  let els;
-  if(sel.charAt(0) === "."){
-    els = document.getElementsByClassName(str.substr(1,str.length-1));
-  }
-  else{
-    els = document.getElementsByTagName(str)
-  }
-  if(els.length > 0){
-    for(let i in els){
-      callback(els[i]);
-    }
-  }
-}
-
-//builds a html string from the json
-Bwe.build = function(tags){
-  if(tags.constructor !== Array){
-    var tags = [tags];
-  }
-  let res = "";
-  for(let tag in tags){
-    let kv = tags[tag];
-    res += "<" + kv["tag"];
-
-    for(var i in Bwe.identifiers){
-      var key = Bwe.identifiers[i];
-      if(kv[key] != undefined && key!=="data"){
-        res += " " + key + "='" + kv[key] + "'";
+      else if(key === "on"){
+        for(let evnt in d[key]){
+          el.addEventListener(evnt, d[key][evnt]);
+        }
       }
     }
 
-    for(var i in Bwe.idendifiersNoVal){
-      var key = Bwe.idendifiersNoVal[i];
-      if(kv[key] != undefined){
-        res += " " + key;
+    if(type === "prepend"){
+      let first = s.firstElementChild;
+      if(first !== undefined){
+        let tmp = s.innerHTML;
+        s.innerHTML = "";
+        s.appendChild(el);
+        s.innerHTML += tmp;
       }
-    }
-
-    if(kv["data"] != undefined){
-      for(var key in kv["data"]){
-          res += " data-" + key + "='" + kv["data"][key] + "'";
+      else {
+        s.appendChild(el);
       }
-    }
-
-    var requiresClosingTag = $.inArray(kv["tag"], Bwe.noClosingTag);
-
-    if(requiresClosingTag != -1){
-      res += ">";
     }
     else{
-      res += ">";
+      if(type === "set"){
+        s.innerHTML = "";
+      }
+      s.appendChild(el);
     }
 
-    if(kv["txt"] != undefined){
-      res += kv["txt"];
-    }
-    for(var i in kv["children"]){
-      res+= Bwe.build(kv["children"][i]);
-    }
-
-    if(requiresClosingTag == -1){
-      res += "</" + kv["tag"] + ">\n";
+    //recussion for children
+    if(d.children !== undefined){
+      for(var i=0; i < d.children.length; i++){
+        Bwe.addEl(el , d.children[i]);
+      }
     }
   }
-  return res;
-}
 
+  //return the selector for the document element
+  static sel(str){
+    let ch = str.charAt(0);
+    if(ch === "."){
+      let els =  document.getElementsByClassName(str.substr(1,str.length-1));
+      if(els.length > 0)
+        return els[0];
+    }
+    else if(ch === "#"){
+      return document.getElementById(str.substr(1,str.length-1));
+    }
+    else if(str === "html"){
+      return document.documentElement;
+    }
+    else if(str === "body"){
+      return document.body;
+    }
+    else{
+      let els = document.getElementsByTagName(str);
+      if(els.length > 0)
+        return els[0];
+    }
+  }
 
-//converts a html string to json
-Bwe.makeData = function(html){
-  var start = 0;
-  var openQuote = false;
-  var openSingleQuote = false;
-  var openDoubleQuote = false;
-  var isClosing = false;
-  let readContent = false;
-  var attr = ""; //characters of the current atttribute
-  var ch; //the current character
-  var attrs = []; //all the parsed attributes as strings
-  var tags = []; //a list json objects for tags
-  var activeParentIndex = -1;
-  var childDepth = -1;
-  var childIndexes = [];
-  let content = "";
-  for(var i=0; i<html.length; i++){
-    var ch = html.charAt(i);
-    if(ch === "<"){
-      start = i;
-      if(html.charAt(i+1) === "/"){
-        isClosing = true;
-        tags[tags.length-1]["txt"] = content
-        content = "";
-        readContent=false;
+  //call the callback for each dom element
+  static each(str, callback){
+    let els;
+    if(sel.charAt(0) === "."){
+      els = document.getElementsByClassName(str.substr(1,str.length-1));
+    }
+    else{
+      els = document.getElementsByTagName(str)
+    }
+    if(els.length > 0){
+      for(let i in els){
+        callback(els[i]);
       }
     }
-    else if(ch === ">"){
-      if(attr !== ""){
-        attrs.push(attr);
-        attr = "";
-      }
-      var json = Bwe.makeFromAttrs(attrs);
-      attrs = [];
-      //opening tag
-      if(!isClosing){
-        readContent = true;
-        childDepth += 1;
-        //root tag
-        if(childDepth == 0){
-          tags.push(json);
-          activeParentIndex += 1;
-        }
-        //child tag
-        else{
-          //add childIndex if it doesnt exist
-          if(childIndexes.length <= childDepth){
-            childIndexes.push(0);
-          }
-          else{
-            childIndexes[childDepth] += 1;
-          }
+  }
 
-          var parent = tags[activeParentIndex];
-          for(var c = 0; c < childDepth-1; c++){
-            var index = childIndexes[c];
-            if(!("children" in parent)){
-              parent["children"] = [];
-            }
-            parent = parent["children"][index];
-          }
-          if(!parent.hasOwnProperty("children")){
-            parent["children"] = [];
-          }
-         parent["children"].push(json);
+  //builds a html string from the json
+  static build(tags){
+    if(tags.constructor !== Array){
+      var tags = [tags];
+    }
+    let res = "";
+    for(let tag in tags){
+      let kv = tags[tag];
+      res += "<" + kv["tag"];
 
-         if($.inArray(json["tag"], Bwe.noClosingTag) == false){
-           childIndexes[childDepth] = -1;
-           childDepth -= 1;
-           childIndexes[childDepth] += 1;
-           isClosing=false;
-         }
+      for(var i in Bwe.identifiers){
+        var key = Bwe.identifiers[i];
+        if(kv[key] != undefined && key!=="data"){
+          res += " " + key + "='" + kv[key] + "'";
         }
       }
-      //closing tag
+
+      for(var i in Bwe.idendifiersNoVal){
+        var key = Bwe.idendifiersNoVal[i];
+        if(kv[key] != undefined){
+          res += " " + key;
+        }
+      }
+
+      if(kv["data"] != undefined){
+        for(var key in kv["data"]){
+            res += " data-" + key + "='" + kv["data"][key] + "'";
+        }
+      }
+
+      var requiresClosingTag = $.inArray(kv["tag"], Bwe.noClosingTag);
+
+      if(requiresClosingTag != -1){
+        res += ">";
+      }
       else{
-        childIndexes[childDepth] = -1;
-        childDepth -= 1;
-        childIndexes[childDepth] += 1;
-        isClosing=false;
+        res += ">";
+      }
+
+      if(kv["txt"] != undefined){
+        res += kv["txt"];
+      }
+      for(var i in kv["children"]){
+        res+= Bwe.build(kv["children"][i]);
+      }
+
+      if(requiresClosingTag == -1){
+        res += "</" + kv["tag"] + ">\n";
       }
     }
-    else if(readContent){
-      content += ch;
-    }
-    else if(ch == "\'"){
-      openSingleQuote = !openSingleQuote
-      if(openDoubleQuote == false && openSingleQuote == true){
-        openQuote = true;
+    return res;
+  }
+
+
+  //converts a html string to json
+  static makeData(html){
+    var start = 0;
+    var openQuote = false;
+    var openSingleQuote = false;
+    var openDoubleQuote = false;
+    var isClosing = false;
+    let readContent = false;
+    var attr = ""; //characters of the current atttribute
+    var ch; //the current character
+    var attrs = []; //all the parsed attributes as strings
+    var tags = []; //a list json objects for tags
+    var activeParentIndex = -1;
+    var childDepth = -1;
+    var childIndexes = [];
+    let content = "";
+    for(var i=0; i<html.length; i++){
+      var ch = html.charAt(i);
+      if(ch === "<"){
+        start = i;
+        if(html.charAt(i+1) === "/"){
+          isClosing = true;
+          tags[tags.length-1]["txt"] = content
+          content = "";
+          readContent=false;
+        }
       }
-      else if(openSingleQuote == false){
-        openQuote = false;
-      }
-    }
-    else if(ch == "\""){
-      openDoubleQuote = !openDoubleQuote;
-      if(openDoubleQuote == true && openSingleQuote == false){
-        openQuote = true;
-      }
-      else if(openDoubleQuote == false){
-        openQuote = false;
-      }
-    }
-    else if(!isClosing){
-      if(openQuote == false && ((ch == ' ') || (ch == '\t') || (ch == '\n'))){
+      else if(ch === ">"){
         if(attr !== ""){
           attrs.push(attr);
           attr = "";
         }
-      }
-      else{
-        attr += ch;
-      }
-    }
-  }
-  return tags;
-}
+        var json = Bwe.makeFromAttrs(attrs);
+        attrs = [];
+        //opening tag
+        if(!isClosing){
+          readContent = true;
+          childDepth += 1;
+          //root tag
+          if(childDepth == 0){
+            tags.push(json);
+            activeParentIndex += 1;
+          }
+          //child tag
+          else{
+            //add childIndex if it doesnt exist
+            if(childIndexes.length <= childDepth){
+              childIndexes.push(0);
+            }
+            else{
+              childIndexes[childDepth] += 1;
+            }
 
-//makes a json object from attribute strings
-Bwe.makeFromAttrs = function(attrs){
-  var json = {
-    tag : attrs[0]
-  };
-  for(var i=1; i<attrs.length; i++){
-    if(attrs[i].indexOf("=") > -1){
-      var els = attrs[i].split("=");
-      if(els[0].indexOf("data-") > -1){
-        let key = els[0].replace("data-", "");
-        if(json["data"] === undefined){
-          json["data"] = {};
+            var parent = tags[activeParentIndex];
+            for(var c = 0; c < childDepth-1; c++){
+              var index = childIndexes[c];
+              if(!("children" in parent)){
+                parent["children"] = [];
+              }
+              parent = parent["children"][index];
+            }
+            if(!parent.hasOwnProperty("children")){
+              parent["children"] = [];
+            }
+           parent["children"].push(json);
+
+           if($.inArray(json["tag"], Bwe.noClosingTag) == false){
+             childIndexes[childDepth] = -1;
+             childDepth -= 1;
+             childIndexes[childDepth] += 1;
+             isClosing=false;
+           }
+          }
         }
-        json["data"][key] = els[1];
+        //closing tag
+        else{
+          childIndexes[childDepth] = -1;
+          childDepth -= 1;
+          childIndexes[childDepth] += 1;
+          isClosing=false;
+        }
       }
-      else{
-        json[els[0]] = els[1].replace(/"/g , "");
+      else if(readContent){
+        content += ch;
+      }
+      else if(ch == "\'"){
+        openSingleQuote = !openSingleQuote
+        if(openDoubleQuote == false && openSingleQuote == true){
+          openQuote = true;
+        }
+        else if(openSingleQuote == false){
+          openQuote = false;
+        }
+      }
+      else if(ch == "\""){
+        openDoubleQuote = !openDoubleQuote;
+        if(openDoubleQuote == true && openSingleQuote == false){
+          openQuote = true;
+        }
+        else if(openDoubleQuote == false){
+          openQuote = false;
+        }
+      }
+      else if(!isClosing){
+        if(openQuote == false && ((ch == ' ') || (ch == '\t') || (ch == '\n'))){
+          if(attr !== ""){
+            attrs.push(attr);
+            attr = "";
+          }
+        }
+        else{
+          attr += ch;
+        }
       }
     }
-    else if(Bwe.idendifiersNoVal.indexOf(attrs[i]) > -1){
-      json[attrs[i]] = "";
-    }
-    else{
-      if(!json.hasOwnProperty("txt")){
-        json["txt"] = "";
-      }
-      json["txt"] += attrs[i];
-    }
+    return tags;
   }
-  return json;
-}
 
-//turns a string array into json data using a default template
-Bwe.genList = function(items){
-  let list = [];
-  for(let i in items){
-    list.push({
-      tag : "li",
-      txt : items[i]
-    });
-  }
-  return list;
-}
-
-//generates a table from string arrays
-//if headings.length == 0 there will be no heading row on the table
-//rowss is 2D array
-Bwe.genTable = function(headings, rows){
-  let table = [];
-  if(headings.length > 0){
-    let headingData = {
-      tag : "tr",
-      children : []
-    }
-    for(let h in headings){
-      headingData.children.push({
-        tag : "th",
-        txt : headings[h]
-      });
-    }
-    table.push(headingData);
-  }
-  for(let r=0; r<rows.length; r++){
-    let rowData = {
-      tag : "tr",
-      children : []
+  //makes a json object from attribute strings
+  static makeFromAttrs(attrs){
+    var json = {
+      tag : attrs[0]
     };
-    for(let i in rows[r]){
-      rowData.children.push({
-        tag : "td",
-        txt : rows[r][i]
-      });
-    }
-    table.push(rowData);
-  }
-  return table;
-}
-
-//clones a json object
-Bwe.clone = function(data){
-  let json = {};
-  for(let key in data){
-
-    if(key === "children"){
-      json[key] = [];
-      for(let child in data[key]){
-        json[key].push(Bwe.clone(data[key][child]));
+    for(var i=1; i<attrs.length; i++){
+      if(attrs[i].indexOf("=") > -1){
+        var els = attrs[i].split("=");
+        if(els[0].indexOf("data-") > -1){
+          let key = els[0].replace("data-", "");
+          if(json["data"] === undefined){
+            json["data"] = {};
+          }
+          json["data"][key] = els[1];
+        }
+        else{
+          json[els[0]] = els[1].replace(/"/g , "");
+        }
+      }
+      else if(Bwe.idendifiersNoVal.indexOf(attrs[i]) > -1){
+        json[attrs[i]] = "";
+      }
+      else{
+        if(!json.hasOwnProperty("txt")){
+          json["txt"] = "";
+        }
+        json["txt"] += attrs[i];
       }
     }
-    else if(key === "on"){
-      json[key] = [];
-        for(let evnt in data[key]){
-          json[key].push(data[key][evnt]);
+    return json;
+  }
+
+  //turns a string array into json data using a default template
+  static genList(items){
+    let list = [];
+    for(let i in items){
+      list.push({
+        tag : "li",
+        txt : items[i]
+      });
+    }
+    return list;
+  }
+
+  //generates a table from string arrays
+  //if headings.length == 0 there will be no heading row on the table
+  //rowss is 2D array
+  static genTable(headings, rows){
+    let table = [];
+    if(headings.length > 0){
+      let headingData = {
+        tag : "tr",
+        children : []
+      }
+      for(let h in headings){
+        headingData.children.push({
+          tag : "th",
+          txt : headings[h]
+        });
+      }
+      table.push(headingData);
+    }
+    for(let r=0; r<rows.length; r++){
+      let rowData = {
+        tag : "tr",
+        children : []
+      };
+      for(let i in rows[r]){
+        rowData.children.push({
+          tag : "td",
+          txt : rows[r][i]
+        });
+      }
+      table.push(rowData);
+    }
+    return table;
+  }
+
+  //clones a json object
+  static clone(data){
+    let json = {};
+    for(let key in data){
+
+      if(key === "children"){
+        json[key] = [];
+        for(let child in data[key]){
+          json[key].push(Bwe.clone(data[key][child]));
         }
+      }
+      else if(key === "on"){
+        json[key] = [];
+          for(let evnt in data[key]){
+            json[key].push(data[key][evnt]);
+          }
+      }
+      else{
+        json[key] = data[key];
+      }
+    }
+    return json;
+  }
+
+  //toggle users ability to scroll
+  static scrollable(enabled){
+    if(enabled === undefined){
+      enabled = !Bwe.isScrollable;
+    }
+    if(enabled){
+      if (window.removeEventListener)
+        window.removeEventListener('DOMMouseScroll', preventDefault, false);
+      window.onmousewheel = document.onmousewheel = null;
+      window.onwheel = null;
+      window.ontouchmove = null;
+      document.onkeydown = null;
     }
     else{
-      json[key] = data[key];
+      if (window.addEventListener) // older FF
+          window.addEventListener('DOMMouseScroll', preventDefault, false);
+      window.onwheel = preventDefault; // modern standard
+      window.onmousewheel = document.onmousewheel = preventDefault; // older browsers, IE
+      window.ontouchmove  = preventDefault; // mobile
+      document.onkeydown  = preventDefaultForScrollKeys;
     }
+    Bwe.isScrollable = enabled;
   }
-  return json;
-}
 
-//toggle users ability to scroll
-Bwe.scrollable = function(enabled){
-  if(enabled === undefined){
-    enabled = !Bwe.isScrollable;
+
+  static preventDefault(e) {
+   e = e || window.event;
+   if (e.preventDefault)
+       e.preventDefault();
+   e.returnValue = false;
   }
-  if(enabled){
-    if (window.removeEventListener)
-      window.removeEventListener('DOMMouseScroll', preventDefault, false);
-    window.onmousewheel = document.onmousewheel = null;
-    window.onwheel = null;
-    window.ontouchmove = null;
-    document.onkeydown = null;
+  static preventDefaultForScrollKeys(e) {
+     if (scrollKeys[e.keyCode]) {
+         preventDefault(e);
+         return false;
+     }
   }
-  else{
-    if (window.addEventListener) // older FF
-        window.addEventListener('DOMMouseScroll', preventDefault, false);
-    window.onwheel = preventDefault; // modern standard
-    window.onmousewheel = document.onmousewheel = preventDefault; // older browsers, IE
-    window.ontouchmove  = preventDefault; // mobile
-    document.onkeydown  = preventDefaultForScrollKeys;
-  }
-  Bwe.isScrollable = enabled;
 }
 Bwe.isScrollable = true;
-var keys = {37: 1, 38: 1, 39: 1, 40: 1};
-function preventDefault(e) {
- e = e || window.event;
- if (e.preventDefault)
-     e.preventDefault();
- e.returnValue = false;
-}
-function preventDefaultForScrollKeys(e) {
-   if (keys[e.keyCode]) {
-       preventDefault(e);
-       return false;
-   }
-}
+Bwe.scrollKeys = {37: 1, 38: 1, 39: 1, 40: 1};
 
 //tag elements with a value
 Bwe.identifiers = [

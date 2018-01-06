@@ -18,7 +18,7 @@ window.onload = function(){
 }
 
 function test(){
-  let a = new Bwe({
+  let a = new Comp({
     tag : "div",
     id : "thisone",
     class : "myclass",
@@ -82,17 +82,16 @@ function test(){
     txt : "i am from addChild",
   }, "url:cdf.com", false);
 
-  //a.render("body");
+  a.render("body");
 
   let b = a.clone();
-  b.data = {};
+  //b.data = {};
 
   a.render("body");
-  console.log(b);
 }
 
 function builder(){
-  let bwe = new Bwe("body", {
+  let bwe = new Comp("body", {
     tag : "div",
     class : "body-con",
     children : [
