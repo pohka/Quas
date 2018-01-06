@@ -83,6 +83,19 @@ class Element{
     return this.el.getAttribute(key);
   }
 
+  //returns or sets a property of the element
+  prop(key, val){
+    if(val === undefined){
+      return this.el[key];
+    }
+    else this.el[key] = val;
+  }
+
+  //vertical scrolls to the top of this element
+  scrollTo(){
+    window.scrollTo(0,this.el.offsetTop);
+  }
+
   //returns or set the visibility of an element
   visible(show){
     let v = this.el.style.visibility;
@@ -519,7 +532,7 @@ class Bwe{
     }
     if(enabled){
       if (window.removeEventListener)
-        window.removeEventListener('DOMMouseScroll', preventDefault, false);
+        window.removeEventListener('DOMMouseScroll', Bwe.preventDefault, false);
       window.onmousewheel = document.onmousewheel = null;
       window.onwheel = null;
       window.ontouchmove = null;
@@ -527,11 +540,11 @@ class Bwe{
     }
     else{
       if (window.addEventListener) // older FF
-          window.addEventListener('DOMMouseScroll', preventDefault, false);
-      window.onwheel = preventDefault; // modern standard
-      window.onmousewheel = document.onmousewheel = preventDefault; // older browsers, IE
-      window.ontouchmove  = preventDefault; // mobile
-      document.onkeydown  = preventDefaultForScrollKeys;
+          window.addEventListener('DOMMouseScroll', Bwe.preventDefault, false);
+      window.onwheel = Bwe.preventDefault; // modern standard
+      window.onmousewheel = document.onmousewheel = Bwe.preventDefault; // older browsers, IE
+      window.ontouchmove  = Bwe.preventDefault; // mobile
+      document.onkeydown  = Bwe.preventDefaultForScrollKeys;
     }
     Bwe.isScrollable = enabled;
   }
@@ -544,7 +557,7 @@ class Bwe{
    e.returnValue = false;
   }
   static preventDefaultForScrollKeys(e) {
-     if (scrollKeys[e.keyCode]) {
+     if (Bwe.scrollKeys[e.keyCode]) {
          preventDefault(e);
          return false;
      }

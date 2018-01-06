@@ -42,7 +42,7 @@ function test(){
             Bwe.scrollable();
           },
           mouseover : function(){
-            console.log("GOOD scrolling");
+            //console.log("GOOD scrolling");
           },
         },
       },
@@ -73,6 +73,20 @@ function test(){
             ["row 2 item 1", "row 2 item 2"],
           ]
         )
+      },
+      {
+        tag : "div",
+        style : "height:1000px;"
+      },
+      {
+        tag : "button",
+        txt : "scroll up",
+        id : "jog",
+        on : {
+          click : function(){
+            Bwe.getEl("#myinput").scrollTo();
+          }
+        }
       }
     ]
   });
@@ -90,7 +104,8 @@ function test(){
   });
 
   let c = Bwe.getEl("#myinput");
-  c.visible(false);
+  //c.visible(false);
+  let offset = c.prop("offsetTop");
 
   let b = a.clone();
   b.data = { tag : "div", txt : "meme"};
@@ -140,7 +155,3 @@ function builder(){
   bwe.render();
 
 }
-
-// $(document).on("input", "#builder-html", function(){
-//   Bwe.html2json($(this).val());
-// });
