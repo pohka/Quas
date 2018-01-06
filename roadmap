@@ -5,11 +5,8 @@ Issues
 
 New Functions
 ---
-* genList(ListTemplate, items);
-* genTable(TableData, [th,th], [[td,td],[td,td]]);
 * genFromTemplate(template, [json, json]);
 * addPage(name, uri, callback);
-* enableScroll(bool);
 * breakpoints();
 * addModal(name, json);
 * toggleModal(name, bool);

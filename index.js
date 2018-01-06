@@ -55,6 +55,24 @@ function test(){
         data : {
           url : "cdf.com"
         }
+      },
+      {
+        tag : "ul",
+        children : Bwe.genList([
+          "item 1",
+          "item 2",
+          "item 3"
+        ])
+      },
+      {
+        tag : "table",
+        children : Bwe.genTable(
+          ["heading 1", "heading 2"],
+          [
+            ["row 1 item 1", "row 1 item 2"],
+            ["row 2 item 1", "row 2 item 2"],
+          ]
+        )
       }
     ]
   });

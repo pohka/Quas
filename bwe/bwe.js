@@ -408,6 +408,51 @@ Bwe.makeFromAttrs = function(attrs){
   return json;
 }
 
+//turns a string array into json data using a default template
+Bwe.genList = function(items){
+  let list = [];
+  for(let i in items){
+    list.push({
+      tag : "li",
+      txt : items[i]
+    });
+  }
+  return list;
+}
+
+//generates a table from string arrays
+//if headings.length == 0 there will be no heading row on the table
+//rowss is 2D array
+Bwe.genTable = function(headings, rows){
+  let table = [];
+  if(headings.length > 0){
+    let headingData = {
+      tag : "tr",
+      children : []
+    }
+    for(let h in headings){
+      headingData.children.push({
+        tag : "th",
+        txt : headings[h]
+      });
+    }
+    table.push(headingData);
+  }
+  for(let r=0; r<rows.length; r++){
+    let rowData = {
+      tag : "tr",
+      children : []
+    };
+    for(let i in rows[r]){
+      rowData.children.push({
+        tag : "td",
+        txt : rows[r][i]
+      });
+    }
+    table.push(rowData);
+  }
+  return table;
+}
 
 //toggle users ability to scroll
 Bwe.scrollable = function(enabled){
