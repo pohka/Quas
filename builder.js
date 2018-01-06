@@ -32,7 +32,8 @@ Bwe.events = [
 //tags that require no closing tag
 Bwe.noClosingTag = ["img", "source", "br", "hr", "area", "track", "link", "col", "meta", "base", "embed", "param", "input"];
 
-
+//converts json to html string
+//probably not working with event listeners
 Bwe.build = function(tags){
   if(tags.constructor !== Array){
     var tags = [tags];

@@ -49,7 +49,7 @@ function test(){
       {
         tag : "input",
         id : "myinput",
-        class : "myclass",
+        class : "myclass second",
         value : "text",
         placeholder : "enter text",
         data : {
@@ -106,6 +106,11 @@ function test(){
   let c = Bwe.getEl("#myinput");
   //c.visible(false);
   let offset = c.prop("offsetTop");
+  c.addCls('tree');
+  c.delCls("second");
+  console.log(c.prop("className"));
+
+  c.active(true);
 
   let b = a.clone();
   b.data = { tag : "div", txt : "meme"};

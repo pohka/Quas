@@ -119,6 +119,48 @@ class Element{
     return this.attr("data-"+key, val);
   }
 
+  //adds a class to this element
+  addCls(cls){
+    this.el.className += " " + cls;
+  }
+
+  //removes a class from this element
+  delCls(cls){
+    let arr = this.el.className.split(" ");
+    let i = arr.length-1;
+    let c = "";
+    while(i > -1){
+      if(arr[i] !== cls)
+        c += arr[i] + " ";
+      i--;
+    }
+    this.el.className = c.slice(0, -1);
+  }
+
+  //set or toggle the active class of this element
+  //if state is undefined it will toggle the state
+  active(state){
+    let a = "active";
+    if(state === undefined){
+      state = !this.hasCls(a);
+    }
+
+    if(state) this.addCls(a);
+    else      this.delCls(a);
+  }
+
+  //returns true/false if this element has the class
+  hasCls(cls){
+    let arr = this.el.className.split(" ");
+    let i = arr.length;
+    while(i > 0){
+      i--;
+      if(arr[i] === cls)
+        return true;
+    }
+    return false;
+  }
+
   //returns the text content of the element
   text(){
     return this.el.textContent;
