@@ -86,8 +86,13 @@ function test(){
   Bwe.each(".myclass", function(el){
     let url = el.data("url");
     if(url!==null)
-    console.log(url);
+      console.log(el.visible());
+     //= false;
+    //console.log();
   });
+
+  let c = Bwe.getEl("#myinput");
+  c.visible(false);
 
   let b = a.clone();
   b.data = { tag : "div", txt : "meme"};

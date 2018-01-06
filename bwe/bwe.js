@@ -83,6 +83,24 @@ class Element{
     return this.el.getAttribute(key);
   }
 
+  //returns or set the visibility of an element
+  visible(show){
+    let v = this.el.style.visibility;
+    //return value
+    if(show === undefined){
+      return (v === "" || v === "visible");
+    }
+    //set value
+    else{
+      if(show){
+        this.el.style.visibility = "visible";
+      }
+      else{
+        this.el.style.visibility = "hidden";
+      }
+    }
+  }
+
   //sets/returns a data attribute
   data(key, val){
     return this.attr("data-"+key, val);

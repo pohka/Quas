@@ -9,7 +9,6 @@ New Functions
 * addPage(name, uri, callback);
 * breakpoints();
 * addModal(name, json);
-* toggleModal(name, bool);
 
 CSS
 ----
