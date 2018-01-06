@@ -2,19 +2,19 @@ window.onload = function(){
   //  builder();
   test();
 
-  let field = Bwe.getEl("#myinput");
-  let val = field.attr("id")
-  console.log("val:" + val);
-  let text = Bwe.getEl("#thisone").text();
-  console.log("text:" + text);
-  let json = field.elData();
-  console.log(json);
+  // let field = Bwe.getEl("#myinput");
+  // let val = field.attr("id")
+  // console.log("val:" + val);
+  // let text = Bwe.getEl("#thisone").text();
+  // console.log("text:" + text);
+  // let json = field.elData();
+  // console.log(json);
   //field.del();
 
-  Bwe.getEl("#thisone").html({
-    tag : "div",
-    txt : "i was added"
-  }, "append");
+  // Bwe.getEl("#thisone").html({
+  //   tag : "div",
+  //   txt : "i was added"
+  // }, "append");
 }
 
 function test(){
@@ -82,7 +82,13 @@ function test(){
     txt : "i am from addChild",
   }, "url:cdf.com", false);
 
+  //a.render("body");
+
+  let b = a.clone();
+  b.data = {};
+
   a.render("body");
+  console.log(b);
 }
 
 function builder(){

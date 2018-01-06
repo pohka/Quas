@@ -51,6 +51,11 @@ class Bwe{
     }
   }
 
+  //deep copy of this object
+  clone(){
+    return new Bwe(Bwe.clone(this.data));
+  }
+
   //render the html
   render(sel, type){
     let el;
@@ -452,6 +457,30 @@ Bwe.genTable = function(headings, rows){
     table.push(rowData);
   }
   return table;
+}
+
+//clones a json object
+Bwe.clone = function(data){
+  let json = {};
+  for(let key in data){
+
+    if(key === "children"){
+      json[key] = [];
+      for(let child in data[key]){
+        json[key].push(Bwe.clone(data[key][child]));
+      }
+    }
+    else if(key === "on"){
+      json[key] = [];
+        for(let evnt in data[key]){
+          json[key].push(data[key][evnt]);
+        }
+    }
+    else{
+      json[key] = data[key];
+    }
+  }
+  return json;
 }
 
 //toggle users ability to scroll
