@@ -1,9 +1,6 @@
 //library
 class Bwe{
   constructor(data){
-    //if(data.constructor !== Array)
-    //  this.data = [data];
-    //else this.data = data;
     this.data=data;
   }
 
@@ -119,8 +116,8 @@ Bwe.addEl = function(s, d, type){
   }
 
   let el = document.createElement(d.tag);
-  if(d.con !== undefined){
-    let c = document.createTextNode(d["con"]);
+  if(d.txt !== undefined){
+    let c = document.createTextNode(d["txt"]);
     el.appendChild(c);
   }
   for(let key in d){
@@ -246,8 +243,8 @@ Bwe.build = function(tags){
       res += ">";
     }
 
-    if(kv["con"] != undefined){
-      res += kv["con"];
+    if(kv["txt"] != undefined){
+      res += kv["txt"];
     }
     for(var i in kv["children"]){
       res+= Bwe.build(kv["children"][i]);
@@ -283,7 +280,7 @@ Bwe.makeData = function(html){
       start = i;
       if(html.charAt(i+1) === "/"){
         isClosing = true;
-        tags[tags.length-1]["con"] = content
+        tags[tags.length-1]["txt"] = content
         content = "";
         readContent=false;
       }
@@ -402,10 +399,10 @@ Bwe.makeFromAttrs = function(attrs){
       json[attrs[i]] = "";
     }
     else{
-      if(!json.hasOwnProperty("con")){
-        json["con"] = "";
+      if(!json.hasOwnProperty("txt")){
+        json["txt"] = "";
       }
-      json["con"] += attrs[i];
+      json["txt"] += attrs[i];
     }
   }
   return json;

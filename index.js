@@ -13,7 +13,7 @@ window.onload = function(){
 
   Bwe.getEl("#thisone").html({
     tag : "div",
-    con : "i was added"
+    txt : "i was added"
   }, "append");
 }
 
@@ -25,17 +25,17 @@ function test(){
     data : {
       url : "abc.com",
     },
-    con : "content is here",
+    txt : "content is here",
     children : [
       {
         tag : "div",
         id : "test",
-        con : "test",
+        txt : "test",
         style : "height:1000px",
       },
       {
         tag : "button",
-        con : "toggle scroll",
+        txt : "toggle scroll",
         on : {
           click : function(){
             console.log("scrollable:" + !Bwe.isScrollable);
@@ -61,7 +61,7 @@ function test(){
 
   a.addChild({
     tag : "div",
-    con : "i am from addChild",
+    txt : "i am from addChild",
   }, "url:cdf.com", false);
 
   a.render("body");
