@@ -109,8 +109,7 @@ function test(){
   c.addCls('tree');
   c.delCls("second");
   console.log(c.prop("className"));
-
-  c.active(true);
+  c.active();
 
   let b = a.clone();
   b.data = { tag : "div", txt : "meme"};
