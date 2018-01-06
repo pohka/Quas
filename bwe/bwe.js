@@ -579,6 +579,40 @@ class Bwe{
     xmlhttp.open(req.type, str.slice(0,-1), true);
     xmlhttp.send();
   }
+
+  //returns the data from the url in as a json object
+  static getUrlValues(){
+    let str = window.location.search;
+    if(str.charAt(0)=="?"){
+      str = str.substr(1, str.length-1);
+    }
+    let variables = str.split("&");
+    let data = {};
+    for(let i = 0; i<variables.length; i++){
+      if(variables[i]!==""){
+        let item = variables[i].split("=");
+        data[item[0]] = decodeURI(item[1]);
+      }
+    }
+    return data;
+  }
+
+  //reloads the page and set or change variables in the url
+  //if the value === "" then the value is removed form the url
+  //values will be encoded
+  static setUrlValues(newVals){
+    let data = Bwe.getUrlValues();
+    for(let key in newVals){
+      data[key] = encodeURI(newVals[key]);
+    }
+    let str = "?";
+    for(let key in data){
+      if(data[key] !== "")
+        str += key + "=" + data[key] + "&";
+    }
+    str = str.slice(0,-1);
+    window.location = window.origin + window.location.pathname + str;
+  }
 }
 Bwe.isScrollable = true;
 Bwe.scrollKeys = {37: 1, 38: 1, 39: 1, 40: 1};

@@ -89,6 +89,32 @@ function test(){
             Bwe.getEl("#myinput").scrollTo();
           }
         }
+      },
+      {
+        tag : "button",
+        txt : "add values",
+        on : {
+          click : function(){
+            Bwe.setUrlValues({
+              key : "v",
+              other : "a b c"
+            });
+          }
+        }
+      },
+      {
+        tag : "button",
+        txt : "clear values",
+        on : {
+          click : function(){
+            let vals = Bwe.getUrlValues();
+            console.log(vals);
+            for(let key in vals){
+              vals[key] = "";
+            }
+            Bwe.setUrlValues(vals);
+          }
+        }
       }
     ]
   });
