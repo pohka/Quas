@@ -83,10 +83,15 @@ function test(){
   }, "url:cdf.com", false);
 
   a.render("body");
+  Bwe.each(".myclass", function(el){
+    let url = el.data("url");
+    if(url!==null)
+    console.log(url);
+  });
 
   let b = a.clone();
   b.data = { tag : "div", txt : "meme"};
-  b.render("body", "set");
+  //b.render("body", "set");
 }
 
 function builder(){

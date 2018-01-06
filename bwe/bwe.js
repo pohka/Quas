@@ -73,8 +73,19 @@ class Element{
   }
 
   //returns an attribute for this element
-  attr(key){
+  //if a value is defined it sets the attr
+  //returns null if the attribute doesn't exist
+  attr(key, val){
+    if(val !== undefined){
+      this.el.setAttribute(key, val);
+      return null;
+    }
     return this.el.getAttribute(key);
+  }
+
+  //sets/returns a data attribute
+  data(key, val){
+    return this.attr("data-"+key, val);
   }
 
   //returns the text content of the element
@@ -126,7 +137,7 @@ class Bwe{
       el.appendChild(c);
     }
     for(let key in d){
-      if( key !== "con" && key !== "data" && key !== "tag" &&
+      if( key !== "txt" && key !== "data" && key !== "tag" &&
           key !== "children" && key!="on"){
           el.setAttribute(key, d[key]);
       }
@@ -196,15 +207,15 @@ class Bwe{
   //call the callback for each dom element
   static each(str, callback){
     let els;
-    if(sel.charAt(0) === "."){
+    if(str.charAt(0) === "."){
       els = document.getElementsByClassName(str.substr(1,str.length-1));
     }
     else{
       els = document.getElementsByTagName(str)
     }
     if(els.length > 0){
-      for(let i in els){
-        callback(els[i]);
+      for(let i=0; i<els.length; i++){
+        callback(new Element(els[i]));
       }
     }
   }
