@@ -3,7 +3,7 @@ class Comp{
     this.data=data;
   }
 
-  //adds a child to the children of this object
+  //adds a child to the children of this component
   //if the selector is defined then it will insert it after that child
   //if before is true then it will insert it before the selector
   //sel = key:val; will add after child with matching data type
@@ -56,15 +56,59 @@ class Comp{
   }
 
   //render the html
-  render(sel, type){
+  render(sel, templateData, type){
     let el;
     if(sel.constructor !== String)
       el = sel;
     else
       el = Bwe.sel(sel);
-      Bwe.addEl(el, this.data, type);
+
+      let a = this.fillTemplates(templateData);
+      console.log(a);
+      Bwe.addEl(el, a, type);
+      //Bwe.addEl(el, this.data, type);
+  }
+
+  //replaces a template key witha value
+  fillTemplates(tempData, a){
+    if(a === undefined)
+      a  = Bwe.clone(this.data);
+
+    for(let key in a){
+      if(a[key].constructor == String){
+        let info = null;
+        let str = a[key];
+        let res = "";
+        do{
+          info = str.match(/\{\((.*?)\)\}/);
+          if(info != null){
+            let i = str.indexOf(info[0])
+            res += str.substr(0,i);
+            i += info[0].length;
+            str = str.substr(i);
+            let tempKey = info[1];
+            res += tempData[tempKey];
+          }
+        } while(info != null);
+        a[key] = res + str;
+      }
+      else if(a[key].constructor == Array){
+          for(let i in a[key]){
+              a[key][i] = this.fillTemplates(tempData, a[key][i]);
+          }
+      }
+      else if(a[key].constructor == Function){
+        //do something
+      }
+      else{
+        a[key] = this.fillTemplates(tempData, a[key]);
+      }
+    }
+    return a;
   }
 }
+
+
 
 //wrapper class for a dom element
 class Element{
@@ -175,9 +219,9 @@ class Element{
     console.log(this.el.className);
   }
 
-  //appen or set the html2json
+  //creates and renders a new component
   //types: set/append/prepend (undefined=set)
-  html(json, type){
+  addChild(json, type){
     if(type === undefined)
       type = "set";
     new Comp(json).render(this.el, type);

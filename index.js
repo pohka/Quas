@@ -14,10 +14,10 @@ window.onload = function(){
   //field.del();
   console.log("mobile:" + Bwe.isMobile());
 
-  Bwe.getEl("#thisone").html({
-    tag : "div",
-    txt : "i was added"
-  }, "url:cdf.com");
+  // Bwe.getEl("#thisone").addChild({
+  //   tag : "div",
+  //   txt : "i was added"
+  // }, "url:cdf.com");
 }
 
 function test(){
@@ -28,7 +28,7 @@ function test(){
     data : {
       url : "abc.com",
     },
-    txt : "content is here",
+    txt : "{(text)}-inbetween-{(text)}",
     children : [
       {
         tag : "div",
@@ -58,13 +58,14 @@ function test(){
         value : "text",
         placeholder : "enter text",
         data : {
-          url : "cdf.com"
+          url : "cdf.com",
+          place : "{(text)}"
         }
       },
       {
         tag : "ul",
         children : Bwe.genList([
-          "item 1",
+          "item {(text)}",
           "item 2",
           "item 3"
         ])
@@ -81,7 +82,7 @@ function test(){
       },
       {
         tag : "div",
-        style : "height:1000px;"
+        style : "height:{(h)}px;"
       },
       {
         tag : "button",
@@ -127,7 +128,7 @@ function test(){
     txt : "i am from addChild",
   }, "url:cdf.com", false);
 
-  a.render("body");
+  a.render("body", {text : "im a templete", h : 2000});
   Bwe.each(".myclass", function(el){
     let url = el.data("url");
     if(url!==null)
@@ -160,48 +161,4 @@ function test(){
       console.log(errorCode +" : " + msg);
     }
   });
-}
-
-function builder(){
-  let bwe = new Comp("body", {
-    tag : "div",
-    class : "body-con",
-    children : [
-      {
-        tag : "div",
-        class : "half-width",
-        children : [
-          {
-            tag : "textarea",
-            id : "builder-html",
-            placeholder : "Paste HTML here"
-          }
-        ]
-      },
-      {
-        tag : "div",
-        class : "half-width",
-        children : [
-          {
-            tag : "textarea",
-            id : "builder-json",
-            placeholder : "JSON will be generated here"
-          }
-        ]
-      },
-      {
-        tag : "div",
-        class : "half-width",
-        children : [
-          {
-            tag : "textarea",
-            id : "builder-result",
-            placeholder : "result"
-          }
-        ]
-      },
-    ]
-  });
-  bwe.render();
-
 }
