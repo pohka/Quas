@@ -57,7 +57,7 @@ function test(testSetURLvals){
 
   //foreach element
   //get and set data values
-  Bwe.each("div", function(el){
+  Quas.each("div", function(el){
     let val = el.data("url");
     if(val !== undefined){
       el.data("url", "/"+val);
@@ -71,7 +71,7 @@ function test(testSetURLvals){
 
   //get an element and log the text
   //this returns a wrapper class around the HTML DOM element
-  let el = Bwe.getEl("#achild2")
+  let el = Quas.getEl("#achild2")
   console.log("text: " +el.text());
 
   //add, remove and check for classes and toggling active class
@@ -83,13 +83,13 @@ function test(testSetURLvals){
   el.active(false);
 
   //returns the HTML DOM element
-  let domEl = Bwe.sel(".class2");
+  let domEl = Quas.sel(".class2");
   console.log(domEl.id);
 
   //add a list
   el.addChild({
     tag : "ul",
-    children : Bwe.genList([
+    children : Quas.genList([
       "item 1",
       "item 2",
       "item 2"
@@ -104,7 +104,7 @@ function test(testSetURLvals){
         console.log("cursor moving within the table");
       }
     },
-    children : Bwe.genTable(
+    children : Quas.genTable(
       ["heading 1", "heading 2"],
       [
         ["row 1 item 1", "row 1 item 2"],
@@ -116,13 +116,13 @@ function test(testSetURLvals){
 
   //toggle or set the ability to scroll
   //also get current scrollable state
-  Bwe.scrollable(true);
-  if(Bwe.isScrollable){
+  Quas.scrollable(true);
+  if(Quas.isScrollable){
       console.log("you can scroll");
   }
 
   //ajax request with succes and error callback functions
-  Bwe.ajax({
+  Quas.ajax({
     url : "php/test.php",
     type : "POST",
     data : {
@@ -138,7 +138,7 @@ function test(testSetURLvals){
   });
 
   //returns kv values from the url as json
-  let urlVals = Bwe.getUrlValues();
+  let urlVals = Quas.getUrlValues();
   let page = urlVals.page;
   if(page === undefined){
     page = 0;
@@ -148,7 +148,7 @@ function test(testSetURLvals){
 
   //set the kv values in the url with json
   if(testSetURLvals !== undefined && testSetURLvals == true){
-    Bwe.setUrlValues({
+    Quas.setUrlValues({
       page : page += 1,
       id : "someID",
     });
@@ -161,27 +161,27 @@ function test(testSetURLvals){
     txt : "i am temporary"
   });
   temp.render("body");
-  Bwe.getEl("#achild3").del();
+  Quas.getEl("#achild3").del();
 
 
   //get or set a HTML DOM property
-  let ch2 = Bwe.getEl("#achild2");
+  let ch2 = Quas.getEl("#achild2");
   let offset = ch2.prop("offsetTop");
   console.log("offset: " + offset);
 
   //browser name and version
-  let info = Bwe.browser();
+  let info = Quas.browser();
   console.log("browser: " + info.name + " v." + info.version + " - " + info.isMobile);
 
   //toggle scrolling
-  let body = Bwe.getEl("body");
+  let body = Quas.getEl("body");
   body.addChild({
     tag : "button",
     txt : "Toggle Scroll",
     on : {
       click : function(){
-        Bwe.scrollable();
-        console.log("Scrolling enabled: " + Bwe.isScrollable);
+        Quas.scrollable();
+        console.log("Scrolling enabled: " + Quas.isScrollable);
       }
     }
   });
@@ -193,7 +193,7 @@ function test(testSetURLvals){
     on : {
       click : function(){
         console.log("clicked");
-        Bwe.getEl("#myid").scrollTo();
+        Quas.getEl("#myid").scrollTo();
       }
     }
   });

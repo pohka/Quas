@@ -99,7 +99,7 @@ class Comp{
     append: adds HTML to the end
     prepend : adds HTML to the start
     set : overwrites the HTML
-    @param {String} sel - See Bwe.sel()
+    @param {String} sel - See Quas.sel()
     @param {String} type - (optional) append/prepend/set
   */
   render(sel, type){
@@ -107,8 +107,8 @@ class Comp{
     if(sel.constructor !== String)
       el = sel;
     else
-      el = Bwe.sel(sel);
-    Bwe.addEl(el, this.data, type);
+      el = Quas.sel(sel);
+    Quas.addEl(el, this.data, type);
   }
 }
 
@@ -283,7 +283,7 @@ class Element{
 /**
   Static class for library functions
 */
-class Bwe{
+class Quas{
   /**
     Recussive function to add a dom element and all of it's children
     @param {JSON} s - parent
@@ -342,7 +342,7 @@ class Bwe{
     //recussion for children
     if(d.children !== undefined){
       for(var i=0; i < d.children.length; i++){
-        Bwe.addEl(el , d.children[i]);
+        Quas.addEl(el , d.children[i]);
       }
     }
   }
@@ -411,7 +411,7 @@ class Bwe{
 
   /**
     For each element with a matching selector call the callback
-    @param {String} sel - See Bwe.sel
+    @param {String} sel - See Quas.sel
     @param {Function(Element)} callback
   */
   static each(sel, callback){
@@ -489,7 +489,7 @@ class Bwe{
     @return {Element} - undefined if not found
   */
   static getEl(sel){
-    let el = Bwe.sel(sel);
+    let el = Quas.sel(sel);
     if(el != null)
       return new Element(el);
   }
@@ -530,7 +530,7 @@ class Bwe{
     @param {Event}
   */
   static preventDefaultForScrollKeys(e) {
-     if (Bwe.scrollKeys[e.keyCode]) {
+     if (Quas.scrollKeys[e.keyCode]) {
          preventDefault(e);
          return false;
      }
@@ -543,11 +543,11 @@ class Bwe{
   */
   static scrollable(enabled){
     if(enabled === undefined){
-      enabled = !Bwe.isScrollable;
+      enabled = !Quas.isScrollable;
     }
     if(enabled){
       if (window.removeEventListener)
-        window.removeEventListener('DOMMouseScroll', Bwe.preventDefault, false);
+        window.removeEventListener('DOMMouseScroll', Quas.preventDefault, false);
       window.onmousewheel = document.onmousewheel = null;
       window.onwheel = null;
       window.ontouchmove = null;
@@ -555,13 +555,13 @@ class Bwe{
     }
     else{
       if (window.addEventListener) // older FF
-          window.addEventListener('DOMMouseScroll', Bwe.preventDefault, false);
-      window.onwheel = Bwe.preventDefault; // modern standard
-      window.onmousewheel = document.onmousewheel = Bwe.preventDefault; // older browsers, IE
-      window.ontouchmove  = Bwe.preventDefault; // mobile
-      document.onkeydown  = Bwe.preventDefaultForScrollKeys;
+          window.addEventListener('DOMMouseScroll', Quas.preventDefault, false);
+      window.onwheel = Quas.preventDefault; // modern standard
+      window.onmousewheel = document.onmousewheel = Quas.preventDefault; // older browsers, IE
+      window.ontouchmove  = Quas.preventDefault; // mobile
+      document.onkeydown  = Quas.preventDefaultForScrollKeys;
     }
-    Bwe.isScrollable = enabled;
+    Quas.isScrollable = enabled;
   }
 
   /**
@@ -603,7 +603,7 @@ class Bwe{
     @param {JSON} newVals
   */
   static setUrlValues(newVals){
-    let data = Bwe.getUrlValues();
+    let data = Quas.getUrlValues();
     for(let key in newVals){
       data[key] = encodeURI(newVals[key]);
     }
@@ -619,9 +619,9 @@ class Bwe{
 /**
   Current state of the users ability to scroll
 */
-Bwe.isScrollable = true;
+Quas.isScrollable = true;
 
 /**
   Keys codes that can scroll
 */
-Bwe.scrollKeys = {37: 1, 38: 1, 39: 1, 40: 1};
+Quas.scrollKeys = {37: 1, 38: 1, 39: 1, 40: 1};
