@@ -166,13 +166,6 @@ class Element{
     return this.el.textContent;
   }
 
-  //returns the json data for this element
-  elData(){
-    let wrap = document.createElement('div');
-    wrap.appendChild(this.el.cloneNode(true));
-    return Bwe.makeData(wrap.innerHTML);
-  }
-
   //removes this element
   del(){
     this.el.remove();
@@ -187,17 +180,21 @@ class Element{
   html(json, type){
     if(type === undefined)
       type = "set";
-    new Bwe(json).render(this.el, type);
+    new Comp(json).render(this.el, type);
   }
 }
 
 class Bwe{
   //returns the element for this object
+  //returns undefined if not found
   static getEl(str, type){
-    return new Element(Bwe.sel(str));
+    let el = Bwe.sel(str);
+    if(el != null)
+      return new Element(el);
   }
 
-  //add to a dom element and all of it's children
+  //recussive function to a dom element and all of it's children
+  //json,selector,before/after
   static addEl(s, d, type){
     //s is the parent element
     if(s === undefined){
@@ -297,124 +294,6 @@ class Bwe{
         callback(new Element(els[i]));
       }
     }
-  }
-
-  //converts a html string to json
-  static makeData(html){
-    var start = 0;
-    var openQuote = false;
-    var openSingleQuote = false;
-    var openDoubleQuote = false;
-    var isClosing = false;
-    let readContent = false;
-    var attr = ""; //characters of the current atttribute
-    var ch; //the current character
-    var attrs = []; //all the parsed attributes as strings
-    var tags = []; //a list json objects for tags
-    var activeParentIndex = -1;
-    var childDepth = -1;
-    var childIndexes = [];
-    let content = "";
-    for(var i=0; i<html.length; i++){
-      var ch = html.charAt(i);
-      if(ch === "<"){
-        start = i;
-        if(html.charAt(i+1) === "/"){
-          isClosing = true;
-          tags[tags.length-1]["txt"] = content
-          content = "";
-          readContent=false;
-        }
-      }
-      else if(ch === ">"){
-        if(attr !== ""){
-          attrs.push(attr);
-          attr = "";
-        }
-        var json = Bwe.makeFromAttrs(attrs);
-        attrs = [];
-        //opening tag
-        if(!isClosing){
-          readContent = true;
-          childDepth += 1;
-          //root tag
-          if(childDepth == 0){
-            tags.push(json);
-            activeParentIndex += 1;
-          }
-          //child tag
-          else{
-            //add childIndex if it doesnt exist
-            if(childIndexes.length <= childDepth){
-              childIndexes.push(0);
-            }
-            else{
-              childIndexes[childDepth] += 1;
-            }
-
-            var parent = tags[activeParentIndex];
-            for(var c = 0; c < childDepth-1; c++){
-              var index = childIndexes[c];
-              if(!("children" in parent)){
-                parent["children"] = [];
-              }
-              parent = parent["children"][index];
-            }
-            if(!parent.hasOwnProperty("children")){
-              parent["children"] = [];
-            }
-           parent["children"].push(json);
-
-           if($.inArray(json["tag"], Bwe.noClosingTag) == false){
-             childIndexes[childDepth] = -1;
-             childDepth -= 1;
-             childIndexes[childDepth] += 1;
-             isClosing=false;
-           }
-          }
-        }
-        //closing tag
-        else{
-          childIndexes[childDepth] = -1;
-          childDepth -= 1;
-          childIndexes[childDepth] += 1;
-          isClosing=false;
-        }
-      }
-      else if(readContent){
-        content += ch;
-      }
-      else if(ch == "\'"){
-        openSingleQuote = !openSingleQuote
-        if(openDoubleQuote == false && openSingleQuote == true){
-          openQuote = true;
-        }
-        else if(openSingleQuote == false){
-          openQuote = false;
-        }
-      }
-      else if(ch == "\""){
-        openDoubleQuote = !openDoubleQuote;
-        if(openDoubleQuote == true && openSingleQuote == false){
-          openQuote = true;
-        }
-        else if(openDoubleQuote == false){
-          openQuote = false;
-        }
-      }
-      else if(!isClosing){
-        if(openQuote == false && ((ch == ' ') || (ch == '\t') || (ch == '\n'))){
-          if(attr !== ""){
-            attrs.push(attr);
-            attr = "";
-          }
-        }
-        else{
-          attr += ch;
-        }
-      }
-    }
-    return tags;
   }
 
   //makes a json object from attribute strings
@@ -612,6 +491,25 @@ class Bwe{
     }
     str = str.slice(0,-1);
     window.location = window.origin + window.location.pathname + str;
+  }
+
+  //returns a json object with the browser name and version
+  static browser(){
+    var ua=navigator.userAgent,tem,M=ua.match(/(opera|chrome|safari|firefox|msie|trident(?=\/))\/?\s*(\d+)/i) || [];
+    if(/trident/i.test(M[1])){
+        tem=/\brv[ :]+(\d+)/g.exec(ua) || [];
+        return {name:'IE ',version:(tem[1]||'')};
+        }
+    if(M[1]==='Chrome'){
+        tem=ua.match(/\bOPR\/(\d+)/)
+        if(tem!=null)   {return {name:'Opera', version:tem[1]};}
+        }
+    M=M[2]? [M[1], M[2]]: [navigator.appName, navigator.appVersion, '-?'];
+    if((tem=ua.match(/version\/(\d+)/i))!=null) {M.splice(1,1,tem[1]);}
+    return {
+      name: M[0],
+      version: M[1]
+    };
   }
 }
 Bwe.isScrollable = true;

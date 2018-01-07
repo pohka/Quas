@@ -1,6 +1,8 @@
 window.onload = function(){
   //  builder();
   test();
+  console.log(Bwe.browser());
+  console.log(navigator.userAgent);
 
   // let field = Bwe.getEl("#myinput");
   // let val = field.attr("id")
@@ -11,10 +13,10 @@ window.onload = function(){
   // console.log(json);
   //field.del();
 
-  // Bwe.getEl("#thisone").html({
-  //   tag : "div",
-  //   txt : "i was added"
-  // }, "append");
+  Bwe.getEl("#thisone").html({
+    tag : "div",
+    txt : "i was added"
+  }, "url:cdf.com");
 }
 
 function test(){
