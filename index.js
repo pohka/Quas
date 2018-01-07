@@ -1,164 +1,167 @@
 window.onload = function(){
-  //  builder();
-  test();
-  console.log(Bwe.browser());
-  console.log(navigator.userAgent);
-
-  // let field = Bwe.getEl("#myinput");
-  // let val = field.attr("id")
-  // console.log("val:" + val);
-  // let text = Bwe.getEl("#thisone").text();
-  // console.log("text:" + text);
-  // let json = field.elData();
-  // console.log(json);
-  //field.del();
-  console.log("mobile:" + Bwe.isMobile());
-
-  // Bwe.getEl("#thisone").addChild({
-  //   tag : "div",
-  //   txt : "i was added"
-  // }, "url:cdf.com");
+  test(false);
 }
 
-function test(){
-  let a = new Comp({
-    tag : "div",
-    id : "thisone",
-    class : "myclass",
-    data : {
-      url : "abc.com",
-    },
-    txt : "{(text)}-inbetween-{(text)}",
-    children : [
-      {
-        tag : "div",
-        id : "test",
-        txt : "test",
-        css : {
-          height : "1000px",
-        }
+class MyComp extends Comp{
+  constructor(data){
+    super({
+      tag : "div",
+      txt : "hello " + data.text,
+      data : {
+        url : data.url
       },
-      {
-        tag : "button",
-        txt : "toggle scroll",
-        on : {
-          click : function(){
-            console.log("scrollable:" + !Bwe.isScrollable);
-            Bwe.scrollable();
-          },
-          mouseover : function(){
-            console.log("mouse over");
-          },
-        },
-      },
-      {
-        tag : "input",
-        id : "myinput",
-        class : "myclass second",
-        value : "text",
-        placeholder : "enter text",
-        data : {
-          url : "cdf.com",
-          place : "{(text)}"
-        }
-      },
-      {
-        tag : "ul",
-        children : Bwe.genList([
-          "item {(text)}",
-          "item 2",
-          "item 3"
-        ])
-      },
-      {
-        tag : "table",
-        children : Bwe.genTable(
-          ["heading 1", "heading 2"],
-          [
-            ["row 1 item 1", "row 1 item 2"],
-            ["row 2 item 1", "row 2 item 2"],
-          ]
-        )
-      },
-      {
-        tag : "div",
-        style : "height:{(h)}px;"
-      },
-      {
-        tag : "button",
-        txt : "scroll up",
-        id : "jog",
-        on : {
-          click : function(){
-            Bwe.getEl("#myinput").scrollTo();
-          }
-        }
-      },
-      {
-        tag : "button",
-        txt : "add values",
-        on : {
-          click : function(){
-            Bwe.setUrlValues({
-              key : "v",
-              other : "a b c"
-            });
-          }
-        }
-      },
-      {
-        tag : "button",
-        txt : "clear values",
-        on : {
-          click : function(){
-            let vals = Bwe.getUrlValues();
-            console.log(vals);
-            for(let key in vals){
-              vals[key] = "";
-            }
-            Bwe.setUrlValues(vals);
-          }
+      on : {
+        click : function(){
+          console.log("i was clicked");
         }
       }
-    ]
-  });
+    });
+  }
+}
 
-  a.addChild({
+//testing each function
+function test(testSetURLvals){
+  //basic component
+  let a = new Comp({
     tag : "div",
-    txt : "i am from addChild",
-  }, "url:cdf.com", false);
+    txt : "hello",
+  });
+  a.render("body");
 
-  a.render("body", {text : "im a templete", h : 2000});
-  Bwe.each(".myclass", function(el){
-    let url = el.data("url");
-    if(url!==null)
-      console.log(el.visible());
+  //extened component
+  let b = new MyComp({
+    text : "world",
+    url : "abc.com",
   });
 
-  let c = Bwe.getEl("#myinput");
-  //c.visible(false);
-  let offset = c.prop("offsetTop");
-  c.addCls('tree');
-  c.delCls("second");
-  console.log(c.prop("className"));
-  c.active();
+  //add a child
+  b.addChild({
+    tag : "div",
+    id : "achild1",
+    txt : "addChild 1"
+  });
 
-  let b = a.clone();
-  b.data = { tag : "div", txt : "meme"};
-  //b.render("body", "set");
+  //add a child before the selector
+  b.addChild({
+    tag : "div",
+    id : "achild2",
+    class : "class1",
+    txt : "addChild 2"
+  }, "#achild", true);
 
+  //render into body
+  b.render("body");
+
+  //foreach element
+  //get and set data values
+  Bwe.each("div", function(el){
+    let val = el.data("url");
+    if(val !== undefined){
+      el.data("url", "/"+val);
+    }
+  });
+
+  //editing componenet data and rendering before
+  b.data.txt = "inserted at the start";
+  b.data.children = [];
+  b.render("body", "prepend"); //options: append/prepend/set
+
+  //get an element and log the text
+  //this returns a wrapper class around the HTML DOM element
+  let el = Bwe.getEl("#achild2")
+  console.log("text: " +el.text());
+
+  //add, remove and check for classes and toggling active class
+  el.addCls("class2");
+  el.delCls('class1')
+  el.active(); //toggle active
+  console.log("class list: " +  el.attr("class"));
+  console.log("has class2: " + el.hasCls('class2'));
+  el.active(false);
+
+  //returns the HTML DOM element
+  let domEl = Bwe.sel(".class2");
+  console.log(domEl.id);
+
+  //add a list
+  el.addChild({
+    tag : "ul",
+    children : Bwe.genList([
+      "item 1",
+      "item 2",
+      "item 2"
+    ])
+  });
+
+  //add a table with an event listener
+  el.addChild({
+    tag : "table",
+    on : {
+      mousemove : function(){
+        console.log("cursor moving within the table");
+      }
+    },
+    children : Bwe.genTable(
+      ["heading 1", "heading 2"],
+      [
+        ["row 1 item 1", "row 1 item 2"],
+        ["row 2 item 1", "row 2 item 2"],
+        ["row 3 item 1", "row 3 item 2"],
+      ]
+    )
+  }, "append");
+
+  //toggle or set the ability to scroll
+  //also get current scrollable state
+  Bwe.scrollable(true);
+  if(Bwe.isScrollable){
+      console.log("you can scroll");
+  }
+
+  //ajax request with succes and error callback functions
   Bwe.ajax({
     url : "php/test.php",
     type : "POST",
     data : {
       key : "value",
-      other : "two"
+      print_me : "two"
     },
     success : function(result){
-      console.log("sucess - " + result);
+      console.log("success - " + result);
     },
     error : function(msg, errorCode){
       console.log(errorCode +" : " + msg);
     }
   });
+
+  //returns kv values from the url as json
+  let urlVals = Bwe.getUrlValues();
+  let page = urlVals.page;
+  if(page === undefined){
+    page = 0;
+  }
+  page = Number(page);
+  console.log({urlValues : urlVals});
+
+  //set the kv values in the url with json
+  if(testSetURLvals !== undefined && testSetURLvals == true){
+    Bwe.setUrlValues({
+      page : page += 1,
+      id : "someID",
+    });
+  }
+
+  //add and remove an element
+  let temp  = new Comp({
+    tag : "div",
+    id : "achild3",
+    txt : "i am temporary"
+  });
+  temp.render("body");
+  Bwe.getEl("#achild3").del();
+
+  //browser name and version
+  let info = Bwe.browser();
+  console.log("browser: " + info.name + " v." + info.version);
+  console.log("isMobile: " + Bwe.isMobile());
 }

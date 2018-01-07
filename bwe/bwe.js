@@ -50,61 +50,14 @@ class Comp{
     }
   }
 
-  //deep copy of this object
-  clone(){
-    return new Comp(Bwe.clone(this.data));
-  }
-
   //render the html
-  render(sel, templateData, type){
+  render(sel, type){
     let el;
     if(sel.constructor !== String)
       el = sel;
     else
       el = Bwe.sel(sel);
-
-      let a = this.fillTemplates(templateData);
-      console.log(a);
-      Bwe.addEl(el, a, type);
-      //Bwe.addEl(el, this.data, type);
-  }
-
-  //replaces a template key witha value
-  fillTemplates(tempData, a){
-    if(a === undefined)
-      a  = Bwe.clone(this.data);
-
-    for(let key in a){
-      if(a[key].constructor == String){
-        let info = null;
-        let str = a[key];
-        let res = "";
-        do{
-          info = str.match(/\{\((.*?)\)\}/);
-          if(info != null){
-            let i = str.indexOf(info[0])
-            res += str.substr(0,i);
-            i += info[0].length;
-            str = str.substr(i);
-            let tempKey = info[1];
-            res += tempData[tempKey];
-          }
-        } while(info != null);
-        a[key] = res + str;
-      }
-      else if(a[key].constructor == Array){
-          for(let i in a[key]){
-              a[key][i] = this.fillTemplates(tempData, a[key][i]);
-          }
-      }
-      else if(a[key].constructor == Function){
-        //do something
-      }
-      else{
-        a[key] = this.fillTemplates(tempData, a[key]);
-      }
-    }
-    return a;
+    Bwe.addEl(el, this.data, type);
   }
 }
 
@@ -122,9 +75,10 @@ class Element{
   attr(key, val){
     if(val !== undefined){
       this.el.setAttribute(key, val);
-      return null;
+      return undefined;
     }
-    return this.el.getAttribute(key);
+    else
+      return this.el.getAttribute(key);
   }
 
   //returns or sets a property of the element
@@ -160,7 +114,9 @@ class Element{
 
   //sets/returns a data attribute
   data(key, val){
-    return this.attr("data-"+key, val);
+    let data = this.attr("data-"+key, val);
+    if(data != null)
+      return data;
   }
 
   //adds a class to this element
@@ -223,15 +179,16 @@ class Element{
   //types: set/append/prepend (undefined=set)
   addChild(json, type){
     if(type === undefined)
-      type = "set";
-    new Comp(json).render(this.el, type);
+      type = "append";
+    let c = new Comp(json);
+    c.render(this.el, type);
   }
 }
 
 class Bwe{
   //returns the element for this object
   //returns undefined if not found
-  static getEl(str, type){
+  static getEl(str){
     let el = Bwe.sel(str);
     if(el != null)
       return new Element(el);
@@ -340,38 +297,6 @@ class Bwe{
     }
   }
 
-  //makes a json object from attribute strings
-  static makeFromAttrs(attrs){
-    var json = {
-      tag : attrs[0]
-    };
-    for(var i=1; i<attrs.length; i++){
-      if(attrs[i].indexOf("=") > -1){
-        var els = attrs[i].split("=");
-        if(els[0].indexOf("data-") > -1){
-          let key = els[0].replace("data-", "");
-          if(json["data"] === undefined){
-            json["data"] = {};
-          }
-          json["data"][key] = els[1];
-        }
-        else{
-          json[els[0]] = els[1].replace(/"/g , "");
-        }
-      }
-      else if(Bwe.idendifiersNoVal.indexOf(attrs[i]) > -1){
-        json[attrs[i]] = "";
-      }
-      else{
-        if(!json.hasOwnProperty("txt")){
-          json["txt"] = "";
-        }
-        json["txt"] += attrs[i];
-      }
-    }
-    return json;
-  }
-
   //turns a string array into json data using a default template
   static genList(items){
     let list = [];
@@ -416,30 +341,6 @@ class Bwe{
       table.push(rowData);
     }
     return table;
-  }
-
-  //clones a json object
-  static clone(data){
-    let json = {};
-    for(let key in data){
-
-      if(key === "children"){
-        json[key] = [];
-        for(let child in data[key]){
-          json[key].push(Bwe.clone(data[key][child]));
-        }
-      }
-      else if(key === "on"){
-        json[key] = [];
-          for(let evnt in data[key]){
-            json[key].push(data[key][evnt]);
-          }
-      }
-      else{
-        json[key] = data[key];
-      }
-    }
-    return json;
   }
 
   //toggle users ability to scroll
