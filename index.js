@@ -12,6 +12,7 @@ window.onload = function(){
   // let json = field.elData();
   // console.log(json);
   //field.del();
+  console.log("mobile:" + Bwe.isMobile());
 
   Bwe.getEl("#thisone").html({
     tag : "div",

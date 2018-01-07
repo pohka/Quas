@@ -511,6 +511,10 @@ class Bwe{
       version: M[1]
     };
   }
+
+  static isMobile(){
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  }
 }
 Bwe.isScrollable = true;
 Bwe.scrollKeys = {37: 1, 38: 1, 39: 1, 40: 1};
