@@ -1,5 +1,5 @@
 /**
- Component for creating and rendering
+ Component for creating and rendering HTML
 */
 class Comp{
   /**
