@@ -46,6 +46,9 @@ function test(testSetURLvals){
     tag : "div",
     id : "achild2",
     class : "class1",
+    css : {
+      "padding-top" : "100px"
+    },
     txt : "addChild 2"
   }, "#achild", true);
 
@@ -109,7 +112,7 @@ function test(testSetURLvals){
         ["row 3 item 1", "row 3 item 2"],
       ]
     )
-  }, "append");
+  }, "prepend");
 
   //toggle or set the ability to scroll
   //also get current scrollable state
@@ -159,6 +162,14 @@ function test(testSetURLvals){
   });
   temp.render("body");
   Bwe.getEl("#achild3").del();
+
+  //scroll to the top of an element
+  let ch2 = Bwe.getEl("#achild2");
+  ch2.scrollTo();
+
+  //get or set a HTML DOM property
+  let offset = ch2.prop("offsetTop");
+  console.log("offset: " + offset);
 
   //browser name and version
   let info = Bwe.browser();

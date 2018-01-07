@@ -232,11 +232,9 @@ class Bwe{
 
     if(type === "prepend"){
       let first = s.firstElementChild;
+      console.log(s);
       if(first !== undefined){
-        let tmp = s.innerHTML;
-        s.innerHTML = "";
-        s.appendChild(el);
-        s.innerHTML += tmp;
+        s.insertBefore(el, s.childNodes[0]);
       }
       else {
         s.appendChild(el);

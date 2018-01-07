@@ -1,22 +1,30 @@
-Issues
-----
-* Element.addChild() with prepend doesnt work
 
+<p align="center">Road Map</p>
+===
 
-New Functions
+Todos
 ---
-* genFromTemplate(template, [json, json]);
-* breakpoints();
+* Aliases for some event listeners
+* Sort functions by alphabethic order
+* Playground
+* Documentation
+  * Comments
+  * Read.me
+  * Landing page
 
-CSS
+Component Package
 ----
-* flexbox rather than inline* blocks
-* reuseable classes
+A number of components which will accelerate prototyping
+* Type of components:
+ * Modal
+ * Body
+ * Navbar
+ * Footer
+ * Sidebar
+ * Comments
+ * Cards
 
-Other
----
-* lazy image loading
-* finish builder
-* mouse clicking (click somewhere else)
-* loading bar at top of pages
-* animation
+
+* CSS Notes:
+ * Flexbox rather than inline-blocks
+ * Reuseable CSS classes
