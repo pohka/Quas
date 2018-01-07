@@ -69,6 +69,32 @@ class Element{
     this.el = el;
   }
 
+  //set or toggle the active class of this element
+  //if state is undefined it will toggle the state
+  active(state){
+    let a = "active";
+    if(state === undefined){
+      state = !this.hasCls(a);
+    }
+
+    if(state) this.addCls(a);
+    else      this.delCls(a);
+  }
+
+  //creates and renders a new component
+  //types: set/append/prepend (undefined=set)
+  addChild(json, type){
+    if(type === undefined)
+      type = "append";
+    let c = new Comp(json);
+    c.render(this.el, type);
+  }
+
+  //adds a class to this element
+  addCls(cls){
+    this.el.className += " " + cls;
+  }
+
   //returns an attribute for this element
   //if a value is defined it sets the attr
   //returns null if the attribute doesn't exist
@@ -79,6 +105,43 @@ class Element{
     }
     else
       return this.el.getAttribute(key);
+  }
+
+  //sets/returns a data attribute
+  data(key, val){
+    let data = this.attr("data-"+key, val);
+    if(data != null)
+      return data;
+  }
+
+  //removes this element
+  del(){
+    this.el.remove();
+  }
+
+  //removes a class from this element
+  delCls(cls){
+    let arr = this.el.className.split(" ");
+    let i = arr.length-1;
+    let c = "";
+    while(i > -1){
+      if(arr[i] !== cls)
+        c += arr[i] + " ";
+      i--;
+    }
+    this.el.className = c.slice(0, -1);
+  }
+
+  //returns true/false if this element has the class
+  hasCls(cls){
+    let arr = this.el.className.split(" ");
+    let i = arr.length;
+    while(i > 0){
+      i--;
+      if(arr[i] === cls)
+        return true;
+    }
+    return false;
   }
 
   //returns or sets a property of the element
@@ -92,6 +155,11 @@ class Element{
   //vertical scrolls to the top of this element
   scrollTo(){
     window.scrollTo(0,this.el.offsetTop);
+  }
+
+  //returns the text content of the element
+  text(){
+    return this.el.textContent;
   }
 
   //returns or set the visibility of an element
@@ -111,89 +179,9 @@ class Element{
       }
     }
   }
-
-  //sets/returns a data attribute
-  data(key, val){
-    let data = this.attr("data-"+key, val);
-    if(data != null)
-      return data;
-  }
-
-  //adds a class to this element
-  addCls(cls){
-    this.el.className += " " + cls;
-  }
-
-  //removes a class from this element
-  delCls(cls){
-    let arr = this.el.className.split(" ");
-    let i = arr.length-1;
-    let c = "";
-    while(i > -1){
-      if(arr[i] !== cls)
-        c += arr[i] + " ";
-      i--;
-    }
-    this.el.className = c.slice(0, -1);
-  }
-
-  //set or toggle the active class of this element
-  //if state is undefined it will toggle the state
-  active(state){
-    let a = "active";
-    if(state === undefined){
-      state = !this.hasCls(a);
-    }
-
-    if(state) this.addCls(a);
-    else      this.delCls(a);
-  }
-
-  //returns true/false if this element has the class
-  hasCls(cls){
-    let arr = this.el.className.split(" ");
-    let i = arr.length;
-    while(i > 0){
-      i--;
-      if(arr[i] === cls)
-        return true;
-    }
-    return false;
-  }
-
-  //returns the text content of the element
-  text(){
-    return this.el.textContent;
-  }
-
-  //removes this element
-  del(){
-    this.el.remove();
-  }
-
-  addClass(){
-    console.log(this.el.className);
-  }
-
-  //creates and renders a new component
-  //types: set/append/prepend (undefined=set)
-  addChild(json, type){
-    if(type === undefined)
-      type = "append";
-    let c = new Comp(json);
-    c.render(this.el, type);
-  }
 }
 
 class Bwe{
-  //returns the element for this object
-  //returns undefined if not found
-  static getEl(str){
-    let el = Bwe.sel(str);
-    if(el != null)
-      return new Element(el);
-  }
-
   //recussive function to a dom element and all of it's children
   //json,selector,before/after
   static addEl(s, d, type){
@@ -255,28 +243,47 @@ class Bwe{
     }
   }
 
-  //return the selector for the document element
-  static sel(str){
-    let ch = str.charAt(0);
-    if(ch === "."){
-      let els =  document.getElementsByClassName(str.substr(1,str.length-1));
-      if(els.length > 0)
-        return els[0];
+  //ajax requests
+  static ajax(req){
+    var xmlhttp = new XMLHttpRequest();
+    xmlhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+          if(req.success!==undefined)
+            req.success(this.responseText);
+        }
+        else if(this.readyState == 4){
+          if(req.error !== undefined){
+            req.error(this.statusText, this.status);
+          }
+        }
+    };
+    let str = req.url + "?";
+    let i = 0;
+    for(let key in req.data){
+      str += key + "=" + req.data[key] + "&"
     }
-    else if(ch === "#"){
-      return document.getElementById(str.substr(1,str.length-1));
-    }
-    else if(str === "html"){
-      return document.documentElement;
-    }
-    else if(str === "body"){
-      return document.body;
-    }
-    else{
-      let els = document.getElementsByTagName(str);
-      if(els.length > 0)
-        return els[0];
-    }
+    xmlhttp.open(req.type, str.slice(0,-1), true);
+    xmlhttp.send();
+  }
+
+  //returns a json object with the browser name and version
+  static browser(){
+    var ua=navigator.userAgent,tem,M=ua.match(/(opera|chrome|safari|firefox|msie|trident(?=\/))\/?\s*(\d+)/i) || [];
+    if(/trident/i.test(M[1])){
+        tem=/\brv[ :]+(\d+)/g.exec(ua) || [];
+        return {name:'IE ',version:(tem[1]||'')};
+        }
+    if(M[1]==='Chrome'){
+        tem=ua.match(/\bOPR\/(\d+)/)
+        if(tem!=null)   {return {name:'Opera', version:tem[1]};}
+        }
+    M=M[2]? [M[1], M[2]]: [navigator.appName, navigator.appVersion, '-?'];
+    if((tem=ua.match(/version\/(\d+)/i))!=null) {M.splice(1,1,tem[1]);}
+    return {
+      name: M[0],
+      version: M[1],
+      isMobile : /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    };
   }
 
   //call the callback for each dom element
@@ -341,6 +348,44 @@ class Bwe{
     return table;
   }
 
+  //returns the element for this object
+  //returns undefined if not found
+  static getEl(str){
+    let el = Bwe.sel(str);
+    if(el != null)
+      return new Element(el);
+  }
+
+  //returns the data from the url in as a json object
+  static getUrlValues(){
+    let str = window.location.search;
+    if(str.charAt(0)=="?"){
+      str = str.substr(1, str.length-1);
+    }
+    let variables = str.split("&");
+    let data = {};
+    for(let i = 0; i<variables.length; i++){
+      if(variables[i]!==""){
+        let item = variables[i].split("=");
+        data[item[0]] = decodeURI(item[1]);
+      }
+    }
+    return data;
+  }
+
+  static preventDefault(e) {
+   e = e || window.event;
+   if (e.preventDefault)
+       e.preventDefault();
+   e.returnValue = false;
+  }
+  static preventDefaultForScrollKeys(e) {
+     if (Bwe.scrollKeys[e.keyCode]) {
+         preventDefault(e);
+         return false;
+     }
+  }
+
   //toggle users ability to scroll
   static scrollable(enabled){
     if(enabled === undefined){
@@ -365,58 +410,28 @@ class Bwe{
     Bwe.isScrollable = enabled;
   }
 
-
-  static preventDefault(e) {
-   e = e || window.event;
-   if (e.preventDefault)
-       e.preventDefault();
-   e.returnValue = false;
-  }
-  static preventDefaultForScrollKeys(e) {
-     if (Bwe.scrollKeys[e.keyCode]) {
-         preventDefault(e);
-         return false;
-     }
-  }
-
-  //ajax requests
-  static ajax(req){
-    var xmlhttp = new XMLHttpRequest();
-    xmlhttp.onreadystatechange = function() {
-        if (this.readyState == 4 && this.status == 200) {
-          if(req.success!==undefined)
-            req.success(this.responseText);
-        }
-        else if(this.readyState == 4){
-          if(req.error !== undefined){
-            req.error(this.statusText, this.status);
-          }
-        }
-    };
-    let str = req.url + "?";
-    let i = 0;
-    for(let key in req.data){
-      str += key + "=" + req.data[key] + "&"
+  //return the selector for the document element
+  static sel(str){
+    let ch = str.charAt(0);
+    if(ch === "."){
+      let els =  document.getElementsByClassName(str.substr(1,str.length-1));
+      if(els.length > 0)
+        return els[0];
     }
-    xmlhttp.open(req.type, str.slice(0,-1), true);
-    xmlhttp.send();
-  }
-
-  //returns the data from the url in as a json object
-  static getUrlValues(){
-    let str = window.location.search;
-    if(str.charAt(0)=="?"){
-      str = str.substr(1, str.length-1);
+    else if(ch === "#"){
+      return document.getElementById(str.substr(1,str.length-1));
     }
-    let variables = str.split("&");
-    let data = {};
-    for(let i = 0; i<variables.length; i++){
-      if(variables[i]!==""){
-        let item = variables[i].split("=");
-        data[item[0]] = decodeURI(item[1]);
-      }
+    else if(str === "html"){
+      return document.documentElement;
     }
-    return data;
+    else if(str === "body"){
+      return document.body;
+    }
+    else{
+      let els = document.getElementsByTagName(str);
+      if(els.length > 0)
+        return els[0];
+    }
   }
 
   //reloads the page and set or change variables in the url
@@ -434,29 +449,6 @@ class Bwe{
     }
     str = str.slice(0,-1);
     window.location = window.origin + window.location.pathname + str;
-  }
-
-  //returns a json object with the browser name and version
-  static browser(){
-    var ua=navigator.userAgent,tem,M=ua.match(/(opera|chrome|safari|firefox|msie|trident(?=\/))\/?\s*(\d+)/i) || [];
-    if(/trident/i.test(M[1])){
-        tem=/\brv[ :]+(\d+)/g.exec(ua) || [];
-        return {name:'IE ',version:(tem[1]||'')};
-        }
-    if(M[1]==='Chrome'){
-        tem=ua.match(/\bOPR\/(\d+)/)
-        if(tem!=null)   {return {name:'Opera', version:tem[1]};}
-        }
-    M=M[2]? [M[1], M[2]]: [navigator.appName, navigator.appVersion, '-?'];
-    if((tem=ua.match(/version\/(\d+)/i))!=null) {M.splice(1,1,tem[1]);}
-    return {
-      name: M[0],
-      version: M[1]
-    };
-  }
-
-  static isMobile(){
-    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   }
 }
 Bwe.isScrollable = true;

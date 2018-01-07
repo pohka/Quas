@@ -173,6 +173,5 @@ function test(testSetURLvals){
 
   //browser name and version
   let info = Bwe.browser();
-  console.log("browser: " + info.name + " v." + info.version);
-  console.log("isMobile: " + Bwe.isMobile());
+  console.log("browser: " + info.name + " v." + info.version + " - " + info.isMobile);
 }
