@@ -1,12 +1,55 @@
+/**
+ Component for creating and rendering
+*/
 class Comp{
+  /**
+    @param {JSON} data
+    Layout of data:
+    {
+      tag : "div",
+      txt : "my text",
+      data :
+      {
+        key : "value",
+        url : "abc.com",
+      }
+      css :
+      {
+        height : "100px",
+        "padding-top" : "20px",
+      },
+      on :
+      {
+        click : function(){},
+        mouserover : function(){},
+      },
+      children :
+      [
+        {
+          tag : "a",
+          href : "abc.com",
+          txt : "link",
+        },
+        {
+          tag : "div",
+          txt : "child 2",
+        }
+      ]
+    }
+  */
   constructor(data){
     this.data=data;
   }
 
-  //adds a child to the children of this component
-  //if the selector is defined then it will insert it after that child
-  //if before is true then it will insert it before the selector
-  //sel = key:val; will add after child with matching data type
+  /**
+    Adds a child to the children of this component
+    if sel is undefined then it will append the child
+    if sel is found then it insert it after that child
+    if before is true then it will insert it before the selector
+    @param {JSON} child
+    @param {String} sel - (optional)
+    @param {Boolean} before - (optional)
+  */
   addChild(child, sel, before){
     if(this.data.children === undefined){
       this.data.children = [];
@@ -50,7 +93,15 @@ class Comp{
     }
   }
 
-  //render the html
+  /**
+    Insert HTML into the selector based on the data of this component
+    If the type is undefined it will append the HTML
+    append: adds HTML to the end
+    prepend : adds HTML to the start
+    set : overwrites the HTML
+    @param {String} sel - See Bwe.sel()
+    @param {String} type - (optional) append/prepend/set
+  */
   render(sel, type){
     let el;
     if(sel.constructor !== String)
@@ -63,14 +114,22 @@ class Comp{
 
 
 
-//wrapper class for a dom element
+/**
+  Wrapper class for a dom element
+*/
 class Element{
+  /**
+    @param {HTMLElement} el
+  */
   constructor(el){
     this.el = el;
   }
 
-  //set or toggle the active class of this element
-  //if state is undefined it will toggle the state
+  /**
+    Set or toggle the active class of this element
+    If state is undefined it will toggle the state
+   @param {Boolean} state - (optional)
+  */
   active(state){
     let a = "active";
     if(state === undefined){
@@ -81,45 +140,67 @@ class Element{
     else      this.delCls(a);
   }
 
-  //creates and renders a new component
-  //types: set/append/prepend (undefined=set)
-  addChild(json, type){
+  /**
+    Creates and renders a new Comp for this element
+    See Comp.render for type
+    @param {JSON} data
+    @param {String} type (optional)
+  */
+  addChild(data, type){
     if(type === undefined)
       type = "append";
-    let c = new Comp(json);
+    let c = new Comp(data);
     c.render(this.el, type);
   }
 
-  //adds a class to this element
+  /**
+    Adds a class to this element
+    @param {String} cls
+  */
   addCls(cls){
     this.el.className += " " + cls;
   }
 
-  //returns an attribute for this element
-  //if a value is defined it sets the attr
-  //returns null if the attribute doesn't exist
+  /**
+    Returns or sets an attribute for this element
+    If a val is defined it sets the attr
+    @param {String} key
+    @param {String} val - (optional)
+    @return {String} (undefined if the attribute doesn't exist)
+  */
   attr(key, val){
     if(val !== undefined){
       this.el.setAttribute(key, val);
-      return undefined;
     }
-    else
-      return this.el.getAttribute(key);
+    else{
+      let a = this.el.getAttribute(key);
+      if(a != null)
+        return a;
+      return undefined
+    }
   }
 
-  //sets/returns a data attribute
+  /**
+    Returns or sets a data attribute
+    @param {String} key
+    @param {String} val - (optional)
+    @return {String} (undefined if the data attribute doesn't exist)
+  */
   data(key, val){
-    let data = this.attr("data-"+key, val);
-    if(data != null)
-      return data;
+    return this.attr("data-"+key, val);
   }
 
-  //removes this element
+  /**
+    Removes this element
+  */
   del(){
     this.el.remove();
   }
 
-  //removes a class from this element
+  /**
+    Removes a class from this element
+    @param {String} cls
+  */
   delCls(cls){
     let arr = this.el.className.split(" ");
     let i = arr.length-1;
@@ -132,7 +213,10 @@ class Element{
     this.el.className = c.slice(0, -1);
   }
 
-  //returns true/false if this element has the class
+  /**
+    Returns true if this element has a class that matches cls
+    @param {String} cls
+  */
   hasCls(cls){
     let arr = this.el.className.split(" ");
     let i = arr.length;
@@ -144,7 +228,13 @@ class Element{
     return false;
   }
 
-  //returns or sets a property of the element
+  /**
+    Returns or sets a HTML DOM property of the element
+    If val is undefined it returns the value
+    @param {String} key
+    @param {String|Number} val - (optional)
+    @return {String|Number}
+  */
   prop(key, val){
     if(val === undefined){
       return this.el[key];
@@ -152,17 +242,26 @@ class Element{
     else this.el[key] = val;
   }
 
-  //vertical scrolls to the top of this element
+  /**
+    Vertically scrolls to the top of this element
+  */
   scrollTo(){
     window.scrollTo(0,this.el.offsetTop);
   }
 
-  //returns the text content of the element
+  /**
+    Returns the text content of the element
+  */
   text(){
     return this.el.textContent;
   }
 
-  //returns or set the visibility of an element
+  /**
+    Returns or set the visibility of an element
+    If show is undefined then the visibility will be toggled
+    Otherwise the visibility will be set to show
+    @param {Boolean} show - (optional)
+  */
   visible(show){
     let v = this.el.style.visibility;
     //return value
@@ -181,11 +280,17 @@ class Element{
   }
 }
 
+/**
+  Static class for library functions
+*/
 class Bwe{
-  //recussive function to a dom element and all of it's children
-  //json,selector,before/after
+  /**
+    Recussive function to add a dom element and all of it's children
+    @param {JSON} s - parent
+    @param {String} d - selector
+    @param {String} type - (optional) append/prepend/set
+  */
   static addEl(s, d, type){
-    //s is the parent element
     if(s === undefined){
       return;
     }
@@ -220,7 +325,6 @@ class Bwe{
 
     if(type === "prepend"){
       let first = s.firstElementChild;
-      console.log(s);
       if(first !== undefined){
         s.insertBefore(el, s.childNodes[0]);
       }
@@ -243,7 +347,20 @@ class Bwe{
     }
   }
 
-  //ajax requests
+  /**
+    Ajax request
+    @param {JSON} req - request data
+    Layout of req:
+    {
+      url : "login.php",
+      type : "POST",
+      data : {
+        key : "value"
+      },
+      success : function(result){},
+      error : function(errorMsg, errorCode){}
+    }
+  */
   static ajax(req){
     var xmlhttp = new XMLHttpRequest();
     xmlhttp.onreadystatechange = function() {
@@ -266,7 +383,13 @@ class Bwe{
     xmlhttp.send();
   }
 
-  //returns a json object with the browser name and version
+  /**
+    Returns a json object with the browser info
+    name - browser name,
+    version - browser version,
+    isMobile - true if a mobile browser
+    @return {JSON}
+  */
   static browser(){
     var ua=navigator.userAgent,tem,M=ua.match(/(opera|chrome|safari|firefox|msie|trident(?=\/))\/?\s*(\d+)/i) || [];
     if(/trident/i.test(M[1])){
@@ -286,14 +409,18 @@ class Bwe{
     };
   }
 
-  //call the callback for each dom element
-  static each(str, callback){
+  /**
+    For each element with a matching selector call the callback
+    @param {String} sel - See Bwe.sel
+    @param {Function(Element)} callback
+  */
+  static each(sel, callback){
     let els;
-    if(str.charAt(0) === "."){
-      els = document.getElementsByClassName(str.substr(1,str.length-1));
+    if(sel.charAt(0) === "."){
+      els = document.getElementsByClassName(sel.substr(1,sel.length-1));
     }
     else{
-      els = document.getElementsByTagName(str)
+      els = document.getElementsByTagName(sel)
     }
     if(els.length > 0){
       for(let i=0; i<els.length; i++){
@@ -302,7 +429,11 @@ class Bwe{
     }
   }
 
-  //turns a string array into json data using a default template
+  /**
+    Turns a string array into an array JSON list items
+    @param {String[]} items
+    @return {JSON[]}
+  */
   static genList(items){
     let list = [];
     for(let i in items){
@@ -314,9 +445,13 @@ class Bwe{
     return list;
   }
 
-  //generates a table from string arrays
-  //if headings.length == 0 there will be no heading row on the table
-  //rowss is 2D array
+  /**
+    Generates a table from string arrays
+    if headings.length == 0 there will be no heading row on the table
+    @param {String[]} headings
+    @param {String[][]} rows
+    @return {JSON[]}
+  */
   static genTable(headings, rows){
     let table = [];
     if(headings.length > 0){
@@ -348,15 +483,21 @@ class Bwe{
     return table;
   }
 
-  //returns the element for this object
-  //returns undefined if not found
-  static getEl(str){
-    let el = Bwe.sel(str);
+  /**
+    Returns the element for the selector
+    @param {String} sel
+    @return {Element} - undefined if not found
+  */
+  static getEl(sel){
+    let el = Bwe.sel(sel);
     if(el != null)
       return new Element(el);
   }
 
-  //returns the data from the url in as a json object
+  /**
+    Returns the data from the url in as a JSON object
+    @return {JSON}
+  */
   static getUrlValues(){
     let str = window.location.search;
     if(str.charAt(0)=="?"){
@@ -373,12 +514,21 @@ class Bwe{
     return data;
   }
 
+  /**
+    Helper function to prevent default events
+    @param {Event}
+  */
   static preventDefault(e) {
    e = e || window.event;
    if (e.preventDefault)
        e.preventDefault();
    e.returnValue = false;
   }
+
+  /**
+    Helper function to prevent default events
+    @param {Event}
+  */
   static preventDefaultForScrollKeys(e) {
      if (Bwe.scrollKeys[e.keyCode]) {
          preventDefault(e);
@@ -386,7 +536,11 @@ class Bwe{
      }
   }
 
-  //toggle users ability to scroll
+  /**
+    Toggle or set users ability to scroll
+    If enabled is undefined then the scroll ability will be toggled
+    @param {Boolean} enabled - (optional)
+  */
   static scrollable(enabled){
     if(enabled === undefined){
       enabled = !Bwe.isScrollable;
@@ -410,7 +564,15 @@ class Bwe{
     Bwe.isScrollable = enabled;
   }
 
-  //return the selector for the document element
+  /**
+    Finds an element in the document and returns it
+    .class - returns the all the elements with a matching class
+    #id - returns an element with the matching id
+    html - returns the document element
+    body - retruns the document body element
+    Otherwise it returns the elements with a matching tag
+    @return {HTMLElement}
+  */
   static sel(str){
     let ch = str.charAt(0);
     if(ch === "."){
@@ -434,9 +596,12 @@ class Bwe{
     }
   }
 
-  //reloads the page and set or change variables in the url
-  //if the value === "" then the value is removed form the url
-  //values will be encoded
+  /**
+    Reloads the page and set or change variables in the url
+    If the value === "" then the value is removed form the url
+    Values will be encoded so they are allowed to have spaces
+    @param {JSON} newVals
+  */
   static setUrlValues(newVals){
     let data = Bwe.getUrlValues();
     for(let key in newVals){
@@ -451,5 +616,12 @@ class Bwe{
     window.location = window.origin + window.location.pathname + str;
   }
 }
+/**
+  Current state of the users ability to scroll
+*/
 Bwe.isScrollable = true;
+
+/**
+  Keys codes that can scroll
+*/
 Bwe.scrollKeys = {37: 1, 38: 1, 39: 1, 40: 1};

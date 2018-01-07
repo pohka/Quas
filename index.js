@@ -163,15 +163,38 @@ function test(testSetURLvals){
   temp.render("body");
   Bwe.getEl("#achild3").del();
 
-  //scroll to the top of an element
-  let ch2 = Bwe.getEl("#achild2");
-  ch2.scrollTo();
 
   //get or set a HTML DOM property
+  let ch2 = Bwe.getEl("#achild2");
   let offset = ch2.prop("offsetTop");
   console.log("offset: " + offset);
 
   //browser name and version
   let info = Bwe.browser();
   console.log("browser: " + info.name + " v." + info.version + " - " + info.isMobile);
+
+  //toggle scrolling
+  let body = Bwe.getEl("body");
+  body.addChild({
+    tag : "button",
+    txt : "Toggle Scroll",
+    on : {
+      click : function(){
+        Bwe.scrollable();
+        console.log("Scrolling enabled: " + Bwe.isScrollable);
+      }
+    }
+  });
+
+  //add a button that scrolls to the top of an element
+  body.addChild({
+    tag : "button",
+    txt : "Scroll Up",
+    on : {
+      click : function(){
+        console.log("clicked");
+        Bwe.getEl("#myid").scrollTo();
+      }
+    }
+  });
 }
