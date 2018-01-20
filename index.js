@@ -1,7 +1,100 @@
-window.onload = function(){
-  test(false);
+class Nav extends Comp{
+  constructor(items){
+    super(
+      "nav",
+      {},
+      "this is the navbar",
+    );
+    for(let i in items){
+      super.addChild(
+        "a",
+        {href : "#"},
+        items[i]
+      );
+    }
+  }
 }
 
+Quas.start  = function(){
+
+  // new Comp({
+  //   tag : "div",
+  //   txt : "testing",
+  //   id : "el1",
+  // }).render("body");
+
+  let el1 = document.querySelector("body");
+  let nav = new Nav(["item 1", "item 2"]);
+  let navEl = nav.render(el1);
+  navEl.on("click", function(){
+    console.log("clicked");
+  });
+
+  console.log(Quas.getEl("aaaa"));
+
+  el1.addEl(
+    "div",
+    {id: "test"},
+    "i was appended"
+  );
+  let test = el1.addEl(
+    "div",
+    {id: "test"},
+    "i was prepend",
+    "prepend"
+  );
+  test.attr("id", "othjer");
+  console.log(test.attr("id"));
+  test.text("changed text");
+
+  //el1.clearChildren();
+  let input = el1.addEl(
+    "input",
+    {type : "text"}
+  );
+  input.val("text1");
+  console.log(input.val());
+
+  el1.addCls("myclass cls2 cl3");
+  el1.delCls("cls2");
+  console.log(el1.hasCls("myclass"));
+
+  el1.data("url", "1");
+  console.log(el1.data("url"));
+
+  //el1.visible();
+  console.log(el1.isVisible());
+
+  // setTimeout(function(){
+  //   input.scrollTo();
+  // }, 1000);
+
+
+  //input.del();
+  let count = 0;
+  Quas.each("div", function(el){
+    console.log(el.text());
+    count++;
+  });
+  console.log("count: " + count);
+
+  let list = Quas.genList(["item 1", "item 2", "item 3"]);
+  list.render(el1);
+
+  let table = Quas.genTable(
+    ["heading 1", "heading 2"],
+    [
+      ["row 1 item 1", "row 1 item 2"],
+      ["row 2 item 1", "row 2 item 2"],
+      ["row 3 item 1", "row 3 item 2"]
+    ]
+  );
+  console.log(table);
+  table.render(el1);
+  //Quas.scrollable(false);
+}
+
+/*
 class MyComp extends Comp{
   constructor(data){
     super({
@@ -198,3 +291,4 @@ function test(testSetURLvals){
     }
   });
 }
+*/

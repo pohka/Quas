@@ -3,94 +3,38 @@
 */
 class Comp{
   /**
-    @param {JSON} data
-    Layout of data:
-    {
-      tag : "div",
-      txt : "my text",
-      data :
-      {
-        key : "value",
-        url : "abc.com",
-      }
-      css :
-      {
-        height : "100px",
-        "padding-top" : "20px",
-      },
-      on :
-      {
-        click : function(){},
-        mouserover : function(){},
-      },
-      children :
-      [
-        {
-          tag : "a",
-          href : "abc.com",
-          txt : "link",
-        },
-        {
-          tag : "div",
-          txt : "child 2",
-        }
-      ]
+    @param {String, JSON, String} data
+    */
+  constructor(tag, attrs, txt, children){
+    this.tag=tag;
+
+    if(attrs !== undefined){
+      this.attrs = attrs;
     }
-  */
-  constructor(data){
-    this.data=data;
+    else{
+      this.attrs = {};
+    }
+
+    if(txt !== undefined){
+      this.txt = txt;
+    }
+
+    if(children !== undefined){
+      this.children = children;
+    }
+    else {
+      this.children = [];
+    }
   }
 
-  /**
-    Adds a child to the children of this component
-    if sel is undefined then it will append the child
-    if sel is found then it insert it after that child
-    if before is true then it will insert it before the selector
-    @param {JSON} child
-    @param {String} sel - (optional)
-    @param {Boolean} before - (optional)
-  */
-  addChild(child, sel, before){
-    if(this.data.children === undefined){
-      this.data.children = [];
-    }
-    switch(sel){
-      case undefined  : this.data.children.push(child); break;
-      case "first"    : this.data.children.splice(0, 0, child); break;
-      default         :
-        let ch = sel.charAt(0);
-        let str = sel.substr(1);
-        let key;
-        let isData = false;
-        switch(ch){
-          case "#" : key = "id";    break;
-          case "." : key = "class"; break;
-          default  :
-            let a = sel.split(":");
-            key = a[0];
-            str = a[1];
-            isData = true;
-            break;
-        }
-
-        for(let i=0; i<this.data.children.length; i++){
-          let c;
-          if(!isData){
-            c = this.data.children[i];
-          }
-          else{
-            c = this.data.children[i].data;
-          }
-
-          if(c!=undefined && c[key] !== undefined && c[key]=== str){
-            if(!before) i++;
-
-            this.data.children.splice(i, 0, child);
-            return;
-          }
-        }
-        this.data.children.push(child);
-    }
+  addChild(tag, attrs, txt){
+    this.children.push({
+      tag : tag,
+      attrs : attrs,
+      txt : txt,
+      children : []
+    });
+    return this.children[this.children.length-1];
   }
 
   /**
@@ -99,208 +43,162 @@ class Comp{
     append: adds HTML to the end
     prepend : adds HTML to the start
     set : overwrites the HTML
-    @param {String|Element|HTMLElement} sel - See Quas.sel()
+    @param {String|HTMLDOMElement} sel - See Quas.sel()
     @param {String} type - (optional) append/prepend/set
   */
-  render(sel, type){
-    let el;
-    if(sel.constructor === Element){
-      el = sel.el;
+  render(sel){
+    let e;
+    if(sel.constructor !== String){ //HTMLElement
+      e = sel;
     }
-    else if(sel.constructor !== String)
-      el = sel;
-    else
-      el = Quas.sel(sel);
-    Quas.addEl(el, this.data, type);
+    else{ //String
+      e = document.querySelector(sel);
+    }
+    let root = e.addEl(this.tag,this.attrs, this.txt);
+    Comp.renderChildren(root, this.children);
+    return root;
+  }
+
+  //recusively renders all the child elements
+  static renderChildren(root, children){
+    for(let i in children){
+      let el = root.addEl(
+        children[i].tag,
+        children[i].attrs,
+        children[i].txt);
+        Comp.renderChildren(el, children[i].children);
+      }
   }
 }
 
+//add a child element, (type=append/prepend) retruns element created
+HTMLElement.prototype.addEl = function(tag, attrs, txt, type){
+    let e = document.createElement(tag);
+    for(let a in attrs){
+      e.setAttribute(a, attrs[a]);
+    }
+    if(txt!==undefined){
+      e.textContent = txt;
+    }
+
+  if(type === undefined || type=="append"){
+    this.appendChild(e);
+  }
+  else if(type === "prepend"){
+    this.insertBefore(e, this.childNodes[0]);
+  }
+  return e;
+}
+
+//get or set attribute
+HTMLElement.prototype.attr = function(key, val){
+  if(val !== undefined){
+    this.setAttribute(key, val);
+  }
+  else{
+    let a = this.getAttribute(key);
+    if(a != null)
+      return a;
+    return undefined
+  }
+}
+
+//set or get the text content
+HTMLElement.prototype.text = function(txt){
+  if(txt === undefined)
+    return this.textContent;
+  this.textContent = txt;
+}
+
+//set or get the value
+HTMLElement.prototype.val = function(v){
+  if(v === undefined)
+    return this.getAttribute("value");
+  this.setAttribute("value", v);
+}
+
+//removes all child nodes
+HTMLElement.prototype.clearChildren = function(){
+  while(this.hasChildNodes())
+    this.removeChild(this.childNodes[0])
+}
+
+//adds a class
+HTMLElement.prototype.addCls = function(c){
+  this.className += " " + c;
+}
+
+//returns true if this element has the given class
+HTMLElement.prototype.hasCls = function(c){
+  let arr = this.className.split(" ");
+  return (arr.indexOf(c) > -1);
+}
+
+//get or set a data attribute
+HTMLElement.prototype.data = function(key, val){
+  return this.attr("data-"+key, val);
+}
+
+//removes the element
+HTMLElement.prototype.del = function(){
+  this.remove();
+}
+
+//removes a class from this element
+HTMLElement.prototype.delCls = function(c){
+  let arr = this.className.split(" ");
+  let i = arr.indexOf(c);
+  if(i>-1){
+    arr.splice(i,1);
+  }
+  this.className = arr.join(" ");
+}
 
 
 /**
-  Wrapper class for a dom element
+  Vertically scrolls to the top of this element
+  won't work if you call in Quas.start
 */
-class Element{
-  /**
-    @param {HTMLElement} el
-  */
-  constructor(el){
-    this.el = el;
+HTMLElement.prototype.scrollTo = function(){
+  window.scrollTo(0,this.offsetTop);
+}
+
+//toggle/set visiblity (type=display type i.e. block, inline-block)
+HTMLElement.prototype.visible = function(show, type){
+  //toggle visiblity
+  if(show === undefined){
+    show = !this.isVisible();
   }
-
-  /**
-    Set or toggle the active class of this element
-    If state is undefined it will toggle the state
-   @param {Boolean} state - (optional)
-  */
-  active(state){
-    let a = "active";
-    if(state === undefined){
-      state = !this.hasCls(a);
-    }
-
-    if(state && !this.hasCls(a)) this.addCls(a);
-    else      this.delCls(a);
+  if(show && type === undefined){
+    type = "block";
   }
-
-  /**
-    Creates and renders a new Comp for this element
-    See Comp.render for type
-    @param {JSON} data
-    @param {String} type (optional)
-  */
-  addChild(data, type){
-    if(type === undefined)
-      type = "append";
-    let c = new Comp(data);
-    c.render(this.el, type);
+  //set style
+  if(show){
+    this.style = "display: "+type+" !important;";
   }
-
-  clearChildren(){
-    while(this.el.hasChildNodes())
-      this.el.removeChild(this.el.childNodes[0])
+  else{
+    this.style = "display: none !important;";
   }
+}
 
-  /**
-    Adds a class to this element
-    @param {String} cls
-  */
-  addCls(cls){
-    this.el.className += " " + cls;
+//returns true if the element is visible
+HTMLElement.prototype.isVisible = function(){
+  return (window.getComputedStyle(this).display !== "none");
+}
+
+//add event listener(s)s to this element
+HTMLElement.prototype.on = function(eventsStr, callback){
+  let arr = eventsStr.split(" ");
+  for(let i in arr){
+    this.addEventListener(arr[i], callback);
   }
+}
 
-  /**
-    Returns or sets an attribute for this element
-    If a val is defined it sets the attr
-    @param {String} key
-    @param {String} val - (optional)
-    @return {String} (undefined if the attribute doesn't exist)
-  */
-  attr(key, val){
-    if(val !== undefined){
-      this.el.setAttribute(key, val);
-    }
-    else{
-      let a = this.el.getAttribute(key);
-      if(a != null)
-        return a;
-      return undefined
-    }
-  }
-
-  /**
-    Returns or sets a data attribute
-    @param {String} key
-    @param {String} val - (optional)
-    @return {String} (undefined if the data attribute doesn't exist)
-  */
-  data(key, val){
-    return this.attr("data-"+key, val);
-  }
-
-  /**
-    Removes this element
-  */
-  del(){
-    this.el.remove();
-  }
-
-  /**
-    Removes a class from this element
-    @param {String} cls
-  */
-  delCls(cls){
-    let arr = this.el.className.split(" ");
-    let i = arr.length-1;
-    let c = "";
-    while(i > -1){
-      if(arr[i] !== cls)
-        c += arr[i] + " ";
-      i--;
-    }
-    this.el.className = c.slice(0, -1);
-  }
-
-  /**
-    Returns true if this element has a class that matches cls
-    @param {String} cls
-  */
-  hasCls(cls){
-    let arr = this.el.className.split(" ");
-    let i = arr.length;
-    while(i > 0){
-      i--;
-      if(arr[i] === cls)
-        return true;
-    }
-    return false;
-  }
-
-  /**
-    Returns or sets a HTML DOM property of the element
-    If val is undefined it returns the value
-    @param {String} key
-    @param {String|Number} val - (optional)
-    @return {String|Number}
-  */
-  prop(key, val){
-    if(val === undefined){
-      return this.el[key];
-    }
-    this.el[key] = val;
-  }
-
-  /**
-    Vertically scrolls to the top of this element
-  */
-  scrollTo(){
-    window.scrollTo(0,this.el.offsetTop);
-  }
-
-  /**
-    Returns the text content of the element
-  */
-  text(val){
-    if(val !==undefined){
-      this.el.textContent = val;
-    }
-    else{
-      return this.el.textContent;
-    }
-  }
-
-  val(val){
-    if(val===undefined){
-      return this.prop("value");
-    }
-    this.prop("value", val);
-  }
-
-  /**
-    Returns or set the visibility of an element
-    use Quas.is
-    Otherwise the visibility will be set to show
-    @param {Boolean} show - (optional)
-  */
-  visible(show){
-    //return value
-    if(show === undefined){
-      let v = window.getComputedStyle(this.el).display;
-      return (v !== "none");
-    }
-    //set value
-    else{
-      if(show){
-        this.el.style = "display: block !important;";
-      }
-      else{
-        this.el.style = "display: none !important;";
-      }
-    }
-  }
-
-  toggleVisible(){
-    this.visible(!this.visible());
+//removes event listener(s)
+HTMLElement.prototype.off = function(eventsStr, callback){
+  let arr = eventsStr.split(" ");
+  for(let i in arr){
+    this.removeEventListener(arr[i], callback);
   }
 }
 
@@ -308,8 +206,6 @@ class Element{
 /**
   Static class for library functions
 */
-
-
 class Quas{
 
   static makeComps(c, fields){
@@ -324,76 +220,6 @@ class Quas{
     let comps = Quas.makeComps(c, fields);
     for(let i in comps){
       comps[i].render(sel);
-    }
-  }
-
-  /**
-    Recussive function to add a dom element and all of it's children
-    @param {JSON} s - parent
-    @param {String} d - selector
-    @param {String} type - (optional) append/prepend/set
-  */
-  static addEl(s, d, type){
-    if(s === undefined){
-      return;
-    }
-
-    if(d.tag === undefined){
-      var textnode = document.createTextNode(d.txt);
-      s.appendChild(textnode);
-      return;
-    }
-    let el = document.createElement(d.tag);
-    if(d.txt !== undefined){
-      let c = document.createTextNode(d["txt"]);
-      el.appendChild(c);
-    }
-    for(let key in d){
-      if(key === "css"){
-        let v = "";
-        for(let i in d.css){
-          v += i + ":" + d.css[i] + ";";
-        }
-        el.setAttribute("style", v);
-      }
-      else if(key === "on"){
-        for(let evnt in d[key]){
-          el.addEventListener(evnt, d[key][evnt]);
-        }
-      }
-      else if(key === "data"){
-        for(let i in d.data){
-          el.setAttribute("data-" + i, d.data[i]);
-        }
-      }
-      else if(key !== "txt" && key !== "tag" && key !== "children"){
-          el.setAttribute(key, d[key]);
-      }
-    }
-
-    if(type === "prepend"){
-      let first = s.firstElementChild;
-      if(first !== undefined){
-        s.insertBefore(el, s.childNodes[0]);
-      }
-      else {
-        s.appendChild(el);
-      }
-    }
-    else{
-      if(type === "set"){
-        while(s.firstChild) {
-          s.removeChild(s.firstChild);
-        }
-      }
-      s.appendChild(el);
-    }
-
-    //recussion for children
-    if(d.children !== undefined){
-      for(var i=0; i < d.children.length; i++){
-        Quas.addEl(el , d.children[i]);
-      }
     }
   }
 
@@ -471,7 +297,7 @@ class Quas{
     isMobile - true if a mobile browser
     @return {JSON}
   */
-  static browser(){
+  static browserInfo(){
     var ua=navigator.userAgent,tem,M=ua.match(/(opera|chrome|safari|firefox|msie|trident(?=\/))\/?\s*(\d+)/i) || [];
     if(/trident/i.test(M[1])){
         tem=/\brv[ :]+(\d+)/g.exec(ua) || [];
@@ -490,160 +316,13 @@ class Quas{
     };
   }
 
-  static on(eventsStr, sel, callback){
-    let el;
-    if(sel.constructor === String){
-      el = Quas.getEl(sel).el;
-    }
-    else{
-      el = sel;
-    }
-    let events = eventsStr.split(" ");
-    for(let i in events){
-      el.addEventListener(events[i], callback);
-    }
-  }
-
-  /*
-    convert html string to json object
-    todo:
-      -nested attributtes
-      -spacing in attributes
-      -text after nested element
-      -multiple depth
-  */
-  static convert(html){
-    let els = [];
-    let reg = new RegExp(/\<.*?\>/g,"");
-    let flag = true;
-    let el = null;
-    let depth =0;
-
-      while(flag){
-        let match = html.match(reg);
-        if(match != null){
-          let tagEls = match[0].substr(1,match[0].length-2).split(" ");
-          //closing tag
-          if(tagEls[0].charAt(0) === "/"){
-            //let text = html.substr(0,match.index);
-            //target == parent
-            let target = el;
-            for(let d=0; d<depth; d++){
-              if(d == depth -1){
-                let text = html.substr(0,match.index);;
-                target.children[target.children.length-1].txt = text;
-              }
-              else{
-                target = target.children[target.children.length-1];
-              }
-            }
-            depth--;
-            if(depth==0){
-              els.push(el);
-              el = null;
-            }
-          }
-          else{
-            if(el == null){
-              el = {
-                 tag : tagEls[0],
-                 children : []
-              };
-            }
-            else{
-              depth++;
-
-              //target == parent
-              let target = el;
-              for(let d=0; d<depth; d++){
-                if(d == depth -1){
-                  target.children.push({
-                    tag : tagEls[0],
-                    children : []
-                  });
-                }
-              }
-              target.txt = html.substr(0,match.index);
-            }
-            tagEls.shift();
-
-            //find and set the attributtes of this tag
-            for(let i in tagEls){
-              let attr = tagEls[i].split("=");
-              if(attr.length == 1){
-                attr.push("");
-              }
-              let target = el;
-              for(let d=0; d<=depth; d++){
-                if(d == depth){
-                  target[attr[0]] = attr[1].substr(1,attr[1].length-2);
-                }
-                else{
-                  target = target.children[target.children.length-1];
-                }
-              }
-            }
-
-          }
-          html = html.substr(match.index + match[0].length);
-        }
-        else{
-          flag = false;
-        }
-        //console.log(html.substr(match.index + match[0].length));
-        //html = html.substr(match.index + match[0].length);
-      }
-
-      console.log(JSON.stringify(els));
-
-    //   for(let m in matches){
-    //     let tagEls = match[0].substr(1,match[0].length-2).split(" ");
-    //     let el = {
-    //        tag : tagEls[0]
-    //     };
-    //     tagEls.shift();
-    //
-    //     //find and set the attributtes of this tag
-    //     for(let i in tagEls){
-    //       let attr = tagEls[i].split("=");
-    //       if(attr.length == 1){
-    //         attr.push("");
-    //       }
-    //       el[attr[0]] = attr[1].substr(1,attr[1].length-2);
-    //     }
-    //
-    //     let index = html.indexOf(match[1]) + match[0].length;
-    //     html = html.substr(index);
-    //     console.log(match);
-    //     console.log(el);
-    //   }
-    //   else{
-    //     flag=false;
-    //   }
-    //   flag = false;
-    // }
-  //  console.log(res);
-    return els;
-  }
-
   /**
     For each element with a matching selector call the callback
-    @param {String} sel - See Quas.sel
-    @param {Function(Element)} callback
+    @param {String} sel
+    @param {Function(HTMLDOMElement)} callback
   */
   static each(sel, callback){
-    let els;
-    if(sel.charAt(0) === "."){
-      els = document.getElementsByClassName(sel.substr(1,sel.length-1));
-    }
-    else{
-      els = document.getElementsByTagName(sel)
-    }
-    if(els.length > 0){
-      for(let i=0; i<els.length; i++){
-        callback(new Element(els[i]));
-      }
-    }
+    [].forEach.call(document.querySelectorAll(sel), callback);
   }
 
   /**
@@ -651,23 +330,18 @@ class Quas{
     @param {String[]} items
     @return {JSON[]}
   */
-  static genList(items){
-    let list = [];
-    for(let i in items){
-      if(items[i].constructor === Array){
-        list.push({
-          tag : "ul",
-          children : Quas.genList(items[i])
-        })
-      }
-      else{
-        list.push({
-          tag : "li",
-          txt : items[i]
-        });
-      }
+  static genList(items, attrs){
+    if(attrs === undefined){
+      attrs = {};
     }
-    return list;
+    let c = new Comp(
+      "ul",
+      attrs,
+    );
+    for(let i in items){
+      c.addChild("li", {}, items[i]);
+    }
+    return c;
   }
 
   /**
@@ -677,35 +351,35 @@ class Quas{
     @param {String[][]} rows
     @return {JSON[]}
   */
-  static genTable(headings, rows){
-    let table = [];
-    if(headings.length > 0){
-      let headingData = {
-        tag : "tr",
-        children : []
-      }
-      for(let h in headings){
-        headingData.children.push({
-          tag : "th",
-          txt : headings[h]
-        });
-      }
-      table.push(headingData);
+  static genTable(headings, rows, attrs){
+    if(attrs === undefined){
+      attrs = {};
     }
-    for(let r=0; r<rows.length; r++){
-      let rowData = {
-        tag : "tr",
-        children : []
-      };
-      for(let i in rows[r]){
-        rowData.children.push({
+    let t = new Comp(
+      "table",
+      attrs,
+    );
+    let h = t.addChild("tr");
+    for(let c=0; c<headings.length; c++){
+      h.children.push({
+        tag : "th",
+        attrs : {},
+        txt : headings[c]
+      });
+    }
+
+    for(let r = 0; r < rows.length; r++){
+      let row = t.addChild("tr");
+      for(let c=0; c < rows[r].length; c++){
+        row.children.push({
           tag : "td",
-          txt : rows[r][i]
+          attrs : {},
+          txt : rows[r][c]
         });
       }
-      table.push(rowData);
     }
-    return table;
+
+    return t;
   }
 
   /**
@@ -714,9 +388,10 @@ class Quas{
     @return {Element} - undefined if not found
   */
   static getEl(sel){
-    let el = Quas.sel(sel);
-    if(el != null)
-      return new Element(el);
+    let r = document.querySelector(sel);
+    if(r == null)
+      return undefined;
+    return r;
   }
 
   /**
@@ -787,38 +462,6 @@ class Quas{
       document.onkeydown  = Quas.preventDefaultForScrollKeys;
     }
     Quas.isScrollable = enabled;
-  }
-
-  /**
-    Finds an element in the document and returns it
-    .class - returns the all the elements with a matching class
-    #id - returns an element with the matching id
-    html - returns the document element
-    body - retruns the document body element
-    Otherwise it returns the elements with a matching tag
-    @return {HTMLElement}
-  */
-  static sel(str){
-    let ch = str.charAt(0);
-    if(ch === "."){
-      let els =  document.getElementsByClassName(str.substr(1,str.length-1));
-      if(els.length > 0)
-        return els[0];
-    }
-    else if(ch === "#"){
-      return document.getElementById(str.substr(1,str.length-1));
-    }
-    else if(str === "html"){
-      return document.documentElement;
-    }
-    else if(str === "body"){
-      return document.body;
-    }
-    else{
-      let els = document.getElementsByTagName(str);
-      if(els.length > 0)
-        return els[0];
-    }
   }
 
   /**
