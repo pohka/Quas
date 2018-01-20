@@ -99,12 +99,15 @@ class Comp{
     append: adds HTML to the end
     prepend : adds HTML to the start
     set : overwrites the HTML
-    @param {String} sel - See Quas.sel()
+    @param {String|Element|HTMLElement} sel - See Quas.sel()
     @param {String} type - (optional) append/prepend/set
   */
   render(sel, type){
     let el;
-    if(sel.constructor !== String)
+    if(sel.constructor === Element){
+      el = sel.el;
+    }
+    else if(sel.constructor !== String)
       el = sel;
     else
       el = Quas.sel(sel);
@@ -136,7 +139,7 @@ class Element{
       state = !this.hasCls(a);
     }
 
-    if(state) this.addCls(a);
+    if(state && !this.hasCls(a)) this.addCls(a);
     else      this.delCls(a);
   }
 
@@ -151,6 +154,11 @@ class Element{
       type = "append";
     let c = new Comp(data);
     c.render(this.el, type);
+  }
+
+  clearChildren(){
+    while(this.el.hasChildNodes())
+      this.el.removeChild(this.el.childNodes[0])
   }
 
   /**
@@ -239,7 +247,7 @@ class Element{
     if(val === undefined){
       return this.el[key];
     }
-    else this.el[key] = val;
+    this.el[key] = val;
   }
 
   /**
@@ -252,38 +260,73 @@ class Element{
   /**
     Returns the text content of the element
   */
-  text(){
-    return this.el.textContent;
+  text(val){
+    if(val !==undefined){
+      this.el.textContent = val;
+    }
+    else{
+      return this.el.textContent;
+    }
+  }
+
+  val(val){
+    if(val===undefined){
+      return this.prop("value");
+    }
+    this.prop("value", val);
   }
 
   /**
     Returns or set the visibility of an element
-    If show is undefined then the visibility will be toggled
+    use Quas.is
     Otherwise the visibility will be set to show
     @param {Boolean} show - (optional)
   */
   visible(show){
-    let v = this.el.style.visibility;
     //return value
     if(show === undefined){
-      return (v === "" || v === "visible");
+      let v = window.getComputedStyle(this.el).display;
+      return (v !== "none");
     }
     //set value
     else{
       if(show){
-        this.el.style.visibility = "visible";
+        this.el.style = "display: block !important;";
       }
       else{
-        this.el.style.visibility = "hidden";
+        this.el.style = "display: none !important;";
       }
     }
   }
+
+  toggleVisible(){
+    this.visible(!this.visible());
+  }
 }
+
 
 /**
   Static class for library functions
 */
+
+
 class Quas{
+
+  static makeComps(c, fields){
+    let  comps =  [];
+    for(let i in fields){
+      comps.push(new c(fields[i]));
+    }
+    return comps;
+  }
+
+  static makeCompsAndRender(c, sel, fields){
+    let comps = Quas.makeComps(c, fields);
+    for(let i in comps){
+      comps[i].render(sel);
+    }
+  }
+
   /**
     Recussive function to add a dom element and all of it's children
     @param {JSON} s - parent
@@ -295,6 +338,11 @@ class Quas{
       return;
     }
 
+    if(d.tag === undefined){
+      var textnode = document.createTextNode(d.txt);
+      s.appendChild(textnode);
+      return;
+    }
     let el = document.createElement(d.tag);
     if(d.txt !== undefined){
       let c = document.createTextNode(d["txt"]);
@@ -334,7 +382,9 @@ class Quas{
     }
     else{
       if(type === "set"){
-        s.innerHTML = "";
+        while(s.firstChild) {
+          s.removeChild(s.firstChild);
+        }
       }
       s.appendChild(el);
     }
@@ -357,16 +407,35 @@ class Quas{
       data : {
         key : "value"
       },
+      return : "json",
       success : function(result){},
       error : function(errorMsg, errorCode){}
     }
   */
   static ajax(req){
-    var xmlhttp = new XMLHttpRequest();
-    xmlhttp.onreadystatechange = function() {
+    var xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function() {
         if (this.readyState == 4 && this.status == 200) {
-          if(req.success!==undefined)
-            req.success(this.responseText);
+          if(req.success!==undefined){
+            let result;
+            if(req.return === undefined){
+              result = this.responseText;
+            }
+            else{
+              let returnType = req.return.toLowerCase();
+              switch(returnType){
+                case "json" :
+                  try {
+                    result = JSON.parse(this.responseText);
+                  } catch(e){
+                    result = "Failed to parse return text to JSON:\n" + this.responseText;
+                  }
+                  break;
+              }
+            }
+
+            req.success(result);
+          }
         }
         else if(this.readyState == 4){
           if(req.error !== undefined){
@@ -376,11 +445,23 @@ class Quas{
     };
     let str = req.url + "?";
     let i = 0;
-    for(let key in req.data){
-      str += key + "=" + req.data[key] + "&"
+    if(req.data!==undefined){
+      for(let key in req.data){
+        str += key + "=" + encodeURIComponent(req.data[key]) + "&"
+      }
     }
-    xmlhttp.open(req.type, str.slice(0,-1), true);
-    xmlhttp.send();
+    xhr.open(req.type, str.slice(0,-1), true);
+    //xhr.setRequestHeader("Access-Control-Allow-Origin", "*");
+    //var contentType = "multipart/form-data; boundary=" + boundary;
+    //xhr.setRequestHeader("Content-Type", contentType);
+
+    //file uploading
+    if(req.data !== undefined && req.data.constructor === FormData){
+      xhr.send(req.data);
+    }
+    else{
+      xhr.send();
+    }
   }
 
   /**
@@ -407,6 +488,142 @@ class Quas{
       version: M[1],
       isMobile : /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
     };
+  }
+
+  static on(eventsStr, sel, callback){
+    let el;
+    if(sel.constructor === String){
+      el = Quas.getEl(sel).el;
+    }
+    else{
+      el = sel;
+    }
+    let events = eventsStr.split(" ");
+    for(let i in events){
+      el.addEventListener(events[i], callback);
+    }
+  }
+
+  /*
+    convert html string to json object
+    todo:
+      -nested attributtes
+      -spacing in attributes
+      -text after nested element
+      -multiple depth
+  */
+  static convert(html){
+    let els = [];
+    let reg = new RegExp(/\<.*?\>/g,"");
+    let flag = true;
+    let el = null;
+    let depth =0;
+
+      while(flag){
+        let match = html.match(reg);
+        if(match != null){
+          let tagEls = match[0].substr(1,match[0].length-2).split(" ");
+          //closing tag
+          if(tagEls[0].charAt(0) === "/"){
+            //let text = html.substr(0,match.index);
+            //target == parent
+            let target = el;
+            for(let d=0; d<depth; d++){
+              if(d == depth -1){
+                let text = html.substr(0,match.index);;
+                target.children[target.children.length-1].txt = text;
+              }
+              else{
+                target = target.children[target.children.length-1];
+              }
+            }
+            depth--;
+            if(depth==0){
+              els.push(el);
+              el = null;
+            }
+          }
+          else{
+            if(el == null){
+              el = {
+                 tag : tagEls[0],
+                 children : []
+              };
+            }
+            else{
+              depth++;
+
+              //target == parent
+              let target = el;
+              for(let d=0; d<depth; d++){
+                if(d == depth -1){
+                  target.children.push({
+                    tag : tagEls[0],
+                    children : []
+                  });
+                }
+              }
+              target.txt = html.substr(0,match.index);
+            }
+            tagEls.shift();
+
+            //find and set the attributtes of this tag
+            for(let i in tagEls){
+              let attr = tagEls[i].split("=");
+              if(attr.length == 1){
+                attr.push("");
+              }
+              let target = el;
+              for(let d=0; d<=depth; d++){
+                if(d == depth){
+                  target[attr[0]] = attr[1].substr(1,attr[1].length-2);
+                }
+                else{
+                  target = target.children[target.children.length-1];
+                }
+              }
+            }
+
+          }
+          html = html.substr(match.index + match[0].length);
+        }
+        else{
+          flag = false;
+        }
+        //console.log(html.substr(match.index + match[0].length));
+        //html = html.substr(match.index + match[0].length);
+      }
+
+      console.log(JSON.stringify(els));
+
+    //   for(let m in matches){
+    //     let tagEls = match[0].substr(1,match[0].length-2).split(" ");
+    //     let el = {
+    //        tag : tagEls[0]
+    //     };
+    //     tagEls.shift();
+    //
+    //     //find and set the attributtes of this tag
+    //     for(let i in tagEls){
+    //       let attr = tagEls[i].split("=");
+    //       if(attr.length == 1){
+    //         attr.push("");
+    //       }
+    //       el[attr[0]] = attr[1].substr(1,attr[1].length-2);
+    //     }
+    //
+    //     let index = html.indexOf(match[1]) + match[0].length;
+    //     html = html.substr(index);
+    //     console.log(match);
+    //     console.log(el);
+    //   }
+    //   else{
+    //     flag=false;
+    //   }
+    //   flag = false;
+    // }
+  //  console.log(res);
+    return els;
   }
 
   /**
@@ -437,10 +654,18 @@ class Quas{
   static genList(items){
     let list = [];
     for(let i in items){
-      list.push({
-        tag : "li",
-        txt : items[i]
-      });
+      if(items[i].constructor === Array){
+        list.push({
+          tag : "ul",
+          children : Quas.genList(items[i])
+        })
+      }
+      else{
+        list.push({
+          tag : "li",
+          txt : items[i]
+        });
+      }
     }
     return list;
   }
@@ -615,6 +840,25 @@ class Quas{
     str = str.slice(0,-1);
     window.location = window.origin + window.location.pathname + str;
   }
+
+  static decodeHtmlSpecialChars(str){
+    str = str.split("&amp;").join("&");
+    str = str.split("&quot;").join('"');
+    str = str.split("&#039;").join("'");
+    str = str.split("&lt;").join("<");
+    str = str.split("&gt;").join(">");
+    return str;
+  }
+
+  static enableScrollTracker(callback){
+    Quas.on("scroll", window, function(){
+      let viewport = {
+        top : window.scrollY,
+        bottom : window.scrollY + window.innerHeight
+      };
+      callback(viewport);
+    });
+  }
 }
 /**
   Current state of the users ability to scroll
@@ -625,3 +869,9 @@ Quas.isScrollable = true;
   Keys codes that can scroll
 */
 Quas.scrollKeys = {37: 1, 38: 1, 39: 1, 40: 1};
+
+Quas.path;
+window.onload = function(){
+  Quas.path = location.pathname.substr(1);
+  Quas.start();
+}
