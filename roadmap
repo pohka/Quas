@@ -4,21 +4,18 @@
 
 Todos
 ---
-* addCompAsChild() - construct a component and add it as a child when declaring data, it also had to call the render() from the new child component
-* Quas.addChild("selector", data, type)
-* Add event listener to existing element
 * fix ajax request to work with $_POST and $_GET
 * states, start -> loading -> finished rendering -> ready
-* addCookie(key,value,date,directory)
-* Add multiple event listeners at the same time i.e. "click keyup change paste"
-* Rather than element being a wrapper object, make prototype functions if possible
-* cookie(key,val) - get/set cookie, clear cookie by passing empty string
+* Cookies
+ * cookie(key,val,date,directory) - get/set cookie, clear cookie by passing empty string
 * Playground
 * Documentation
   * Quas.formChildren([json,json,[json,json], josn) - return 1D array of josn objects
   * Comments
   * Read.me
   * Landing page
+
+---
 
 Component Package
 ----
