@@ -4,8 +4,12 @@
 
 Todos
 ---
+* make virtual dom
+* props and JSX
+* register compnents instead of calling render()
+* 
 * fix ajax request to work with $_POST and $_GET
-* states, start -> loading -> finished rendering -> ready
+* states, start -> loading -> finished rendering -> ready (this must be optional)
 * Cookies
  * cookie(key,val,date,directory) - get/set cookie, clear cookie by passing empty string
 * Playground
