@@ -13,19 +13,30 @@ class Comp{
 class Quas{
   static render(comp, target){
     let info = comp.render();
-    let e = document.createElement(info[0]);
-    for(let a in info[1]){
-      if(info[1][a].substring(0,2) === "on"){
-        //add event listener
-      }
-      else{
-        e.setAttribute(a, info[1][a]);
-      }
+    let tag = info[0];
+    let attrs = info[1];
+    let text = info[2];
+    let events  = info[3];
+    let children = info[4];
+    let el = document.createElement(tag);
+    for(let a in attrs){
+        el.setAttribute(a, attrs[a]);
     }
-    if(info[2] !== undefined){
-      e.textContent = info[2];
+    if(text !== undefined){
+      el.textContent = text;
+    }
+    if(events !== undefined){
+      for(let key in events){
+        let eventNames = key.split(" ");
+        for(let i in eventNames){
+          el.addEventListener(eventNames[i],
+            function(){
+              events[key][0](events[key][1])
+          });
+        }
+      }
     }
 
-    target.appendChild(e);
+    target.appendChild(el);
   }
 }

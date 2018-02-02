@@ -7,12 +7,17 @@ class Card extends Comp{
 
   }
 
+  eventTest(str){
+    console.log("triggered by event: " + str);
+  }
+
   render(){
     return [
-      "div",
-      {id:"test"},
-      this.name,
-      []
+      "div", //tag
+      {id:"test"}, //attributes
+      this.name, //text
+      {"click mouseover" : [this.eventTest, "im a param"] }, //events
+      [] //children
     ];
   }
 }
