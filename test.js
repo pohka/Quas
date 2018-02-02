@@ -2,9 +2,6 @@ class Card extends Comp{
   constructor(props){
     super(props)
     this.name = props.text
-    //div hello world
-
-
   }
 
   eventTest(str){
@@ -17,13 +14,34 @@ class Card extends Comp{
       {id:"test"}, //attributes
       this.name, //text
       {"click mouseover" : [this.eventTest, "im a param"] }, //events
-      [] //children
+      [
+        [
+          "div",
+          {},
+          "im a child ",
+          {},
+          [
+            [
+              "a",
+              {href: "#"},
+              "link",
+              []
+            ],
+            " text after",
+            [
+              "br"
+            ],
+            " more after"
+          ]
+        ]
+      ] //children
     ];
   }
 }
 
-window.onload = function(){
+//starting point
+Quas.start = function(){
   let c = new Card({text:"hello world"});
   let target = document.getElementById("root")
-  Quas.render(c, target);
+  Quas.render(c, "#root");
 }
