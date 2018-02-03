@@ -17,7 +17,7 @@ class Quas{
       target  = document.querySelector(target);
     }
     let info = comp.render();
-    let el = Quas.createEl(info)
+    let el = Quas.createEl(info);
     target.appendChild(el);
   }
 
@@ -217,6 +217,78 @@ class Quas{
     return bundle;
   }
 
+  //returns the array as a javascript valid array with indent
+  static jsArr(arr, tab){
+    let str = "";
+    if(tab === undefined){
+      tab = 0;
+    }
+
+    for(let t=0; t<tab; t++){
+      str += "\t";
+    }
+    str += "[\n";
+    tab++;
+    for(let i=0; i<arr.length; i++){
+      for(let t=0; t<tab; t++){
+        str += "\t";
+      }
+      //tag
+      if(i == 0){
+        str += arr[i] + ",\n";
+      }
+
+      //attrs
+      else if(i == 1){
+        str += "{"
+        for(let key in arr[i]){
+          str += "\"" + key + "\":" + arr[i][key] + ",";
+        }
+        str = str.substr(0,str.length-1);
+        str += "}, \n";
+      }
+
+      //children
+      else if(i==2){
+        if(arr[2].length == 0){
+          str += "[]";
+        }
+        else{
+          str += "[\n";
+          tab++;
+          for(let j=0; j<arr[2].length; j++){
+            if(Array.isArray(arr[2][j])){
+              str += Quas.jsArr(arr[2][j], tab);
+
+              if(j != arr[2].length-1){
+                str += ",\n";
+              }
+            }
+            else{
+              for(let t=0; t<tab; t++){
+                str += "\t";
+              }
+              str += arr[2][j];
+            }
+          }
+
+          str += "\n";
+          for(let t=0; t<tab-1; t++){
+            str += "\t";
+          }
+          str += "]";
+          tab--;
+        }
+      }
+    }
+    str += "\n";
+    for(let t=0; t<tab-1; t++){
+      str += "\t";
+    }
+    str += "]";
+    return str;
+  }
+
   //convert HTML for Quas DOM info
   static convertToQuasDOMInfo(html){
     let info;
@@ -227,12 +299,15 @@ class Quas{
       if(html[i] === "<"){
         tagStart = i;
         if(info!==undefined && text !== ""){
-          parent = info;
-          for(let d=0; d<depth-1; d++){
-            parent = parent[parent.length-1];
+          let parent = info[2];
+          for(let d=1; d<depth; d++){
+              parent = parent[parent.length-1];
           }
-          //console.log(parent[2]);
-          //parent[2] = text;
+
+          console.log(parent);
+          if(parent[2] !== undefined){
+          //  parent[2].push(text.trim());
+          }
           text = "";
         }
       }
@@ -273,13 +348,13 @@ class Quas{
           }
           else{
             //find location to add this element
-            let parent = info;
+            let parent = info[2];
             for(let d=0; d<depth; d++){
               if(d == depth-1){
-                  if(parent[parent.length-1] !== undefined){
-                    parent = parent[parent.length-1];
+                  if(parent[2] !== undefined){
+                    parent = parent[2];
                   }
-                  parent.push([tagInfo[0], attrs]);
+                  parent.push([tagInfo[0], attrs, []]);
               }
               else{
                 parent = parent[parent.length-1];
@@ -291,11 +366,14 @@ class Quas{
       }
       //between tags
       else if(tagStart == -1){
-        console.log(html[i]);
+        //console.log(html[i]);
         text += html[i];
       }
     }
+    console.log("fin");
+    info[2].push("hello world");
     console.log(info);
+    console.log(Quas.jsArr(info));
     //todo: convert array to string
     return "test";
   }
