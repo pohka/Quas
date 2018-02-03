@@ -31,33 +31,26 @@ class Quas{
 
     let tag = info[0];
     let attrs = info[1];
-    let text = info[2];
-    let events  = info[3];
-    let children = info[4];
+    let children = info[2];
 
     let el = document.createElement(tag);
 
     //attributes
     for(let a in attrs){
-        el.setAttribute(a, attrs[a]);
-    }
-
-    //text
-    if(text !== undefined){
-      el.textContent = text;
-    }
-
-    //events
-    if(events !== undefined){
-      for(let key in events){
-        let eventNames = key.split(" ");
-        for(let i in eventNames){
-          el.addEventListener(eventNames[i],
-            function(){
-              events[key][0](events[key][1])
-          });
+        //attribute
+        if(a.substr(0,2) !== "on"){
+          el.setAttribute(a, attrs[a]);
         }
-      }
+        //event
+        else{
+          let eventNames = a.substr(2).split(" on");
+          for(let i in eventNames){
+            el.addEventListener(eventNames[i],
+              function(){
+                attrs[a]();
+            });
+          }
+        }
     }
 
     //children
@@ -229,24 +222,33 @@ class Quas{
     let info;
     let depth = 0;
     let tagStart = -1;
+    let text = "";
     for(let i=0; i<html.length; i++){
       if(html[i] === "<"){
         tagStart = i;
+        if(info!==undefined && text !== ""){
+          parent = info;
+          for(let d=0; d<depth-1; d++){
+            parent = parent[parent.length-1];
+          }
+          //console.log(parent[2]);
+          //parent[2] = text;
+          text = "";
+        }
       }
       else if(html[i] === ">"){
         let tagContent = html.substr(tagStart+1, i - 1 - tagStart);
+        tagStart = -1;
 
         //split by space but ignore spaces in quotes
         let tagInfo = tagContent.split(/ +(?=(?:(?:[^"]*"){2})*[^"]*$)/g);
 
         //this is a closing tag
         if(tagInfo[0][0] === "/"){
-          //todo add text content
           depth--;
         }
         //opening tag
         else{
-          //add text content if it exists
           let attrs = {};
           let events = {};
 
@@ -267,7 +269,7 @@ class Quas{
 
           //adding root
           if(info === undefined){
-            info = [tagInfo[0], attrs, undefined, events, []];
+            info = [tagInfo[0], attrs, []];
           }
           else{
             //find location to add this element
@@ -277,7 +279,7 @@ class Quas{
                   if(parent[parent.length-1] !== undefined){
                     parent = parent[parent.length-1];
                   }
-                  parent.push([tagInfo[0], attrs, undefined, events]);
+                  parent.push([tagInfo[0], attrs]);
               }
               else{
                 parent = parent[parent.length-1];
@@ -286,6 +288,11 @@ class Quas{
           }
           depth++;
         }
+      }
+      //between tags
+      else if(tagStart == -1){
+        console.log(html[i]);
+        text += html[i];
       }
     }
     console.log(info);

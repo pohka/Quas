@@ -4,29 +4,29 @@ class Card extends Comp{
     this.name = props.text
   }
 
-  eventTest(str){
-    console.log("triggered by event: " + str);
+  eventTest(){
+    console.log("triggered by event: ");
   }
 
 
   render(){
     return [
       "div", //tag
-      {id:"test"}, //attributes
-      this.name, //text
-      {"click mouseover" : [this.eventTest, "im a param"] }, //events
+      {
+        id:"test",
+        "onclick onmouseover" : this.eventTest //events
+      },
       [
+        this.name,
         [
           "div",
           {},
-          "im a child ",
-          {},
           [
+            "im a child ",
             [
               "a",
               {href: "#"},
-              "link",
-              []
+              ["link"]
             ],
             " text after",
             [
@@ -53,8 +53,12 @@ class Card extends Comp{
 
     <quas>
     <div id="test">
-      <div class="inner"><div id="even deeper"></div></div>
-      <div class="inner2"></div>
+      hello world
+      <div class="inner">
+        inner
+        <div id="even deeper">deeper</div>
+      </div>
+      <div class="inner2">other</div>
     </div>
     </quas>
   }
