@@ -162,7 +162,7 @@ class Quas{
           }
         }
       }
-    })
+    });
   }
 
   //concatates each file and evaluates it
@@ -200,7 +200,7 @@ class Quas{
         if(closeIndex > -1){
           html += lines[i].substr(0, closeIndex);
           let info = Quas.convertToQuasDOMInfo(html);
-          lines[i] = info + lines[i].substr(closeIndex + tagName.length + 3);
+          lines[i] = "\treturn " + info + ";" + lines[i].substr(closeIndex + tagName.length + 3);
           open = -1;
           html = "";
         }
@@ -213,7 +213,7 @@ class Quas{
       }
     }
     bundle = lines.join("\n");
-    //console.log(bundle);
+    console.log(bundle);
     return bundle;
   }
 
@@ -221,7 +221,7 @@ class Quas{
   static jsArr(arr, tab){
     let str = "";
     if(tab === undefined){
-      tab = 0;
+      tab = 1;
     }
 
     for(let t=0; t<tab; t++){
@@ -235,7 +235,7 @@ class Quas{
       }
       //tag
       if(i == 0){
-        str += arr[i] + ",\n";
+        str += '"' + arr[i] + '",\n';
       }
 
       //attrs
@@ -257,6 +257,7 @@ class Quas{
           str += "[\n";
           tab++;
           for(let j=0; j<arr[2].length; j++){
+            //child element
             if(Array.isArray(arr[2][j])){
               str += Quas.jsArr(arr[2][j], tab);
 
@@ -268,7 +269,12 @@ class Quas{
               for(let t=0; t<tab; t++){
                 str += "\t";
               }
-              str += arr[2][j];
+
+              //text context
+              str += '"'+ arr[2][j] + '"';
+              if(j != arr[2].length-1){
+                str += ",\n";
+              }
             }
           }
 
@@ -298,15 +304,14 @@ class Quas{
     for(let i=0; i<html.length; i++){
       if(html[i] === "<"){
         tagStart = i;
-        if(info!==undefined && text !== ""){
+        if(info!==undefined && text.trim() !== ""){
           let parent = info[2];
           for(let d=1; d<depth; d++){
-              parent = parent[parent.length-1];
+              parent = parent[parent.length-1][2];
           }
 
-          console.log(parent);
-          if(parent[2] !== undefined){
-          //  parent[2].push(text.trim());
+          if(parent !== undefined){
+            parent.push(text.trim());
           }
           text = "";
         }
@@ -351,13 +356,13 @@ class Quas{
             let parent = info[2];
             for(let d=0; d<depth; d++){
               if(d == depth-1){
-                  if(parent[2] !== undefined){
-                    parent = parent[2];
-                  }
+                  //if(parent !== undefined){
+                  //  parent = parent[2];
+                  //}
                   parent.push([tagInfo[0], attrs, []]);
               }
               else{
-                parent = parent[parent.length-1];
+                parent = parent[parent.length-1][2];
               }
             }
           }
@@ -370,12 +375,12 @@ class Quas{
         text += html[i];
       }
     }
-    console.log("fin");
-    info[2].push("hello world");
-    console.log(info);
+  //  console.log("fin");
+  //  info[2].push("hello world");
+  //  console.log(info);
     console.log(Quas.jsArr(info));
     //todo: convert array to string
-    return "test";
+    return Quas.jsArr(info);
   }
 
 

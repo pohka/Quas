@@ -8,7 +8,7 @@ class Card extends Comp{
     console.log("triggered by event: ");
   }
 
-
+/*
   render(){
     return [
       "div", //tag
@@ -38,10 +38,10 @@ class Card extends Comp{
       ] //children
     ];
   }
+*/
 
-/*
   render(){
-
+/*
       <div id="test" onclick-onmouseover="{this.eventTest, 'im a param'}">
         hello world
         <div>im a child
@@ -50,17 +50,17 @@ class Card extends Comp{
           more after
         </div>
       </div>
-
+*/
     <quas>
-    <div id="root">
-      hello world
-      <div class="inner">
-        inner
-        <div id="even deeper">deeper</div>
+      <div id="root">
+        hello world
+        <div class="inner">
+          inner
+          <div id="even deeper">deeper</div>
+        </div>
+        <div class="inner2">other</div>
       </div>
-      <div class="inner2">other</div>
-    </div>
     </quas>
   }
-*/
+
 }
