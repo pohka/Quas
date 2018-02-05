@@ -186,7 +186,9 @@ Quas.convertToQuasDOMInfo = function(html){
         }
 
         if(parent !== undefined){
-          parent.push(text.trimExcess());
+          let trimmedText = text.trimExcess();
+          let parseProps = Quas.parseProps(trimmedText);
+          parent.push(parseProps);
         }
         text = "";
       }
@@ -252,6 +254,17 @@ Quas.convertToQuasDOMInfo = function(html){
 
   console.log(Quas.jsArr(info));
   return Quas.jsArr(info);
+}
+
+//parses props
+Quas.parseProps = function(str){
+  let matches =  str.match(/\{.*?\}/g);
+  for(let i in matches){
+  	let parsed = matches[i].replace("{", '"+');
+    parsed = parsed.replace("}", '+"');
+    str = str.replace(matches[i], parsed);
+  }
+  return str;
 }
 
 //returns a string with the excess white spacing removed

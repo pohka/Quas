@@ -4,7 +4,7 @@
 
 Todos
 ---
-* props and events with html to QuasDOM info transpiler
+* events with html to QuasDOM info transpiler
 * fix ajax request to work with $_POST and $_GET
 * states, start -> loading -> finished rendering -> ready (this must be optional)
 * Cookies

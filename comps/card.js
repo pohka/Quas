@@ -53,7 +53,7 @@ class Card extends Comp{
 */
     <quas>
       <div id="card">
-        hello world
+        hello {this.name}
         <div class="inner">
           inner
           <div id="even deeper">deeper</div>
