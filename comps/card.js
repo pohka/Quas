@@ -4,55 +4,15 @@ class Card extends Comp{
     this.name = props.text
   }
 
-  eventTest(){
-    console.log("triggered by event: ");
+  eventTest(str){
+    if(str === undefined) str = "";
+    console.log("triggered by event: " +str);
   }
 
-/*
-  render(){
-    return [
-      "div", //tag
-      {
-        id:"test",
-        "onclick onmouseover" : this.eventTest //events
-      },
-      [
-        this.name,
-        [
-          "div",
-          {},
-          [
-            "im a child ",
-            [
-              "a",
-              {href: "#"},
-              ["link"]
-            ],
-            " text after",
-            [
-              "br"
-            ],
-            " more after"
-          ]
-        ]
-      ] //children
-    ];
-  }
-*/
 
   render(){
-/*
-      <div id="test" onclick-onmouseover="{this.eventTest, 'im a param'}">
-        hello world
-        <div>im a child
-          <a href="#">link</a>
-          text after <br>
-          more after
-        </div>
-      </div>
-*/
     <quas>
-      <div id="card">
+      <div id="card" class="abc" onclick-onmouseover="this.eventTest">
         hello {this.name}
         <div class="inner">
           inner

@@ -43,7 +43,7 @@ class Quas{
         }
         //event
         else{
-          let eventNames = a.substr(2).split(" on");
+          let eventNames = a.substr(2).split("-on");
           for(let i in eventNames){
             el.addEventListener(eventNames[i],
               function(){
