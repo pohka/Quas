@@ -115,9 +115,12 @@ Quas.jsArr = function(arr, tab){
     else if(i == 1){
       str += "{"
       for(let key in arr[i]){
-          str += "\"" + key + "\":" + arr[i][key] + ",";
+            str += "\"" + key + "\":" + arr[i][key] + ",";
       }
-      str = str.substr(0,str.length-1);
+      //remove last comma, only if this element has attributes
+      if(Object.keys(arr[i]).length>0){
+        str = str.substr(0,str.length-1);
+      }
       str += "}, \n";
     }
 
@@ -168,8 +171,6 @@ Quas.jsArr = function(arr, tab){
   return str;
 }
 
-
-
 //convert HTML for Quas DOM info
 Quas.convertToQuasDOMInfo = function(html){
   let info;
@@ -214,7 +215,7 @@ Quas.convertToQuasDOMInfo = function(html){
           if(tagInfo[v].substr(0,2) === "on"){
             let arr = tagInfo[v].split("=");
             if(arr[1] !== undefined){
-              attrs[arr[0]] = arr[1].substr(1,arr[1].length-2);
+              attrs[arr[0]] = arr[1];
             }
           }
           //attrs

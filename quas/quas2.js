@@ -37,20 +37,25 @@ class Quas{
 
     //attributes
     for(let a in attrs){
-        //attribute
-        if(a.substr(0,2) !== "on"){
-          el.setAttribute(a, attrs[a]);
+      let prefix = a.substr(0,2);
+      //custom attribute
+      if(prefix === "q-"){
+        Quas.evalCustomAttr(el, a, attrs[a]);
+      }
+      //event
+      if(prefix === "on"){
+        let eventNames = a.substr(2).split("-on");
+        for(let i in eventNames){
+          el.addEventListener(eventNames[i],
+            function(){
+              attrs[a]();
+          });
         }
-        //event
-        else{
-          let eventNames = a.substr(2).split("-on");
-          for(let i in eventNames){
-            el.addEventListener(eventNames[i],
-              function(){
-                attrs[a]();
-            });
-          }
-        }
+      }
+      //attr
+      else{
+        el.setAttribute(a, attrs[a]);
+      }
     }
 
     //children
@@ -130,6 +135,22 @@ class Quas{
     }
     else{
       xhr.send();
+    }
+  }
+
+  //evaluates a custom attribute
+  static evalCustomAttr(parent, key, val){
+    let info = key.split("-");
+    let type = info[1];
+    let command = info[2];
+    let children = [];
+
+    if(command === "foreach"){
+      for(let i in val){
+        let el = document.createElement(type);
+        el.textContent = val[i];
+        parent.appendChild(el);
+      }
     }
   }
 }
