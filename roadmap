@@ -4,7 +4,16 @@
 
 Todos
 ---
-* events with html to QuasDOM info transpiler
+* custom attribute for:
+  * tables
+* handle changes to a prop
+* handle changes to custom attributes
+* define your own custom attributes
+* add features form old quas version:
+  * scroll locking
+  * scroll tacker/breakpoints
+  * browser info
+  * url values
 * fix ajax request to work with $_POST and $_GET
 * states, start -> loading -> finished rendering -> ready (this must be optional)
 * Cookies
