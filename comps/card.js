@@ -52,8 +52,8 @@ class Card extends Comp{
       </div>
 */
     <quas>
-      <div id="root">
-        hello world 
+      <div id="card">
+        hello world
         <div class="inner">
           inner
           <div id="even deeper">deeper</div>
