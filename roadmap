@@ -4,10 +4,7 @@
 
 Todos
 ---
-* make virtual dom
-* props and JSX
-* register compnents instead of calling render()
-* 
+* props and events with html to QuasDOM info transpiler
 * fix ajax request to work with $_POST and $_GET
 * states, start -> loading -> finished rendering -> ready (this must be optional)
 * Cookies

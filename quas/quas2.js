@@ -295,6 +295,8 @@ class Quas{
     return str;
   }
 
+
+
   //convert HTML for Quas DOM info
   static convertToQuasDOMInfo(html){
     let info;
@@ -304,14 +306,14 @@ class Quas{
     for(let i=0; i<html.length; i++){
       if(html[i] === "<"){
         tagStart = i;
-        if(info!==undefined && text.trim() !== ""){
+        if(info!==undefined && text.trimExcess() !== ""){
           let parent = info[2];
           for(let d=1; d<depth; d++){
               parent = parent[parent.length-1][2];
           }
 
           if(parent !== undefined){
-            parent.push(text.trim());
+            parent.push(text.trimExcess());
           }
           text = "";
         }
@@ -384,6 +386,21 @@ class Quas{
   }
 
 
+}
+
+//returns a string with the excess white spacing removed
+String.prototype.trimExcess = function(){
+  let end = "";
+  let start = "";
+
+  if(this.charAt(0) === " "){
+    start = " ";
+  }
+  if(this.charAt(this.length-1) === " "){
+    end = " ";
+  }
+
+  return start + this.replace(/[\n\r]+|[\s]{2,}/g, '') + end;
 }
 
 Quas.filesToBundle = 0; //count of the number of files being bundled
