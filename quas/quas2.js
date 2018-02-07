@@ -54,6 +54,18 @@ class Quas{
 
     let el = document.createElement(tag);
 
+
+
+    //children
+    if(children !== undefined){
+      for(let i in children){
+        let child = Quas.createEl(children[i], comp, el);
+        if(child !== undefined){
+          el.appendChild(child);
+        }
+      }
+    }
+
     //attributes
     for(let a in attrs){
       let prefix = a.substr(0,2);
@@ -78,16 +90,6 @@ class Quas{
       //attr
       else{
         el.setAttribute(a, attrs[a]);
-      }
-    }
-
-    //children
-    if(children !== undefined){
-      for(let i in children){
-        let child = Quas.createEl(children[i], comp, el);
-        if(child !== undefined){
-          el.appendChild(child);
-        }
       }
     }
 

@@ -4,9 +4,6 @@
 
 Todos
 ---
-* render custom attrs when tag is closed, not when open
-* handle changes to a prop
-* handle changes to custom attributes
 * define your own custom attributes
 * add features form old quas version:
   * scroll locking
