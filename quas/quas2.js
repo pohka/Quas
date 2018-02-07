@@ -17,12 +17,12 @@ class Quas{
       target  = document.querySelector(target);
     }
     let info = comp.render();
-    let el = Quas.createEl(info);
+    let el = Quas.createEl(info, comp);
     target.appendChild(el);
   }
 
   //creates and returns a HTML DOM Element
-  static createEl(info, parent){
+  static createEl(info, comp, parent){
     //appending the text context
     if(info.constructor === String){
       parent.appendChild(document.createTextNode(info));
@@ -41,15 +41,18 @@ class Quas{
       //custom attribute
       if(prefix === "q-"){
         Quas.evalCustomAttr(el, a, attrs[a]);
-        el.setAttribute(a, attrs[a]);
+        //don't set custom attribute in DOM if value is an array
+        if(!Array.isArray(attrs[a])){
+          el.setAttribute(a, attrs[a]);
+        }
       }
       //event
       else if(prefix === "on"){
         let eventNames = a.substr(2).split("-on");
         for(let i in eventNames){
           el.addEventListener(eventNames[i],
-            function(){
-              attrs[a]();
+            function(e){
+              attrs[a](e, comp);
           });
         }
       }
@@ -62,7 +65,7 @@ class Quas{
     //children
     if(children !== undefined){
       for(let i in children){
-        let child = Quas.createEl(children[i], el);
+        let child = Quas.createEl(children[i], comp, el);
         if(child !== undefined){
           el.appendChild(child);
         }

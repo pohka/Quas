@@ -8,12 +8,14 @@ class Card extends Comp{
       ["row 2 col 1", "row 2 col 2"],
       ["row 3 col 1", "row 3 col 2"]
     ];
+    this.headings = ["heading 1", "heading 2"];
   }
 
-  enter(){
+  enter(e, comp){
     this.active = true;
     console.log("active: " + this.active);
-    console.log(this.name);
+    console.log(e);
+    console.log(comp);
   }
 
   leave(){
@@ -36,7 +38,9 @@ class Card extends Comp{
           <ul q-foreach-li=this.listItems>
           </ul>
         </div>
-        <table q-foreach-tr-td=this.data></table>
+        <table q-foreach-tr-td=this.data>
+          <tr q-foreach-th=this.headings></tr>
+        </table>
       </div>
     </quas>
   }
