@@ -4,9 +4,17 @@ class Comp{
     this.props = props;
   }
 
-  render(){
-
+  //find an element with a matching selector, within this components DOM element
+  findChild(s){
+    return this.el.querySelector(s);
   }
+
+  //call this function for each child specified for the selector
+  eachChild(s, func){
+    [].forEach.call(this.el.querySelectorAll(s), func);
+  }
+
+  render(){}
 }
 
 
@@ -20,7 +28,16 @@ class Quas{
     let el = Quas.createEl(info, comp);
     target.appendChild(el);
     comp.el = el;
-    console.log(comp.el);
+  }
+
+  //rerenders and the component
+  static rerender(comp){
+    let info = comp.render();
+    let newEl = Quas.createEl(info, comp);
+    let parent = comp.el.parentNode;
+
+    parent.replaceChild(newEl, comp.el);
+    comp.el = newEl;
   }
 
   //creates and returns a HTML DOM Element
