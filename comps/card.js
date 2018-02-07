@@ -40,7 +40,7 @@ class Card extends Comp{
 
   static test(str){
     <quas>
-      <div>testing {str}</div>
+      <div q-test-abc="xyz">testing {str}</div>
     </quas>
   }
 

@@ -187,12 +187,15 @@ class Quas{
         parent.appendChild(el);
       }
     }
+    else{
+      Quas.customAttrs[command](parent, params, data);
+    }
   }
 }
 
 
 
-
+Quas.customAttrs = {};
 Quas.isDevBuild = false;
 Quas.path;
 window.onload = function(){
