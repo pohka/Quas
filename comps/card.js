@@ -9,13 +9,14 @@ class Card extends Comp{
       ["row 3 col 1", "row 3 col 2"]
     ];
     this.headings = ["heading 1", "heading 2"];
+    this.count = 0;
   }
 
   enter(e, comp){
     this.active = true;
-    console.log("active: " + this.active);
-    console.log(e);
-    console.log(comp);
+    comp.count++;
+    let child = comp.el.querySelector("#deeper");
+    child.textContent = "deeper " + comp.count;
   }
 
   leave(){
@@ -29,10 +30,10 @@ class Card extends Comp{
       <div id="card" class="abc"
         onmouseenter=this.enter onmouseleave=this.leave
         active="false">
-        hello {this.name}
+        hello {this.name}, count: {this.count}
         <div>
           inner
-          <div id="even deeper">deeper</div>
+          <div id="deeper">deeper</div>
         </div>
         <div class="inner2">
           <ul q-foreach-li=this.listItems>

@@ -19,6 +19,8 @@ class Quas{
     let info = comp.render();
     let el = Quas.createEl(info, comp);
     target.appendChild(el);
+    comp.el = el;
+    console.log(comp.el);
   }
 
   //creates and returns a HTML DOM Element
