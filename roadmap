@@ -4,7 +4,6 @@
 
 Todos
 ---
-* call functions to return html
 * render custom attrs when tag is closed, not when open
 * handle changes to a prop
 * handle changes to custom attributes

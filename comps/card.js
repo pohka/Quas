@@ -11,6 +11,9 @@ class Card extends Comp{
     this.headings = ["heading 1", "heading 2"];
     this.count = 0;
     this.active = false;
+
+    let a = ["item 1", Card.test()];
+    console.log(a);
   }
 
   click(e, comp){
@@ -35,8 +38,15 @@ class Card extends Comp{
     console.log(comp.el);
   }
 
+  static test(str){
+    <quas>
+      <div>testing {str}</div>
+    </quas>
+  }
+
 
   render(){
+    let a = this.test;
     <quas>
       <div id="card" class="abc"
         onclick=this.click onmouseleave=this.leave
@@ -53,6 +63,7 @@ class Card extends Comp{
         <table q-foreach-tr-td=this.data>
           <tr q-foreach-th=this.headings></tr>
         </table>
+        {Card.test("123")}
       </div>
     </quas>
   }

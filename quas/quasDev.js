@@ -146,8 +146,14 @@ Quas.jsArr = function(arr, tab){
               str += "\t";
             }
 
+            //function call prop
+            if(arr[2][j].match(/\(.*?\)/g)){
+              str += arr[2][j] + ",";
+            }
             //text context
-            str += '"'+ arr[2][j] + '"';
+            else{
+              str += '"'+ arr[2][j] + '"';
+            }
             if(j != arr[2].length-1){
               str += ",\n";
             }
@@ -268,6 +274,12 @@ Quas.parseProps = function(str){
   for(let i in matches){
   	let parsed = matches[i].replace("{", '"+');
     parsed = parsed.replace("}", '+"');
+    let res = matches[i].substr(1,matches[i].length-2);
+    //function
+    if(res.match(/\(.*?\)/g)){
+      return res;
+    }
+    //text component
     str = str.replace(matches[i], parsed);
   }
   return str;
