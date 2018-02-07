@@ -41,9 +41,10 @@ class Quas{
       //custom attribute
       if(prefix === "q-"){
         Quas.evalCustomAttr(el, a, attrs[a]);
+        el.setAttribute(a, attrs[a]);
       }
       //event
-      if(prefix === "on"){
+      else if(prefix === "on"){
         let eventNames = a.substr(2).split("-on");
         for(let i in eventNames){
           el.addEventListener(eventNames[i],
@@ -139,16 +140,26 @@ class Quas{
   }
 
   //evaluates a custom attribute
-  static evalCustomAttr(parent, key, val){
-    let info = key.split("-");
-    let type = info[1];
-    let command = info[2];
+  static evalCustomAttr(parent, key, data){
+    let params = key.split("-");
+
+    let command = params[1];
+    params.splice(0,2);
     let children = [];
 
     if(command === "foreach"){
-      for(let i in val){
-        let el = document.createElement(type);
-        el.textContent = val[i];
+      for(let i in data){
+        let el = document.createElement(params[0]);
+        if(params.length == 1){
+          el.textContent = data[i];
+        }
+        else{
+          for(let j in data[i]){
+            let ch = document.createElement(params[1]);
+            ch.textContent = data[i][j];
+            el.appendChild(ch);
+          }
+        }
         parent.appendChild(el);
       }
     }

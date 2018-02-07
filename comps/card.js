@@ -3,11 +3,17 @@ class Card extends Comp{
     super(props)
     this.name = props.text
     this.listItems = ["item 1", "item 2", "item 3"];
+    this.data = [
+      ["row 1 col 1", "row 1 col 2"],
+      ["row 2 col 1", "row 2 col 2"],
+      ["row 3 col 1", "row 3 col 2"]
+    ];
   }
 
   enter(){
     this.active = true;
     console.log("active: " + this.active);
+    console.log(this.name);
   }
 
   leave(){
@@ -27,9 +33,10 @@ class Card extends Comp{
           <div id="even deeper">deeper</div>
         </div>
         <div class="inner2">
-          <ul q-li-foreach=this.listItems>
+          <ul q-foreach-li=this.listItems>
           </ul>
         </div>
+        <table q-foreach-tr-td=this.data></table>
       </div>
     </quas>
   }
