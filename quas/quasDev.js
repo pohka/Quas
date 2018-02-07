@@ -5,6 +5,7 @@ For production use a static build and remember to remove links to this script
 
 Quas.filesToBundle = 0; //count of the number of files being bundled
 Quas.bundleData = []; //string data of each file
+Quas.bundle = "";
 
 Quas.devBuild = function(config){
   Quas.isDevBuild = true;
@@ -44,9 +45,11 @@ Quas.evalDevBundle = function(){
   for(let i=0; i<Quas.bundleData.length; i++){
     bundle += Quas.bundleData[i];
   }
-  bundle += "\nif(typeof start === 'function'){ start(); }";
 
-  eval(Quas.parseBundle(bundle));
+  bundle = Quas.parseBundle(bundle);
+  Quas.bundle = bundle;
+  bundle += "\nif(typeof start==='function'){start();}";
+  eval(bundle);
 }
 
 //returns the javascript string for the bundle with Quas DOM info
@@ -301,4 +304,81 @@ String.prototype.trimExcess = function(){
     return "";
   }
   return start + removedSpace + end;
+}
+
+//downloads the bundle, set minify to true to use minify, default filename is bundle
+Quas.build = function(minify, filename){
+  var element = document.createElement('a');
+  var text = Quas.bundle;
+  if(filename === undefined){
+    filename = "bundle";
+  }
+  if(minify){
+    text = Quas.minify(text);
+    filename+=".min";
+  }
+  filename += ".js";
+
+ element.setAttribute('href', 'data:text/plain;charset=utf-8,' + text);
+ element.setAttribute('download', filename);
+ element.style.display = 'none';
+ document.body.appendChild(element);
+
+ element.click();
+
+ document.body.removeChild(element);
+}
+
+Quas.minify = function(str){
+  let lines = str.split("\n");
+
+  //remove comments
+  let openCommentIndex = -1;
+  for(let i=0; i<lines.length; i++){
+    lines[i] = lines[i].trim();
+    let commentIndex = lines[i].indexOf("//");
+    if(lines[i].indexOf("//") > -1){
+      lines[i] = lines[i].substr(0, lines[i].indexOf("//"));
+    }
+
+    //opening of multi line comment
+    if(openCommentIndex == -1){
+      if(lines[i].indexOf("/*") > -1){
+        openCommentIndex = i;
+      }
+    }
+
+    //closing of multi line comment
+    if(openCommentIndex > -1 && lines[i].indexOf("*/") > -1){
+      //same line comment
+      if(openCommentIndex == i){
+        let start = lines[i].indexOf("/*");
+        let end = lines[i].indexOf("*/")+2;
+        lines[i].replace(lines[i].slice(start, end), "");
+      }
+      else{
+        //remove first line
+        lines[openCommentIndex] = lines[openCommentIndex].substr(0, lines[openCommentIndex].indexOf("/*"));
+        for(let c=openCommentIndex+1; c<i-1; c++){
+          lines[i]="";
+        }
+        //remove last lines
+        lines[i] = lines[i].substr(lines[i].indexOf("*/")+2);
+      }
+
+      openCommentIndex = -1;
+    }
+  }
+  str = lines.join("\n");
+  str = str.replace(/\n\n/g, "");
+  str = str.replace(/(,\s)(?=(?:[^"]|"[^"]*")*$)/g,',');
+  str = str.replace(/(;\s)(?=(?:[^"]|"[^"]*")*$)/g,';');
+  str = str.replace(/({\s)(?=(?:[^"]|"[^"]*")*$)/g,'{');
+  str = str.replace(/(}\s)(?=(?:[^"]|"[^"]*")*$)/g,'}');
+  str = str.replace(/(\[\s)(?=(?:[^"]|"[^"]*")*$)/g,'[');
+  str = str.replace(/(]\s)(?=(?:[^"]|"[^"]*")*$)/g,']');
+  str = str.replace(/(\s=\s)(?=(?:[^"]|"[^"]*")*$)/g,'=');
+  str+="\nif(typeof start==='function'){start();}";
+
+  return str;
 }

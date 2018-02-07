@@ -1,1 +1,0 @@
-Quas.devBuild("/config.txt");

@@ -24,10 +24,15 @@ class Quas{
     if(target.constructor === String){
       target  = document.querySelector(target);
     }
-    let info = comp.render();
-    let el = Quas.createEl(info, comp);
-    target.appendChild(el);
-    comp.el = el;
+    if(target!==null){
+      let info = comp.render();
+      let el = Quas.createEl(info, comp);
+      target.appendChild(el);
+      comp.el = el;
+    }
+    else{
+      console.log("Element not found: " + target);
+    }
   }
 
   //rerenders and the component
