@@ -3,12 +3,12 @@ function start(){
   let c = new Card({text:"world"});
   let target = document.getElementById("root")
   Quas.render(c, "#root");
-  console.log("urlvals");
+//  console.log("urlvals");
   let vals = Quas.getUrlValues();
   if(vals.video === undefined)
     Quas.setUrlValues({"video":"abc"})
-  console.log(vals);
-  console.log(Quas.browserInfo());
+//  console.log(vals);
+//  console.log(Quas.browserInfo());
 
   //on enter viewport, on exit viewport
   Quas.enableScrollTracker();
@@ -18,6 +18,17 @@ function start(){
   Quas.onScroll("exit", c, breakExit);
   Quas.setCookie("key", "");
   Quas.clearCookie("key");
+
+  Quas.ajax({
+    url : "/php/test.php",
+    type : "GET",
+    data : {
+      print_me : "me"
+    },
+    success: function(res){
+      console.log(res);
+    }
+  });
 }
 
 //example of creating a custom attribute

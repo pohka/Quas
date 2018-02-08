@@ -1,3 +1,3 @@
 <?php
-  echo "in php: " . $_REQUEST["print_me"];
+  echo "in php: " . $_POST["print_me"];
  ?>

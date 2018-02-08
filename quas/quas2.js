@@ -148,23 +148,29 @@ class Quas{
         }
     };
     let str = req.url + "?";
-    let i = 0;
+    let kvs = "";
     if(req.data!==undefined){
       for(let key in req.data){
-        str += key + "=" + encodeURIComponent(req.data[key]) + "&"
+        kvs += key + "=" + encodeURIComponent(req.data[key]) + "&"
       }
+      kvs = kvs.slice(0,-1);
     }
-    xhr.open(req.type, str.slice(0,-1), true);
-    //xhr.setRequestHeader("Access-Control-Allow-Origin", "*");
-    //var contentType = "multipart/form-data; boundary=" + boundary;
-    //xhr.setRequestHeader("Content-Type", contentType);
 
-    //file uploading
-    if(req.data !== undefined && req.data.constructor === FormData){
-      xhr.send(req.data);
+    if(req.type === "POST"){
+      xhr.open(req.type, req.url, true);
+      xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+      xhr.send(kvs);
     }
     else{
-      xhr.send();
+      xhr.open(req.type, req.url + "?" + kvs, true);
+
+      //file uploading
+      if(req.data !== undefined && req.data.constructor === FormData){
+        xhr.send(req.data);
+      }
+      else{
+        xhr.send();
+      }
     }
   }
 
