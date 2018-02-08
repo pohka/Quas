@@ -135,6 +135,13 @@ class Quas{
                     result = "Failed to parse return text to JSON:\n" + this.responseText;
                   }
                   break;
+                case "xml" :
+                  try{
+                    result = new DOMParser().parseFromString(this.responseText,"text/xml");
+                  } catch(e){
+                    result = "Failed to parse return text to XML:\n" + this.responseText;
+                  }
+                  break;
               }
             }
 
@@ -156,11 +163,13 @@ class Quas{
       kvs = kvs.slice(0,-1);
     }
 
+    //post requests
     if(req.type === "POST"){
       xhr.open(req.type, req.url, true);
       xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
       xhr.send(kvs);
     }
+    //get requests
     else{
       xhr.open(req.type, req.url + "?" + kvs, true);
 

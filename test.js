@@ -20,13 +20,11 @@ function start(){
   Quas.clearCookie("key");
 
   Quas.ajax({
-    url : "/php/test.php",
+    url : "/test.xml",
     type : "GET",
-    data : {
-      print_me : "me"
-    },
+    return: "xml",
     success: function(res){
-      console.log(res);
+      console.log(res.getElementsByTagName("note")[0]);
     }
   });
 }
