@@ -20,7 +20,7 @@ function start(){
   Quas.clearCookie("key");
 
   Quas.ajax({
-    url : "/test.xml",
+    url : "/test/other/test.xml",
     type : "GET",
     return: "xml",
     success: function(res){

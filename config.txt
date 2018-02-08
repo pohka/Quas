@@ -1,2 +1,0 @@
-/comps/card.js
-/test.js

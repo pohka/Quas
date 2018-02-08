@@ -1,228 +1,101 @@
-/**
- Component for creating and rendering HTML
-*/
 class Comp{
-  /**
-    @param {String, JSON, String} data
-    */
-  constructor(tag, attrs, txt, children){
-    this.tag=tag;
 
-    if(attrs !== undefined){
-      this.attrs = attrs;
+  constructor(props){
+    this.props = props;
+  }
+
+  //find an element with a matching selector, within this components DOM element
+  findChild(s){
+    return this.el.querySelector(s);
+  }
+
+  //call this function for each child specified for the selector
+  eachChild(s, func){
+    [].forEach.call(this.el.querySelectorAll(s), func);
+  }
+
+  render(){}
+}
+
+
+class Quas{
+  //renders a component to a target HTML DOM element
+  static render(comp, target){
+    if(target.constructor === String){
+      target  = document.querySelector(target);
     }
-    else{
-      this.attrs = {};
+    if(target!==null){
+      let info = comp.render();
+      let el = Quas.createEl(info, comp);
+      target.appendChild(el);
+      comp.el = el;
+    }
+  }
+
+  //rerenders and the component
+  static rerender(comp){
+    let info = comp.render();
+    let newEl = Quas.createEl(info, comp);
+    let parent = comp.el.parentNode;
+
+    parent.replaceChild(newEl, comp.el);
+    comp.el = newEl;
+  }
+
+  //creates and returns a HTML DOM Element
+  static createEl(info, comp, parent){
+    //appending the text context
+    if(info.constructor === String){
+      parent.appendChild(document.createTextNode(info));
+      return;
     }
 
-    if(txt !== undefined){
-      this.txt = txt;
-    }
+    let tag = info[0];
+    let attrs = info[1];
+    let children = info[2];
 
+    let el = document.createElement(tag);
+
+
+
+    //children
     if(children !== undefined){
-      this.children = children;
-    }
-    else {
-      this.children = [];
-    }
-  }
-
-  addChild(tag, attrs, txt){
-    this.children.push({
-      tag : tag,
-      attrs : attrs,
-      txt : txt,
-      children : []
-    });
-    return this.children[this.children.length-1];
-  }
-
-  /**
-    Insert HTML into the selector based on the data of this component
-    If the type is undefined it will append the HTML
-    append: adds HTML to the end
-    prepend : adds HTML to the start
-    set : overwrites the HTML
-    @param {String|HTMLDOMElement} sel - See Quas.sel()
-    @param {String} type - (optional) append/prepend/set
-  */
-  render(sel){
-    let e;
-    if(sel.constructor !== String){ //HTMLElement
-      e = sel;
-    }
-    else{ //String
-      e = document.querySelector(sel);
-    }
-    let root = e.addEl(this.tag,this.attrs, this.txt);
-    renderChildren(root, this.children);
-    return root;
-  }
-
-  renderChildren(root, children){
-    for(let i in children){
-      let el = root.addEl(
-        children[i].tag,
-        children[i].attrs,
-        children[i].txt);
-      for(let c in children[i].children){
-        renderChildren(el, children[c].children);
+      for(let i in children){
+        let child = Quas.createEl(children[i], comp, el);
+        if(child !== undefined){
+          el.appendChild(child);
+        }
       }
     }
-  }
-}
 
-//add a child element, (type=append/prepend) retruns element created
-HTMLElement.prototype.addEl = function(tag, attrs, txt, type){
-    let e = document.createElement(tag);
-    console.log(e);
+    //attributes
     for(let a in attrs){
-      e.setAttribute(a, attrs[a]);
+      let prefix = a.substr(0,2);
+      //custom attribute
+      if(prefix === "q-"){
+        Quas.evalCustomAttr(el, a, attrs[a]);
+        //don't set custom attribute in DOM if value is an array
+        if(!Array.isArray(attrs[a])){
+          el.setAttribute(a, attrs[a]);
+        }
+      }
+      //event
+      else if(prefix === "on"){
+        let eventNames = a.substr(2).split("-on");
+        for(let i in eventNames){
+          el.addEventListener(eventNames[i],
+            function(e){
+              attrs[a](e, comp);
+          });
+        }
+      }
+      //attr
+      else{
+        el.setAttribute(a, attrs[a]);
+      }
     }
-    if(txt!==undefined){
-      e.textContent = txt;
-    }
 
-  if(type === undefined || type=="append"){
-    this.appendChild(e);
-  }
-  else if(type === "prepend"){
-    this.insertBefore(e, this.childNodes[0]);
-  }
-  return e;
-}
-
-//get or set attribute
-HTMLElement.prototype.attr = function(key, val){
-  if(val !== undefined){
-    this.setAttribute(key, val);
-  }
-  else{
-    let a = this.getAttribute(key);
-    if(a != null)
-      return a;
-    return undefined
-  }
-}
-
-//set or get the text content
-HTMLElement.prototype.text = function(txt){
-  if(txt === undefined)
-    return this.textContent;
-  this.textContent = txt;
-}
-
-//set or get the value
-HTMLElement.prototype.val = function(v){
-  if(v === undefined)
-    return this.getAttribute("value");
-  this.setAttribute("value", v);
-}
-
-//removes all child nodes
-HTMLElement.prototype.clearChildren = function(){
-  while(this.hasChildNodes())
-    this.removeChild(this.childNodes[0])
-}
-
-//adds a class
-HTMLElement.prototype.addCls = function(c){
-  this.className += " " + c;
-}
-
-//returns true if this element has the given class
-HTMLElement.prototype.hasCls = function(c){
-  let arr = this.className.split(" ");
-  return (arr.indexOf(c) > -1);
-}
-
-//get or set a data attribute
-HTMLElement.prototype.data = function(key, val){
-  return this.attr("data-"+key, val);
-}
-
-//removes the element
-HTMLElement.prototype.del = function(){
-  this.remove();
-}
-
-//removes a class from this element
-HTMLElement.prototype.delCls = function(c){
-  let arr = this.className.split(" ");
-  let i = arr.indexOf(c);
-  if(i>-1){
-    arr.splice(i,1);
-  }
-  this.className = arr.join(" ");
-}
-
-
-/**
-  Vertically scrolls to the top of this element
-  won't work if you call in Quas.start
-*/
-HTMLElement.prototype.scrollTo = function(){
-  window.scrollTo(0,this.offsetTop);
-}
-
-//toggle/set visiblity (type=display type i.e. block, inline-block)
-HTMLElement.prototype.visible = function(show, type){
-  //toggle visiblity
-  if(show === undefined){
-    show = !this.isVisible();
-  }
-  if(show && type === undefined){
-    type = "block";
-  }
-  //set style
-  if(show){
-    this.style = "display: "+type+" !important;";
-  }
-  else{
-    this.style = "display: none !important;";
-  }
-}
-
-//returns true if the element is visible
-HTMLElement.prototype.isVisible = function(){
-  return (window.getComputedStyle(this).display !== "none");
-}
-
-//add event listener(s)s to this element
-HTMLElement.prototype.on = function(eventsStr, callback){
-  let arr = eventsStr.split(" ");
-  for(let i in arr){
-    this.addEventListener(arr[i], callback);
-  }
-}
-
-//removes event listener(s)
-HTMLElement.prototype.off = function(eventsStr, callback){
-  let arr = eventsStr.split(" ");
-  for(let i in arr){
-    this.removeEventListener(arr[i], callback);
-  }
-}
-
-
-/**
-  Static class for library functions
-*/
-class Quas{
-
-  static makeComps(c, fields){
-    let  comps =  [];
-    for(let i in fields){
-      comps.push(new c(fields[i]));
-    }
-    return comps;
-  }
-
-  static makeCompsAndRender(c, sel, fields){
-    let comps = Quas.makeComps(c, fields);
-    for(let i in comps){
-      comps[i].render(sel);
-    }
+    return el;
   }
 
   /**
@@ -259,6 +132,13 @@ class Quas{
                     result = "Failed to parse return text to JSON:\n" + this.responseText;
                   }
                   break;
+                case "xml" :
+                  try{
+                    result = new DOMParser().parseFromString(this.responseText,"text/xml");
+                  } catch(e){
+                    result = "Failed to parse return text to XML:\n" + this.responseText;
+                  }
+                  break;
               }
             }
 
@@ -272,23 +152,60 @@ class Quas{
         }
     };
     let str = req.url + "?";
-    let i = 0;
+    let kvs = "";
     if(req.data!==undefined){
       for(let key in req.data){
-        str += key + "=" + encodeURIComponent(req.data[key]) + "&"
+        kvs += key + "=" + encodeURIComponent(req.data[key]) + "&"
+      }
+      kvs = kvs.slice(0,-1);
+    }
+
+    //post requests
+    if(req.type === "POST"){
+      xhr.open(req.type, req.url, true);
+      xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+      xhr.send(kvs);
+    }
+    //get requests
+    else{
+      xhr.open(req.type, req.url + "?" + kvs, true);
+
+      //file uploading
+      if(req.data !== undefined && req.data.constructor === FormData){
+        xhr.send(req.data);
+      }
+      else{
+        xhr.send();
       }
     }
-    xhr.open(req.type, str.slice(0,-1), true);
-    //xhr.setRequestHeader("Access-Control-Allow-Origin", "*");
-    //var contentType = "multipart/form-data; boundary=" + boundary;
-    //xhr.setRequestHeader("Content-Type", contentType);
+  }
 
-    //file uploading
-    if(req.data !== undefined && req.data.constructor === FormData){
-      xhr.send(req.data);
+  //evaluates a custom attribute
+  static evalCustomAttr(parent, key, data){
+    let params = key.split("-");
+
+    let command = params[1];
+    params.splice(0,2);
+    let children = [];
+
+    if(command === "foreach"){
+      for(let i in data){
+        let el = document.createElement(params[0]);
+        if(params.length == 1){
+          el.textContent = data[i];
+        }
+        else{
+          for(let j in data[i]){
+            let ch = document.createElement(params[1]);
+            ch.textContent = data[i][j];
+            el.appendChild(ch);
+          }
+        }
+        parent.appendChild(el);
+      }
     }
     else{
-      xhr.send();
+      Quas.customAttrs[command](parent, params, data);
     }
   }
 
@@ -319,84 +236,6 @@ class Quas{
   }
 
   /**
-    For each element with a matching selector call the callback
-    @param {String} sel
-    @param {Function(HTMLDOMElement)} callback
-  */
-  static each(sel, callback){
-    [].forEach.call(document.querySelectorAll(sel), callback);
-  }
-
-  /**
-    Turns a string array into an array JSON list items
-    @param {String[]} items
-    @return {JSON[]}
-  */
-  static genList(items, attrs){
-    if(attrs === undefined){
-      attrs = {};
-    }
-    let c = new Comp(
-      "ul",
-      attrs,
-    );
-    for(let i in items){
-      c.addChild("li", {}, items[i]);
-    }
-    return c;
-  }
-
-  /**
-    Generates a table from string arrays
-    if headings.length == 0 there will be no heading row on the table
-    @param {String[]} headings
-    @param {String[][]} rows
-    @return {JSON[]}
-  */
-  static genTable(headings, rows, attrs){
-    if(attrs === undefined){
-      attrs = {};
-    }
-    let t = new Comp(
-      "table",
-      attrs,
-    );
-    let h = t.addChild("tr");
-    for(let c=0; c<headings.length; c++){
-      h.children.push({
-        tag : "th",
-        attrs : {},
-        txt : headings[c]
-      });
-    }
-
-    for(let r = 0; r < rows.length; r++){
-      let row = t.addChild("tr");
-      for(let c=0; c < rows[r].length; c++){
-        row.children.push({
-          tag : "td",
-          attrs : {},
-          txt : rows[r][c]
-        });
-      }
-    }
-
-    return t;
-  }
-
-  /**
-    Returns the element for the selector
-    @param {String} sel
-    @return {Element} - undefined if not found
-  */
-  static getEl(sel){
-    let r = document.querySelector(sel);
-    if(r == null)
-      return undefined;
-    return r;
-  }
-
-  /**
     Returns the data from the url in as a JSON object
     @return {JSON}
   */
@@ -414,56 +253,6 @@ class Quas{
       }
     }
     return data;
-  }
-
-  /**
-    Helper function to prevent default events
-    @param {Event}
-  */
-  static preventDefault(e) {
-   e = e || window.event;
-   if (e.preventDefault)
-       e.preventDefault();
-   e.returnValue = false;
-  }
-
-  /**
-    Helper function to prevent default events
-    @param {Event}
-  */
-  static preventDefaultForScrollKeys(e) {
-     if (Quas.scrollKeys[e.keyCode]) {
-         preventDefault(e);
-         return false;
-     }
-  }
-
-  /**
-    Toggle or set users ability to scroll
-    If enabled is undefined then the scroll ability will be toggled
-    @param {Boolean} enabled - (optional)
-  */
-  static scrollable(enabled){
-    if(enabled === undefined){
-      enabled = !Quas.isScrollable;
-    }
-    if(enabled){
-      if (window.removeEventListener)
-        window.removeEventListener('DOMMouseScroll', Quas.preventDefault, false);
-      window.onmousewheel = document.onmousewheel = null;
-      window.onwheel = null;
-      window.ontouchmove = null;
-      document.onkeydown = null;
-    }
-    else{
-      if (window.addEventListener) // older FF
-          window.addEventListener('DOMMouseScroll', Quas.preventDefault, false);
-      window.onwheel = Quas.preventDefault; // modern standard
-      window.onmousewheel = document.onmousewheel = Quas.preventDefault; // older browsers, IE
-      window.ontouchmove  = Quas.preventDefault; // mobile
-      document.onkeydown  = Quas.preventDefaultForScrollKeys;
-    }
-    Quas.isScrollable = enabled;
   }
 
   /**
@@ -486,37 +275,135 @@ class Quas{
     window.location = window.origin + window.location.pathname + str;
   }
 
-  static decodeHtmlSpecialChars(str){
-    str = str.split("&amp;").join("&");
-    str = str.split("&quot;").join('"');
-    str = str.split("&#039;").join("'");
-    str = str.split("&lt;").join("<");
-    str = str.split("&gt;").join(">");
-    return str;
+  /**
+    Helper function to prevent default events
+    @param {Event}
+  */
+  static preventDefault(e) {
+   e = e || window.event;
+   if (e.preventDefault)
+       e.preventDefault();
+   e.returnValue = false;
   }
 
+  /**
+    Helper function to prevent default events
+    @param {Event}
+  */
+  static preventDefaultForScrollKeys(e) {
+     if (Quas.scrollKeys[e.keyCode]) {
+         Quas.preventDefault(e);
+         return false;
+     }
+  }
+
+  /**
+    Toggle or set users ability to scroll
+    If enabled is undefined then the scroll ability will be toggled
+    @param {Boolean} enabled - (optional)
+  */
+  static scrollable(enabled){
+    if(enabled === undefined){
+      enabled = !Quas.isScrollable;
+    }
+    if(enabled){
+      window.onwheel = null;
+      window.ontouchmove = null;
+      document.onkeydown = null;
+    }
+    else{
+      window.onwheel = Quas.preventDefault; // modern standard
+      window.ontouchmove  = Quas.preventDefault; // mobile
+      document.onkeydown  = Quas.preventDefaultForScrollKeys; //arrow keys
+    }
+    Quas.isScrollable = enabled;
+  }
+
+  //enables scroll tracking for using scroll listeners
   static enableScrollTracker(callback){
-    Quas.on("scroll", window, function(){
+    window.addEventListener("scroll", function(){
       let viewport = {
         top : window.scrollY,
         bottom : window.scrollY + window.innerHeight
       };
-      callback(viewport);
+      if(callback !== undefined){
+        callback(viewport);
+      }
+      for(let type in Quas.trackingEls){
+        for(let i in Quas.trackingEls[type]){
+          let e = Quas.trackingEls[type][i];
+          let elTop = e.comp.el.offsetTop;
+          let elBot = elTop + e.comp.el.offsetHeight;
+          let currentlyVisible = viewport.bottom - Quas.scrollSafeZone.top > elTop && viewport.top + Quas.scrollSafeZone.bottom < elBot;
+          if(e.comp !== undefined){
+            if(type === "enter" && !e.visible && currentlyVisible){
+              e.func(e.comp.el);
+            }
+            else if(type === "exit" && e.visible && !currentlyVisible){
+              e.func(e.comp.el);
+            }
+          }
+          e.visible = currentlyVisible;
+        }
+      }
     });
   }
+
+  //listens and event entering or exiting the visiblity of a component
+  static onScroll(type, comp, callback){
+    Quas.trackingEls[type].push({
+      comp : comp,
+      func : callback,
+      visible: false
+    });
+  }
+
+  //returns a cookie
+  static getCookie(key){
+    var name = key + "=";
+    var decodedCookie = decodeURIComponent(document.cookie);
+    var ca = decodedCookie.split(';');
+    for(var i = 0; i <ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) == ' ') {
+            c = c.substring(1);
+        }
+        if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+        }
+    }
+  }
+
+  //sets a cookie
+  static setCookie(k, v, date, path){
+    if(path === undefined){
+      path = "/";
+    }
+    //12hrs if not defined
+    if(date === undefined){
+      date = new Date();
+      var expireTime = date.getTime() + 43200000;
+      date.setTime(expireTime);
+    }
+     document.cookie = k + "=" + v + ";expires="+ date.toGMTString() +";path="+ path;
+  }
+
+  //removes a cookie
+  static clearCookie(k){
+    document.cookie = k + "=;expires=Thu, 01 Jan 1970 00:00:01 GMT;path=/";
+  }
 }
-/**
-  Current state of the users ability to scroll
-*/
+
+Quas.trackingEls = {"enter" : [], "exit": []};
+Quas.scrollKeys = {37: 1, 38: 1, 39: 1, 40: 1}; //Keys codes that can scroll
+Quas.scrollSafeZone = {"top": 0, "bottom" : 0}; //safezone padding for scroll listeners
 Quas.isScrollable = true;
-
-/**
-  Keys codes that can scroll
-*/
-Quas.scrollKeys = {37: 1, 38: 1, 39: 1, 40: 1};
-
+Quas.customAttrs = {};
+Quas.isDevBuild = false;
 Quas.path;
 window.onload = function(){
   Quas.path = location.pathname.substr(1);
-  Quas.start();
+  if(typeof start === "function" && !Quas.isDevBuild){
+    start();
+  }
 }

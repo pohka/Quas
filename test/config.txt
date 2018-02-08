@@ -1,0 +1,2 @@
+/test/comps/card.js
+/test/js/test.js
