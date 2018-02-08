@@ -4,9 +4,6 @@
 
 Todos
 ---
-* add features form old quas version:
-  * scroll locking
-  * scroll tacker/breakpoints
 * fix ajax request to work with $_POST and $_GET
 * fix minfier with variables outside of class scope
 * states, start -> loading -> finished rendering -> ready (this must be optional)

@@ -9,7 +9,13 @@ function start(){
     Quas.setUrlValues({"video":"abc"})
   console.log(vals);
   console.log(Quas.browserInfo());
-  Quas.scrollable(false);
+
+  //on enter viewport, on exit viewport
+  Quas.enableScrollTracker();
+  Quas.scrollSafeZone.bottom = 100;
+  Quas.scrollSafeZone.top = 100;
+  Quas.onScroll("enter", c, breakEnter);
+  Quas.onScroll("exit", c, breakExit);
 }
 
 //example of creating a custom attribute
@@ -18,4 +24,12 @@ Quas.customAttrs["test"] = function(parent, params, data){
   parent.appendChild(child);
   let text = document.createTextNode(data);
   parent.appendChild(text);
+}
+
+function breakEnter(el){
+  console.log("entered");
+}
+
+function breakExit(el){
+  console.log("exited");
 }

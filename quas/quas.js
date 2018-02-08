@@ -55,25 +55,27 @@ class Comp{
       e = document.querySelector(sel);
     }
     let root = e.addEl(this.tag,this.attrs, this.txt);
-    Comp.renderChildren(root, this.children);
+    renderChildren(root, this.children);
     return root;
   }
 
-  //recusively renders all the child elements
-  static renderChildren(root, children){
+  renderChildren(root, children){
     for(let i in children){
       let el = root.addEl(
         children[i].tag,
         children[i].attrs,
         children[i].txt);
-        Comp.renderChildren(el, children[i].children);
+      for(let c in children[i].children){
+        renderChildren(el, children[c].children);
       }
+    }
   }
 }
 
 //add a child element, (type=append/prepend) retruns element created
 HTMLElement.prototype.addEl = function(tag, attrs, txt, type){
     let e = document.createElement(tag);
+    console.log(e);
     for(let a in attrs){
       e.setAttribute(a, attrs[a]);
     }
@@ -223,7 +225,72 @@ class Quas{
     }
   }
 
+  /**
+    Ajax request
+    @param {JSON} req - request data
+    Layout of req:
+    {
+      url : "login.php",
+      type : "POST",
+      data : {
+        key : "value"
+      },
+      return : "json",
+      success : function(result){},
+      error : function(errorMsg, errorCode){}
+    }
+  */
+  static ajax(req){
+    var xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+          if(req.success!==undefined){
+            let result;
+            if(req.return === undefined){
+              result = this.responseText;
+            }
+            else{
+              let returnType = req.return.toLowerCase();
+              switch(returnType){
+                case "json" :
+                  try {
+                    result = JSON.parse(this.responseText);
+                  } catch(e){
+                    result = "Failed to parse return text to JSON:\n" + this.responseText;
+                  }
+                  break;
+              }
+            }
 
+            req.success(result);
+          }
+        }
+        else if(this.readyState == 4){
+          if(req.error !== undefined){
+            req.error(this.statusText, this.status);
+          }
+        }
+    };
+    let str = req.url + "?";
+    let i = 0;
+    if(req.data!==undefined){
+      for(let key in req.data){
+        str += key + "=" + encodeURIComponent(req.data[key]) + "&"
+      }
+    }
+    xhr.open(req.type, str.slice(0,-1), true);
+    //xhr.setRequestHeader("Access-Control-Allow-Origin", "*");
+    //var contentType = "multipart/form-data; boundary=" + boundary;
+    //xhr.setRequestHeader("Content-Type", contentType);
+
+    //file uploading
+    if(req.data !== undefined && req.data.constructor === FormData){
+      xhr.send(req.data);
+    }
+    else{
+      xhr.send();
+    }
+  }
 
   /**
     Returns a json object with the browser info
@@ -381,18 +448,18 @@ class Quas{
       enabled = !Quas.isScrollable;
     }
     if(enabled){
-      if (window.removeEventListener){
-      //  window.removeEventListener('DOMMouseScroll', Quas.preventDefault, false);
-      }
+      if (window.removeEventListener)
+        window.removeEventListener('DOMMouseScroll', Quas.preventDefault, false);
+      window.onmousewheel = document.onmousewheel = null;
       window.onwheel = null;
       window.ontouchmove = null;
       document.onkeydown = null;
     }
     else{
-      if (window.addEventListener){
-      //    window.addEventListener('DOMMouseScroll', Quas.preventDefault, false);
-      }
+      if (window.addEventListener) // older FF
+          window.addEventListener('DOMMouseScroll', Quas.preventDefault, false);
       window.onwheel = Quas.preventDefault; // modern standard
+      window.onmousewheel = document.onmousewheel = Quas.preventDefault; // older browsers, IE
       window.ontouchmove  = Quas.preventDefault; // mobile
       document.onkeydown  = Quas.preventDefaultForScrollKeys;
     }

@@ -306,10 +306,50 @@ class Quas{
     }
     Quas.isScrollable = enabled;
   }
+
+  //enables scroll tracking for using scroll listeners
+  static enableScrollTracker(callback){
+    window.addEventListener("scroll", function(){
+      let viewport = {
+        top : window.scrollY,
+        bottom : window.scrollY + window.innerHeight
+      };
+      if(callback !== undefined){
+        callback(viewport);
+      }
+      for(let type in Quas.trackingEls){
+        for(let i in Quas.trackingEls[type]){
+          let e = Quas.trackingEls[type][i];
+          let elTop = e.comp.el.offsetTop;
+          let elBot = elTop + e.comp.el.offsetHeight;
+          let currentlyVisible = viewport.bottom - Quas.scrollSafeZone.top > elTop && viewport.top + Quas.scrollSafeZone.bottom < elBot;
+          if(e.comp !== undefined){
+            if(type === "enter" && !e.visible && currentlyVisible){
+              e.func(e.comp.el);
+            }
+            else if(type === "exit" && e.visible && !currentlyVisible){
+              e.func(e.comp.el);
+            }
+          }
+          e.visible = currentlyVisible;
+        }
+      }
+    });
+  }
+
+  //listens and event entering or exiting the visiblity of a component
+  static onScroll(type, comp, callback){
+    Quas.trackingEls[type].push({
+      comp : comp,
+      func : callback,
+      visible: false
+    });
+  }
 }
 
-
+Quas.trackingEls = {"enter" : [], "exit": []};
 Quas.scrollKeys = {37: 1, 38: 1, 39: 1, 40: 1}; //Keys codes that can scroll
+Quas.scrollSafeZone = {"top": 0, "bottom" : 0}; //safezone padding for scroll listeners
 Quas.isScrollable = true;
 Quas.customAttrs = {};
 Quas.isDevBuild = false;
