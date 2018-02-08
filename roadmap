@@ -6,12 +6,8 @@ Todos
 ---
 * fix ajax request to work with $_POST and $_GET
 * fix minfier with variables outside of class scope
-* states, start -> loading -> finished rendering -> ready (this must be optional)
-* Cookies
- * cookie(key,val,date,directory) - get/set cookie, clear cookie by passing empty string
 * Playground
 * Documentation
-  * Quas.formChildren([json,json,[json,json], josn) - return 1D array of josn objects
   * Comments
   * Read.me
   * Landing page

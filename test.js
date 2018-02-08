@@ -16,6 +16,8 @@ function start(){
   Quas.scrollSafeZone.top = 100;
   Quas.onScroll("enter", c, breakEnter);
   Quas.onScroll("exit", c, breakExit);
+  Quas.setCookie("key", "");
+  Quas.clearCookie("key");
 }
 
 //example of creating a custom attribute

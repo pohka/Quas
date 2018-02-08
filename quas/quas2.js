@@ -345,6 +345,41 @@ class Quas{
       visible: false
     });
   }
+
+  //returns a cookie
+  static getCookie(key){
+    var name = key + "=";
+    var decodedCookie = decodeURIComponent(document.cookie);
+    var ca = decodedCookie.split(';');
+    for(var i = 0; i <ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) == ' ') {
+            c = c.substring(1);
+        }
+        if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+        }
+    }
+  }
+
+  //sets a cookie
+  static setCookie(k, v, date, path){
+    if(path === undefined){
+      path = "/";
+    }
+    //12hrs if not defined
+    if(date === undefined){
+      date = new Date();
+      var expireTime = date.getTime() + 43200000;
+      date.setTime(expireTime);
+    }
+     document.cookie = k + "=" + v + ";expires="+ date.toGMTString() +";path="+ path;
+  }
+
+  //removes a cookie
+  static clearCookie(k){
+    document.cookie = k + "=;expires=Thu, 01 Jan 1970 00:00:01 GMT;path=/";
+  }
 }
 
 Quas.trackingEls = {"enter" : [], "exit": []};
