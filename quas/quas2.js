@@ -196,10 +196,121 @@ class Quas{
       Quas.customAttrs[command](parent, params, data);
     }
   }
+
+  /**
+    Returns a json object with the browser info
+    name - browser name,
+    version - browser version,
+    isMobile - true if a mobile browser
+    @return {JSON}
+  */
+  static browserInfo(){
+    var ua=navigator.userAgent,tem,M=ua.match(/(opera|chrome|safari|firefox|msie|trident(?=\/))\/?\s*(\d+)/i) || [];
+    if(/trident/i.test(M[1])){
+        tem=/\brv[ :]+(\d+)/g.exec(ua) || [];
+        return {name:'IE ',version:(tem[1]||'')};
+        }
+    if(M[1]==='Chrome'){
+        tem=ua.match(/\bOPR\/(\d+)/)
+        if(tem!=null)   {return {name:'Opera', version:tem[1]};}
+        }
+    M=M[2]? [M[1], M[2]]: [navigator.appName, navigator.appVersion, '-?'];
+    if((tem=ua.match(/version\/(\d+)/i))!=null) {M.splice(1,1,tem[1]);}
+    return {
+      name: M[0],
+      version: M[1],
+      isMobile : /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    };
+  }
+
+  /**
+    Returns the data from the url in as a JSON object
+    @return {JSON}
+  */
+  static getUrlValues(){
+    let str = window.location.search;
+    if(str.charAt(0)=="?"){
+      str = str.substr(1, str.length-1);
+    }
+    let variables = str.split("&");
+    let data = {};
+    for(let i = 0; i<variables.length; i++){
+      if(variables[i]!==""){
+        let item = variables[i].split("=");
+        data[item[0]] = decodeURI(item[1]);
+      }
+    }
+    return data;
+  }
+
+  /**
+    Reloads the page and set or change variables in the url
+    If the value === "" then the value is removed form the url
+    Values will be encoded so they are allowed to have spaces
+    @param {JSON} newVals
+  */
+  static setUrlValues(newVals){
+    let data = Quas.getUrlValues();
+    for(let key in newVals){
+      data[key] = encodeURI(newVals[key]);
+    }
+    let str = "?";
+    for(let key in data){
+      if(data[key] !== "")
+        str += key + "=" + data[key] + "&";
+    }
+    str = str.slice(0,-1);
+    window.location = window.origin + window.location.pathname + str;
+  }
+
+  /**
+    Helper function to prevent default events
+    @param {Event}
+  */
+  static preventDefault(e) {
+   e = e || window.event;
+   if (e.preventDefault)
+       e.preventDefault();
+   e.returnValue = false;
+  }
+
+  /**
+    Helper function to prevent default events
+    @param {Event}
+  */
+  static preventDefaultForScrollKeys(e) {
+     if (Quas.scrollKeys[e.keyCode]) {
+         Quas.preventDefault(e);
+         return false;
+     }
+  }
+
+  /**
+    Toggle or set users ability to scroll
+    If enabled is undefined then the scroll ability will be toggled
+    @param {Boolean} enabled - (optional)
+  */
+  static scrollable(enabled){
+    if(enabled === undefined){
+      enabled = !Quas.isScrollable;
+    }
+    if(enabled){
+      window.onwheel = null;
+      window.ontouchmove = null;
+      document.onkeydown = null;
+    }
+    else{
+      window.onwheel = Quas.preventDefault; // modern standard
+      window.ontouchmove  = Quas.preventDefault; // mobile
+      document.onkeydown  = Quas.preventDefaultForScrollKeys; //arrow keys
+    }
+    Quas.isScrollable = enabled;
+  }
 }
 
 
-
+Quas.scrollKeys = {37: 1, 38: 1, 39: 1, 40: 1}; //Keys codes that can scroll
+Quas.isScrollable = true;
 Quas.customAttrs = {};
 Quas.isDevBuild = false;
 Quas.path;

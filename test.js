@@ -3,6 +3,13 @@ function start(){
   let c = new Card({text:"world"});
   let target = document.getElementById("root")
   Quas.render(c, "#root");
+  console.log("urlvals");
+  let vals = Quas.getUrlValues();
+  if(vals.video === undefined)
+    Quas.setUrlValues({"video":"abc"})
+  console.log(vals);
+  console.log(Quas.browserInfo());
+  Quas.scrollable(false);
 }
 
 //example of creating a custom attribute

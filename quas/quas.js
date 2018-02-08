@@ -381,18 +381,18 @@ class Quas{
       enabled = !Quas.isScrollable;
     }
     if(enabled){
-      if (window.removeEventListener)
-        window.removeEventListener('DOMMouseScroll', Quas.preventDefault, false);
-      window.onmousewheel = document.onmousewheel = null;
+      if (window.removeEventListener){
+      //  window.removeEventListener('DOMMouseScroll', Quas.preventDefault, false);
+      }
       window.onwheel = null;
       window.ontouchmove = null;
       document.onkeydown = null;
     }
     else{
-      if (window.addEventListener) // older FF
-          window.addEventListener('DOMMouseScroll', Quas.preventDefault, false);
+      if (window.addEventListener){
+      //    window.addEventListener('DOMMouseScroll', Quas.preventDefault, false);
+      }
       window.onwheel = Quas.preventDefault; // modern standard
-      window.onmousewheel = document.onmousewheel = Quas.preventDefault; // older browsers, IE
       window.ontouchmove  = Quas.preventDefault; // mobile
       document.onkeydown  = Quas.preventDefaultForScrollKeys;
     }
