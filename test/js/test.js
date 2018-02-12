@@ -1,9 +1,10 @@
 //starting point
-function start(){
+function startQuas(){
   let c = new Card({text:"world"});
   let target = document.getElementById("root")
   Quas.render(c, "#root");
 //  console.log("urlvals");
+//  return;
   let vals = Quas.getUrlValues();
   if(vals.video === undefined)
     Quas.setUrlValues({"video":"abc"})
@@ -30,7 +31,7 @@ function start(){
 }
 
 //example of creating a custom attribute
-Quas.customAttrs["test"] = function(parent, params, data){
+Quas.customAttrs["test"] = function(comp, parent, params, data){
   let child = document.createElement("br");
   parent.appendChild(child);
   let text = document.createTextNode(data);

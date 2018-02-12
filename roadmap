@@ -4,12 +4,14 @@
 
 Todos
 ---
+* more single page support, without reloading page
+* custom html link class for handling default events
+  * middle mouse button
+  * ctrl + click
+  * shift + click
 * fix minfier with variables outside of class scope
-* Playground
 * Documentation
-  * Comments
   * Read.me
-  * Landing page
 
 ---
 
@@ -29,3 +31,4 @@ A number of components which will accelerate prototyping (look at bootstrap too)
 * CSS Notes:
  * Flexbox rather than inline-blocks
  * Reuseable CSS classes
+

@@ -1,6 +1,6 @@
-class Card extends Comp{
+class Card extends Component{
   constructor(props){
-    super(props)
+    super();
     this.name = props.text
     this.listItems = ["item 1", "item 2", "item 3"];
     this.data = [

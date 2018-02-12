@@ -1,38 +1,104 @@
-class Comp{
+/**
+  Super class for all components
+*/
+class Component{
+  /**
+    Sets a property and rerenders the component
 
-  constructor(props){
-    this.props = props;
+    @param {String} key
+    @param {?} value
+  */
+  setProp(k, v){
+    this[k] = v;
+    Quas.rerender(this);
   }
 
-  //find an element with a matching selector, within this components DOM element
-  findChild(s){
-    return this.el.querySelector(s);
+  /**
+    removes this component from the DOM tree
+  */
+  remove(){
+    if(this.el){
+      this.el.parentNode.removeChild(this.el);
+      this.el = undefined;
+    }
   }
-
-  //call this function for each child specified for the selector
-  eachChild(s, func){
-    [].forEach.call(this.el.querySelectorAll(s), func);
-  }
-
-  render(){}
 }
 
-
 class Quas{
-  //renders a component to a target HTML DOM element
-  static render(comp, target){
-    if(target.constructor === String){
-      target  = document.querySelector(target);
+  /**
+    Renders a component
+    Appends a component to as a child to a HTML DOM element
+    alternatively you can specify the parent with a query selector (#id, .class, etc)
+
+    @param {Component} component
+    @param {String|HTMLDOMElement} parent
+  */
+  static render(comp, parent){
+    if(parent.constructor === String){
+      parent = document.querySelector(parent);
     }
-    if(target!==null){
+    if(parent !== null){
       let info = comp.render();
       let el = Quas.createEl(info, comp);
-      target.appendChild(el);
+      parent.appendChild(el);
       comp.el = el;
     }
   }
 
-  //rerenders and the component
+  /**
+    Renders a component with a rule
+
+    rule options:
+      prepend     - insert as the first child to the parent
+      #id         - insert after a child with this id. You can also use any value query selector
+      #id before  - insert before a child with this id
+
+    @param {Component} component
+    @param {String|HTMLDOMElement} parent
+    @param {String} rule
+  */
+  static renderRule(comp, parent, target){
+    if(parent.constructor === String){
+      parent = document.querySelector(parent);
+    }
+    if(parent !== null){
+      let info = comp.render();
+      let el = Quas.createEl(info, comp);
+      if(target === undefined){
+        parent.appendChild(el);
+      }
+      else if(target === "prepend"){
+        parent.insertBefore(el, parent.childNodes[0]);
+      }
+      else{
+        let arr = target.split(" ");
+        let sel = arr[0];
+        let before = (arr[1]!==undefined && arr[1]==="before");
+        let t = parent.querySelector(sel);
+
+        //after
+        if(!before){
+          t = t.nextSibling;
+        }
+
+        if(t !== null){
+          parent.insertBefore(el, t);
+        }
+        else{
+          parent.appendChild(el);
+        }
+      }
+
+      comp.el = el;
+    }
+  }
+
+  /**
+    Rerenders a component
+    This will update changes made to props
+
+    @param {Component} component
+  */
   static rerender(comp){
     let info = comp.render();
     let newEl = Quas.createEl(info, comp);
@@ -42,7 +108,23 @@ class Quas{
     comp.el = newEl;
   }
 
-  //creates and returns a HTML DOM Element
+  /**
+    Creates a HTML DOM Element in the DOM tree from a component and
+    returns the newly created element
+
+    renderInfo format:
+    [tag,{attrKey:attrVal},[...]]
+    or
+    [textContent]
+
+    Note: [...] == child element
+
+    @param {Array} renderInfo - description of the element
+    @param {Object} component
+    @param {String|HTMLDOMElement} parent
+
+    @return {HTMLDOMElement}
+  */
   static createEl(info, comp, parent){
     //appending the text context
     if(info.constructor === String){
@@ -53,10 +135,7 @@ class Quas{
     let tag = info[0];
     let attrs = info[1];
     let children = info[2];
-
     let el = document.createElement(tag);
-
-
 
     //children
     if(children !== undefined){
@@ -73,9 +152,8 @@ class Quas{
       let prefix = a.substr(0,2);
       //custom attribute
       if(prefix === "q-"){
-        Quas.evalCustomAttr(el, a, attrs[a]);
-        //don't set custom attribute in DOM if value is an array
-        if(!Array.isArray(attrs[a])){
+        let useAttr = Quas.evalCustomAttr(comp, el, a, attrs[a]);
+        if(useAttr){
           el.setAttribute(a, attrs[a]);
         }
       }
@@ -100,15 +178,16 @@ class Quas{
 
   /**
     Ajax request
-    @param {JSON} req - request data
-    Layout of req:
+
+    @param {OBJECT} request - request data
+    Layout of request:
     {
       url : "login.php",
-      type : "POST",
+      type : "GET|POST",
       data : {
         key : "value"
       },
-      return : "json",
+      return : "json|xml",
       success : function(result){},
       error : function(errorMsg, errorCode){}
     }
@@ -180,8 +259,20 @@ class Quas{
     }
   }
 
-  //evaluates a custom attribute
-  static evalCustomAttr(parent, key, data){
+  /**
+    Evaluates a custom attribute
+
+    returns true if the custom attribute should be
+    added to the HTML DOM Element
+
+    @param {Component} component
+    @param {HTMLDOMElement} parent
+    @param {String} key
+    @param {?} data  - this is often a string
+
+    @return {Boolean}
+  */
+  static evalCustomAttr(comp, parent, key, data){
     let params = key.split("-");
 
     let command = params[1];
@@ -204,9 +295,55 @@ class Quas{
         parent.appendChild(el);
       }
     }
-    else{
-      Quas.customAttrs[command](parent, params, data);
+    else if(command === "bind"){
+      if(params[0] ===undefined){
+        let domInfo = data[0](data[1]);
+        let newEl = Quas.createEl(domInfo, comp);
+        parent.appendChild(newEl);
+      }
+      else if(params[0] === "for"){
+        for(let o in data[1]){
+          let domInfo = data[0](data[1][o]);
+          let newEl = Quas.createEl(domInfo, comp);
+          parent.appendChild(newEl);
+        }
+      }
     }
+    else{
+      return Quas.customAttrs[command](comp, parent, params, data);
+    }
+  }
+
+  /**
+    Removes a component from the DOM tree
+
+    @param {Component} component
+  */
+  static remove(comp){
+    comp.el.parentNode.removeChild(comp.el);
+  }
+
+  /**
+    Find an element with a matching selector, within this components element in thr DOM tree
+
+    @param {Component} component
+    @param {String} selector
+
+    @return {HTMLDOMElement}
+  */
+  static findChild(comp, s){
+    return comp.el.querySelector(s);
+  }
+
+  /**
+    Call a function for each child specified for the selector
+
+    @param {Component} component
+    @param {String} selector
+    @param {Function} callback
+  */
+  static eachChild(comp, s, func){
+    [].forEach.call(comp.el.querySelectorAll(s), func);
   }
 
   /**
@@ -214,7 +351,8 @@ class Quas{
     name - browser name,
     version - browser version,
     isMobile - true if a mobile browser
-    @return {JSON}
+
+    @return {OBJECT}
   */
   static browserInfo(){
     var ua=navigator.userAgent,tem,M=ua.match(/(opera|chrome|safari|firefox|msie|trident(?=\/))\/?\s*(\d+)/i) || [];
@@ -237,7 +375,10 @@ class Quas{
 
   /**
     Returns the data from the url in as a JSON object
-    @return {JSON}
+    Example:
+      www.mysite.com/home?key=val&foo=bar => {key : "val", foo : "bar"}
+
+    @return {OBJECT}
   */
   static getUrlValues(){
     let str = window.location.search;
@@ -256,12 +397,17 @@ class Quas{
   }
 
   /**
-    Reloads the page and set or change variables in the url
+    Set or change variables in the url
     If the value === "" then the value is removed form the url
-    Values will be encoded so they are allowed to have spaces
-    @param {JSON} newVals
+    By default the page won't reload the page unless the reload parameter is set to true
+
+    Note: values will be encoded so they are allowed to have spaces
+
+
+    @param {OBJECT} values
+    @param {Boolean} reload - (optional)
   */
-  static setUrlValues(newVals){
+  static setUrlValues(newVals, reload){
     let data = Quas.getUrlValues();
     for(let key in newVals){
       data[key] = encodeURI(newVals[key]);
@@ -272,7 +418,16 @@ class Quas{
         str += key + "=" + data[key] + "&";
     }
     str = str.slice(0,-1);
-    window.location = window.origin + window.location.pathname + str;
+
+    if(reload){
+      window.location = window.origin + window.location.pathname + str;
+    }
+    else if(history.pushState){
+      let newurl = window.origin + window.location.pathname + str;
+      if(newurl !== window.location.href){
+        window.history.pushState(newVals,'',newurl);
+      }
+    }
   }
 
   /**
@@ -287,7 +442,7 @@ class Quas{
   }
 
   /**
-    Helper function to prevent default events
+    Helper function to prevent default events for keys
     @param {Event}
   */
   static preventDefaultForScrollKeys(e) {
@@ -319,7 +474,18 @@ class Quas{
     Quas.isScrollable = enabled;
   }
 
-  //enables scroll tracking for using scroll listeners
+  /**
+    enables scroll tracking for using scroll listeners
+
+    The callback function allows you to make custom functionality from an onscroll event
+    it will have 1 parameter for the viewport which has values from the offset of the top of the page
+    viewport = {
+      top : {Number} - minY of the raw viewport
+      bottom : {Number} - maxY of the raw viewport
+    }
+
+    @param {Function} callback - (optional)
+  */
   static enableScrollTracker(callback){
     window.addEventListener("scroll", function(){
       let viewport = {
@@ -349,7 +515,14 @@ class Quas{
     });
   }
 
-  //listens and event entering or exiting the visiblity of a component
+  /**
+    Makes a component listen to a scroll event
+    such as entering or exiting the visiblity of the viewport
+
+    @param {String} eventName - enter|exit
+    @param {Component} component
+    @param {Function} callback
+  */
   static onScroll(type, comp, callback){
     Quas.trackingEls[type].push({
       comp : comp,
@@ -358,7 +531,12 @@ class Quas{
     });
   }
 
-  //returns a cookie
+  /**
+    Returns a cookie value by key
+    @param {String} key
+
+    @return {String}
+  */
   static getCookie(key){
     var name = key + "=";
     var decodedCookie = decodeURIComponent(document.cookie);
@@ -374,7 +552,14 @@ class Quas{
     }
   }
 
-  //sets a cookie
+  /**
+  Sets a cookie
+
+  @param {String} key
+  @param {String} value
+  @param {Date} date - (optional) default is 12hrs from now
+  @param {String} path - (optional) default is "/"
+  */
   static setCookie(k, v, date, path){
     if(path === undefined){
       path = "/";
@@ -388,22 +573,68 @@ class Quas{
      document.cookie = k + "=" + v + ";expires="+ date.toGMTString() +";path="+ path;
   }
 
-  //removes a cookie
+  /**
+    Removes a cookie by key
+
+    @param {String} key
+  */
   static clearCookie(k){
     document.cookie = k + "=;expires=Thu, 01 Jan 1970 00:00:01 GMT;path=/";
   }
+
+  /**
+    Returns true if the component is rendered to the DOM tree
+
+    @param {Component} component
+
+    @return {Boolean}
+  */
+  static isRendered(comp){
+    return comp.el !== undefined;
+  }
+
+  /**
+    Makes the function listen to a custom event
+    The data will be sent to the listeners when broadcasted
+
+    @param {String} eventName
+    @param {Function} callback
+
+  */
+  static addEventListener(eventName, callback){
+    if(Quas.events[eventName] === undefined){
+      Quas.events[eventName] = [];
+    }
+
+    Quas.events[eventName].push(callback);
+  }
+
+  /**
+    Broadcast a custom event to all the listeners
+    data is passed as the first parameter
+
+    @param {String} eventName
+    @param {OBJECT} data - (optional)
+  */
+  static broadcastEvent(e, data){
+    if(Quas.events[e] !== undefined){
+      for(let i in Quas.events[e]){
+        Quas.events[e][i](data);
+      }
+    }
+  }
 }
 
-Quas.trackingEls = {"enter" : [], "exit": []};
+Quas.events = []; //all the custom events data
+Quas.trackingEls = {"enter" : [], "exit": []}; //all the scroll tracking events
 Quas.scrollKeys = {37: 1, 38: 1, 39: 1, 40: 1}; //Keys codes that can scroll
 Quas.scrollSafeZone = {"top": 0, "bottom" : 0}; //safezone padding for scroll listeners
-Quas.isScrollable = true;
-Quas.customAttrs = {};
-Quas.isDevBuild = false;
-Quas.path;
+Quas.isScrollable = true; //true if scrolling is enabled
+Quas.customAttrs = {}; //custom attributes
+Quas.isDevBuild = false; //true if using development mode
+
 window.onload = function(){
-  Quas.path = location.pathname.substr(1);
-  if(typeof start === "function" && !Quas.isDevBuild){
-    start();
+  if(typeof startQuas === "function" && !Quas.isDevBuild){
+    startQuas();
   }
 }

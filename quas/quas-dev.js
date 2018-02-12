@@ -3,56 +3,147 @@ This script is used for transpiling and bundling development builds
 For production use a static build and remember to remove links to this script
 */
 
-Quas.filesToBundle = 0; //count of the number of files being bundled
-Quas.bundleData = []; //string data of each file
-Quas.bundle = "";
+//Quas.jsFilesToBundle = 0; //count of the number of files being bundled
+//Quas.jsBundleFiles = []; //string data of each file
+Quas.jsBundle = ""; //the current bundle as a string
+//Quas.cssFiles = [];
+//Quas.cssBundleFiles = [];
+//Quas.cssFilesToBundle = 0;
 
+Quas.bundleInfo = {}
+
+//tags that require no closing tag
+Quas.noClosingTag = ["img", "source", "br", "hr", "area", "track", "link", "col", "meta", "base", "embed", "param", "input"];
+
+/**
+  Creates a development build using a config file
+
+  @param {String} configPath - path to the config file
+*/
 Quas.devBuild = function(config){
   Quas.isDevBuild = true;
   Quas.ajax({
     url : config,
     type : "GET",
-    success : function(configRes){
-      var files = configRes.split("\n");
+    return: "json",
+    success : function(data){
+      Quas.populateBundleInfo(data);
 
-      for(let i in files){
-        let file = files[i].trim();
-        if(file !== ""){
-          Quas.filesToBundle++;
-          Quas.ajax({
-            url : file,
-            type : "GET",
-            success : function(res){
-              Quas.bundleData[i] = res;
+      if(Quas.bundleInfo.css !== undefined){
+        Quas.dynamicLoadCSS(Quas.bundleInfo.css.files);
+      }
 
-              if(Quas.filesToBundle == 1){
-                Quas.evalDevBundle();
-              }
-              else{
-                Quas.filesToBundle--;
-              }
-            }
-          });
-        }
+      if(Quas.bundleInfo.js !== undefined){
+        Quas.dynamicLoadJS(Quas.bundleInfo.js.files);
       }
     }
   });
 }
 
-//concatates each file and evaluates it
+/**
+  populate bundleInfo from the config data
+
+  @param {Object} data - config file format
+*/
+Quas.populateBundleInfo = function(data){
+  for(let ext in data){
+    Quas.bundleInfo[ext] = {
+      filesLeft : 0,
+      files : [],
+      content : []
+    };
+
+    for(let i in data[ext]){
+      //directory object
+      if(data[ext][i].constructor != String){
+        for(let a in data[ext][i]){
+          for(let b in data[ext][i][a]){
+            Quas.bundleInfo[ext].files.push(a + data[ext][i][a][b] + "." + ext);
+          }
+        }
+      }
+      //string directory
+      else{
+        Quas.bundleInfo[ext].files.push(data[ext][i] + "." + ext);
+      }
+    }
+  }
+}
+
+/**
+  Dynamically load css files at runtime
+  files is a string array of the paths to each file
+
+  @param {String[]} - files
+*/
+Quas.dynamicLoadCSS = function(files){
+  for(let i in files){
+    var fileref = document.createElement("link");
+    fileref.rel = "stylesheet";
+    fileref.type = "text/css";
+    fileref.href = Quas.bundleInfo.css.files[i];
+    document.getElementsByTagName("head")[0].appendChild(fileref)
+  }
+}
+
+/**
+  Dynamically load javascript files at runtime
+  Files is a string array of the paths to each file
+
+  @param {String[]} - files
+*/
+Quas.dynamicLoadJS = function(files){
+  for(let i in files){
+    let file = Quas.bundleInfo.js.files[i].trim();
+    if(file !== ""){
+      Quas.bundleInfo.js.filesLeft++;
+      Quas.ajax({
+        url : file,
+        type : "GET",
+        success : function(res){
+          Quas.bundleInfo.js.content[i] = res;
+
+          if(Quas.bundleInfo.js.filesLeft == 1){
+            Quas.evalDevBundle();
+          }
+          else{
+            Quas.bundleInfo.js.filesLeft--;
+          }
+        }
+      });
+    }
+  }
+}
+
+/**
+  Concatates each file and evaluates it
+*/
 Quas.evalDevBundle = function(){
   let bundle = "";
-  for(let i=0; i<Quas.bundleData.length; i++){
-    bundle += Quas.bundleData[i];
+  for(let i=0; i<Quas.bundleInfo.js.content.length; i++){
+    if(Quas.bundleInfo.js.content[i] !== undefined){
+      bundle += Quas.bundleInfo.js.content[i];
+    }
+    else{
+      console.log("One or more JavaScript files in the config file were not recognize");
+    }
   }
 
   bundle = Quas.parseBundle(bundle);
-  Quas.bundle = bundle;
-  bundle += "\nif(typeof start==='function'){start();}";
+  Quas.jsBundle = bundle;
+  bundle += "\nif(typeof startQuas==='function'){startQuas();}";
   eval(bundle);
 }
 
-//returns the javascript string for the bundle with Quas DOM info
+/**
+  Returns the bundle as as javascript valid code
+  The returned string will have all the HTML syntax transpiled to a render info array
+  which is valid JavaScript syntax
+
+  @param {Array} bundle
+
+  @return {String}
+*/
 Quas.parseBundle = function(bundle){
   let lines = bundle.split("\n");
   let open = -1;
@@ -75,25 +166,33 @@ Quas.parseBundle = function(bundle){
       let closeIndex = lines[i].indexOf("</"+tagName+">");
       if(closeIndex > -1){
         html += lines[i].substr(0, closeIndex);
-        let info = Quas.convertToQuasDOMInfo(html);
+        let info = Quas.convertToRenderInfo(html);
         lines[i] = "\treturn " + info + ";" + lines[i].substr(closeIndex + tagName.length + 3);
         open = -1;
         html = "";
       }
       //still currently open
       else{
-        html += lines[i];
+        //split by "//" out side of quotes
+        let match = lines[i].split(/(?=(?:[^"]*"[^"]*")*[^"]*$)\/\//g);
+        html += match[0];
         lines.splice(i, 1);
         i--;
       }
     }
   }
   bundle = lines.join("\n");
-  console.log(bundle);
   return bundle;
 }
 
-//returns the array as a javascript valid array with indent
+/**
+  Returns an array as a javascript valid styntax for the array with indentation
+
+  @param {Array} array
+  @param {Number} indentCount
+
+  @return {String}
+*/
 Quas.jsArr = function(arr, tab){
   let str = "";
   if(tab === undefined){
@@ -118,7 +217,10 @@ Quas.jsArr = function(arr, tab){
     else if(i == 1){
       str += "{"
       for(let key in arr[i]){
-            str += "\"" + key + "\":" + arr[i][key] + ",";
+        if(arr[i][key] === ""){
+          arr[i][key] = "\"\"";
+        }
+        str += "\"" + key + "\":" + Quas.parseProps(arr[i][key]) + ",";
       }
       //remove last comma, only if this element has attributes
       if(Object.keys(arr[i]).length>0){
@@ -180,8 +282,15 @@ Quas.jsArr = function(arr, tab){
   return str;
 }
 
-//convert HTML for Quas DOM info
-Quas.convertToQuasDOMInfo = function(html){
+/**
+  Convert HTML syntax to render info as a string
+  with JavaScript valid syntax for an array
+
+  @param {String} htmlString
+
+  @return {Sting}
+*/
+Quas.convertToRenderInfo = function(html){
   let info;
   let depth = 0;
   let tagStart = -1;
@@ -248,9 +357,6 @@ Quas.convertToQuasDOMInfo = function(html){
           let parent = info[2];
           for(let d=0; d<depth; d++){
             if(d == depth-1){
-                //if(parent !== undefined){
-                //  parent = parent[2];
-                //}
                 parent.push([tagInfo[0], attrs, []]);
             }
             else{
@@ -258,7 +364,9 @@ Quas.convertToQuasDOMInfo = function(html){
             }
           }
         }
-        depth++;
+        if(Quas.noClosingTag.indexOf(tagInfo[0]) == -1){
+          depth++;
+        }
       }
     }
     //text between tags
@@ -271,24 +379,39 @@ Quas.convertToQuasDOMInfo = function(html){
   return Quas.jsArr(info);
 }
 
-//parses props
+/**
+  Parses the props in the HTML syntax
+
+  @param {String} htmlString
+
+  @param {String}
+*/
 Quas.parseProps = function(str){
   let matches =  str.match(/\{.*?\}/g);
   for(let i in matches){
   	let parsed = matches[i].replace("{", '"+');
     parsed = parsed.replace("}", '+"');
     let res = matches[i].substr(1,matches[i].length-2);
-    //function
-    if(res.match(/\(.*?\)/g)){
-      return res;
+
+    //ignore is using \}
+    let char = matches[i].charAt(matches[i].length-2);
+    if(char !== "\\"){
+      //function
+      if(res.match(/\(.*?\)/g)){
+        return res;
+      }
+      //text component
+      str = str.replace(matches[i], parsed);
     }
-    //text component
-    str = str.replace(matches[i], parsed);
   }
   return str;
 }
 
-//returns a string with the excess white spacing removed
+/**
+  Returns a string with the excess white spacing removed
+
+  @return {String}
+*/
 String.prototype.trimExcess = function(){
   let end = "";
   let start = "";
@@ -306,29 +429,101 @@ String.prototype.trimExcess = function(){
   return start + removedSpace + end;
 }
 
-//downloads the bundle, set minify to true to use minify, default filename is bundle
-Quas.build = function(minify, filename){
-  var element = document.createElement('a');
-  var text = Quas.bundle;
-  if(filename === undefined){
-    filename = "bundle";
+/**
+  Downloads the current bundle.
+  You can call this from you browsers console examples:
+    Quas.jsBundle();
+    Quas.jsBundle(false, "my-bundle-name");
+
+  type will only export only the file types defined all,css or js
+  the default value is all
+
+  set useMinfier to true to use minifier
+  fileName will set the name of the file being downloaded
+
+  Note: The minifier is experimental and it is recommented that
+  you use something like UglifyJS, minfier.org or Closure
+
+
+  @param {String} fileName - (optional) default value is bundle
+  @param {String} type - (optional) all|css|js
+  @param {Boolean} useMinifier - (optional)
+*/
+Quas.build = function(filename, type, minify){
+  if(type === undefined){
+    type = "all";
   }
-  if(minify){
-    text = Quas.minify(text);
-    filename+=".min";
+
+  for(let i in Quas.bundleInfo){
+    if(type === "all" || type === i){
+      let fileType = i;
+      let text = "";
+      let extention = "";
+
+      if(filename === undefined){
+        filename = "bundle";
+      }
+
+      //js file type
+      if(fileType === "js"){
+        Quas.bundleInfo.js.content[0] = Quas.jsBundle;
+
+        if(minify){
+          text = Quas.minify(text);
+          extention = ".min";
+        }
+
+        Quas.exportToFile(Quas.bundleInfo["js"].content, filename + extention + ".js");
+      }
+      //other file types
+      else{
+        Quas.bundleInfo[fileType].filesLeft = Quas.bundleInfo[fileType].files.length;
+        for(let a in Quas.bundleInfo[fileType].files){
+          Quas.ajax({
+            url : Quas.bundleInfo[fileType].files[a],
+            type : "GET",
+            success : function(text){
+              Quas.bundleInfo[fileType].content[a] = text;
+              Quas.bundleInfo[fileType].filesLeft--;
+              if(Quas.bundleInfo[fileType].filesLeft == 0){
+                Quas.exportToFile(Quas.bundleInfo[fileType].content, filename+"."+fileType);
+              }
+            }
+          });
+        }
+      }
+    }
   }
-  filename += ".js";
-
- element.setAttribute('href', 'data:text/plain;charset=utf-8,' + text);
- element.setAttribute('download', filename);
- element.style.display = 'none';
- document.body.appendChild(element);
-
- element.click();
-
- document.body.removeChild(element);
 }
 
+/**
+  Exports file(s) for a static build
+
+  @param {String[]} content
+  @param {String} filename
+*/
+Quas.exportToFile = function(content, filename){
+  let text = "";
+  for(let i in content){
+    text += content[i] + "\n";
+  }
+
+  let element = document.createElement('a');
+  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + text);
+  element.setAttribute('download', filename);
+  element.style.display = 'none';
+  document.body.appendChild(element);
+  element.click();
+  document.body.removeChild(element);
+}
+
+/**
+  This will minify a JavaScript string
+
+  @param {String}
+
+  @return {String}
+*/
 Quas.minify = function(str){
   let lines = str.split("\n");
 
@@ -378,7 +573,7 @@ Quas.minify = function(str){
   str = str.replace(/(\[\s)(?=(?:[^"]|"[^"]*")*$)/g,'[');
   str = str.replace(/(]\s)(?=(?:[^"]|"[^"]*")*$)/g,']');
   str = str.replace(/(\s=\s)(?=(?:[^"]|"[^"]*")*$)/g,'=');
-  str+="\nif(typeof start==='function'){start();}";
+  str+="\nif(typeof startQuas==='function'){startQuas();}";
 
   return str;
 }
