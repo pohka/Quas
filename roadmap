@@ -5,6 +5,7 @@
 Todos
 ---
 * more single page support, without reloading page
+* fix: custom event handling on elements that are not mounted
 * custom html link class for handling default events
   * middle mouse button
   * ctrl + click
@@ -31,4 +32,3 @@ A number of components which will accelerate prototyping (look at bootstrap too)
 * CSS Notes:
  * Flexbox rather than inline-blocks
  * Reuseable CSS classes
-
