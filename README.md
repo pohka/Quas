@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://i.imgur.com/Fo2YyRP.png" alt="logo">
+  <img src="https://i.imgur.com/rHf8GOb.png" alt="logo">
 </p>
 
 Quas is a JavaScript library for building the front end of web applications.
@@ -17,7 +17,7 @@ User interfaces are component based and it comes with a multitude of features su
 
 ## Basic Example
 Hello world with a prop
-```
+```js
 class Example extends Component{
   constructor(text){
     super();
@@ -42,7 +42,7 @@ function startQuas(){
 
 ## Custom Attributes
 Creating an unordered list with use of a custom attribute
-```
+```js
 class MyList extends Component{
   constructor(items){
     super();
@@ -67,7 +67,7 @@ function startQuas(){
 
 ## Event Handling and Updating Props
 Update the counter on each click
-```
+```js
 class Counter extends Component{
   constructor(){
     super();
