@@ -12,7 +12,7 @@ User interfaces are component based and it comes with a multitude of features su
 * File bundling for components
 * Custom events
 
----
+<br>
 
 ## Basic Example
 Hello world with a prop
@@ -88,7 +88,7 @@ function startQuas(){
 }
 ```
 
----
+<br>
 
 ## Road Map
 * CSS animations and classes
