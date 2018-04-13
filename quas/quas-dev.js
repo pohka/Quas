@@ -132,7 +132,11 @@ Quas.evalDevBundle = function(){
   bundle = Quas.parseBundle(bundle);
   Quas.jsBundle = bundle;
   bundle += "\nif(typeof startQuas==='function'){startQuas();}";
-  eval(bundle);
+  
+  var script = document.createElement("script");
+  script.setAttribute("type", "text/javascript");
+  script.textContent = bundle;
+  document.getElementsByTagName("head")[0].appendChild(script);
 }
 
 /**
