@@ -11,6 +11,8 @@ Todos
   * ctrl + click
   * shift + click
 * fix minfier with variables outside of class scope
+* bundler takes into account special characters (modulus)
+* bundler can load javascript for use with events from html code
 * Documentation
   * Read.me
 

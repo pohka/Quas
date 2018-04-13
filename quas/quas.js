@@ -50,6 +50,7 @@ class Quas{
 
     rule options:
       prepend     - insert as the first child to the parent
+      replace     - removes all the children and appends the element to the parent
       #id         - insert after a child with this id. You can also use any value query selector
       #id before  - insert before a child with this id
 
@@ -69,6 +70,12 @@ class Quas{
       }
       else if(target === "prepend"){
         parent.insertBefore(el, parent.childNodes[0]);
+      }
+      else if(target === "replace"){
+        while(parent.hasChildNodes()){
+          parent.removeChild(parent.childNodes[0]);
+        }
+        parent.appendChild(el);
       }
       else{
         let arr = target.split(" ");
@@ -296,7 +303,7 @@ class Quas{
       }
     }
     else if(command === "bind"){
-      if(params[0] ===undefined){
+      if(params[0] === undefined){
         let domInfo = data[0](data[1]);
         let newEl = Quas.createEl(domInfo, comp);
         parent.appendChild(newEl);
