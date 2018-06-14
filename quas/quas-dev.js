@@ -3,137 +3,19 @@ This script is used for transpiling and bundling development builds
 For production use a static build and remember to remove links to this script
 */
 
-//Quas.jsFilesToBundle = 0; //count of the number of files being bundled
-//Quas.jsBundleFiles = []; //string data of each file
-Quas.jsBundle = ""; //the current bundle as a string
-//Quas.cssFiles = [];
-//Quas.cssBundleFiles = [];
-//Quas.cssFilesToBundle = 0;
-
-Quas.bundleInfo = {}
-
 //tags that require no closing tag
 Quas.noClosingTag = ["img", "source", "br", "hr", "area", "track", "link", "col", "meta", "base", "embed", "param", "input"];
 
-/**
-  Creates a development build using a config file
-
-  @param {String} configPath - path to the config file
-*/
-Quas.devBuild = function(config){
-  Quas.isDevBuild = true;
-  Quas.ajax({
-    url : config,
-    type : "GET",
-    return: "json",
-    success : function(data){
-      Quas.populateBundleInfo(data);
-
-      if(Quas.bundleInfo.css !== undefined){
-        Quas.dynamicLoadCSS(Quas.bundleInfo.css.files);
-      }
-
-      if(Quas.bundleInfo.js !== undefined){
-        Quas.dynamicLoadJS(Quas.bundleInfo.js.files);
-      }
-    }
-  });
-}
-
-/**
-  populate bundleInfo from the config data
-
-  @param {Object} data - config file format
-*/
-Quas.populateBundleInfo = function(data){
-  for(let ext in data){
-    Quas.bundleInfo[ext] = {
-      filesLeft : 0,
-      files : [],
-      content : []
-    };
-
-    for(let i in data[ext]){
-      //directory object
-      if(data[ext][i].constructor != String){
-        for(let a in data[ext][i]){
-          for(let b in data[ext][i][a]){
-            Quas.bundleInfo[ext].files.push(a + data[ext][i][a][b] + "." + ext);
-          }
-        }
-      }
-      //string directory
-      else{
-        Quas.bundleInfo[ext].files.push(data[ext][i] + "." + ext);
-      }
-    }
+//all he imported files
+Quas.imports = {
+  "js" : {
+    content : {
+    },
+    importsLeft : 0,
   }
-}
+};
 
-/**
-  Dynamically load css files at runtime
-  files is a string array of the paths to each file
-
-  @param {String[]} - files
-*/
-Quas.dynamicLoadCSS = function(files){
-  for(let i in files){
-    var fileref = document.createElement("link");
-    fileref.rel = "stylesheet";
-    fileref.type = "text/css";
-    fileref.href = Quas.bundleInfo.css.files[i];
-    document.getElementsByTagName("head")[0].appendChild(fileref)
-  }
-}
-
-/**
-  Dynamically load javascript files at runtime
-  Files is a string array of the paths to each file
-
-  @param {String[]} - files
-*/
-Quas.dynamicLoadJS = function(files){
-  for(let i in files){
-    let file = Quas.bundleInfo.js.files[i].trim();
-    if(file !== ""){
-      Quas.bundleInfo.js.filesLeft++;
-      Quas.ajax({
-        url : file,
-        type : "GET",
-        success : function(res){
-          Quas.bundleInfo.js.content[i] = res;
-
-          if(Quas.bundleInfo.js.filesLeft == 1){
-            Quas.evalDevBundle();
-          }
-          else{
-            Quas.bundleInfo.js.filesLeft--;
-          }
-        }
-      });
-    }
-  }
-}
-
-/**
-  Concatates each file and evaluates it
-*/
-Quas.evalDevBundle = function(){
-  let bundle = "";
-  for(let i=0; i<Quas.bundleInfo.js.content.length; i++){
-    if(Quas.bundleInfo.js.content[i] !== undefined){
-      bundle += Quas.bundleInfo.js.content[i];
-    }
-    else{
-      console.log("One or more JavaScript files in the config file were not recognize");
-    }
-  }
-
-  bundle = Quas.parseBundle(bundle);
-  Quas.jsBundle = bundle;
-  bundle += "\nif(typeof startQuas==='function'){startQuas();}";
-  eval(bundle);
-}
+Quas.devBundle = {};
 
 /**
   Returns the bundle as as javascript valid code
@@ -200,13 +82,13 @@ Quas.jsArr = function(arr, tab){
   }
 
   for(let t=0; t<tab; t++){
-    str += "\t";
+    str += "  ";
   }
   str += "[\n";
   tab++;
   for(let i=0; i<arr.length; i++){
     for(let t=0; t<tab; t++){
-      str += "\t";
+      str += "  ";
     }
     //tag
     if(i == 0){
@@ -248,7 +130,7 @@ Quas.jsArr = function(arr, tab){
           }
           else{
             for(let t=0; t<tab; t++){
-              str += "\t";
+              str += "  ";
             }
 
             //function call prop
@@ -267,7 +149,7 @@ Quas.jsArr = function(arr, tab){
 
         str += "\n";
         for(let t=0; t<tab-1; t++){
-          str += "\t";
+          str += "  ";
         }
         str += "]";
         tab--;
@@ -276,7 +158,7 @@ Quas.jsArr = function(arr, tab){
   }
   str += "\n";
   for(let t=0; t<tab-1; t++){
-    str += "\t";
+    str += "  ";
   }
   str += "]";
   return str;
@@ -305,7 +187,16 @@ Quas.convertToRenderInfo = function(html){
         }
 
         if(parent !== undefined){
+          //console.log(text);
           let trimmedText = text.trimExcess();
+
+          //escaping round brackets
+          let matches =  trimmedText.match(/\\\)/g);
+          for(let i in matches){
+            let newStr = "--/(";
+            trimmedText = trimmedText.replace(matches[i], newStr);
+          }
+
           let parseProps = Quas.parseProps(trimmedText);
           parent.push(parseProps);
         }
@@ -375,7 +266,7 @@ Quas.convertToRenderInfo = function(html){
     }
   }
 
-  console.log(Quas.jsArr(info));
+  //console.log(Quas.jsArr(info));
   return Quas.jsArr(info);
 }
 
@@ -429,72 +320,6 @@ String.prototype.trimExcess = function(){
   return start + removedSpace + end;
 }
 
-/**
-  Downloads the current bundle.
-  You can call this from you browsers console examples:
-    Quas.jsBundle();
-    Quas.jsBundle(false, "my-bundle-name");
-
-  type will only export only the file types defined all,css or js
-  the default value is all
-
-  set useMinfier to true to use minifier
-  fileName will set the name of the file being downloaded
-
-  Note: The minifier is experimental and it is recommented that
-  you use something like UglifyJS, minfier.org or Closure
-
-
-  @param {String} fileName - (optional) default value is bundle
-  @param {String} type - (optional) all|css|js
-  @param {Boolean} useMinifier - (optional)
-*/
-Quas.build = function(filename, type, minify){
-  if(type === undefined){
-    type = "all";
-  }
-
-  for(let i in Quas.bundleInfo){
-    if(type === "all" || type === i){
-      let fileType = i;
-      let text = "";
-      let extention = "";
-
-      if(filename === undefined){
-        filename = "bundle";
-      }
-
-      //js file type
-      if(fileType === "js"){
-        Quas.bundleInfo.js.content[0] = Quas.jsBundle;
-
-        if(minify){
-          text = Quas.minify(text);
-          extention = ".min";
-        }
-
-        Quas.exportToFile(Quas.bundleInfo["js"].content, filename + extention + ".js");
-      }
-      //other file types
-      else{
-        Quas.bundleInfo[fileType].filesLeft = Quas.bundleInfo[fileType].files.length;
-        for(let a in Quas.bundleInfo[fileType].files){
-          Quas.ajax({
-            url : Quas.bundleInfo[fileType].files[a],
-            type : "GET",
-            success : function(text){
-              Quas.bundleInfo[fileType].content[a] = text;
-              Quas.bundleInfo[fileType].filesLeft--;
-              if(Quas.bundleInfo[fileType].filesLeft == 0){
-                Quas.exportToFile(Quas.bundleInfo[fileType].content, filename+"."+fileType);
-              }
-            }
-          });
-        }
-      }
-    }
-  }
-}
 
 /**
   Exports file(s) for a static build
@@ -517,63 +342,169 @@ Quas.exportToFile = function(content, filename){
   document.body.removeChild(element);
 }
 
-/**
-  This will minify a JavaScript string
 
-  @param {String}
 
-  @return {String}
-*/
-Quas.minify = function(str){
-  let lines = str.split("\n");
-
-  //remove comments
-  let openCommentIndex = -1;
-  for(let i=0; i<lines.length; i++){
-    lines[i] = lines[i].trim();
-    let commentIndex = lines[i].indexOf("//");
-    if(lines[i].indexOf("//") > -1){
-      lines[i] = lines[i].substr(0, lines[i].indexOf("//"));
-    }
-
-    //opening of multi line comment
-    if(openCommentIndex == -1){
-      if(lines[i].indexOf("/*") > -1){
-        openCommentIndex = i;
-      }
-    }
-
-    //closing of multi line comment
-    if(openCommentIndex > -1 && lines[i].indexOf("*/") > -1){
-      //same line comment
-      if(openCommentIndex == i){
-        let start = lines[i].indexOf("/*");
-        let end = lines[i].indexOf("*/")+2;
-        lines[i].replace(lines[i].slice(start, end), "");
-      }
-      else{
-        //remove first line
-        lines[openCommentIndex] = lines[openCommentIndex].substr(0, lines[openCommentIndex].indexOf("/*"));
-        for(let c=openCommentIndex+1; c<i-1; c++){
-          lines[i]="";
-        }
-        //remove last lines
-        lines[i] = lines[i].substr(lines[i].indexOf("*/")+2);
-      }
-
-      openCommentIndex = -1;
-    }
+Quas.import = function(path, type){
+  if(Quas.imports[type] === undefined){
+    Quas.imports[type] = {
+      content : {},
+      importsLeft : 1
+    };
   }
-  str = lines.join("\n");
-  str = str.replace(/\n\n/g, "");
-  str = str.replace(/(,\s)(?=(?:[^"]|"[^"]*")*$)/g,',');
-  str = str.replace(/(;\s)(?=(?:[^"]|"[^"]*")*$)/g,';');
-  str = str.replace(/({\s)(?=(?:[^"]|"[^"]*")*$)/g,'{');
-  str = str.replace(/(}\s)(?=(?:[^"]|"[^"]*")*$)/g,'}');
-  str = str.replace(/(\[\s)(?=(?:[^"]|"[^"]*")*$)/g,'[');
-  str = str.replace(/(]\s)(?=(?:[^"]|"[^"]*")*$)/g,']');
-  str = str.replace(/(\s=\s)(?=(?:[^"]|"[^"]*")*$)/g,'=');
-  str+="\nif(typeof startQuas==='function'){startQuas();}";
+  else{
+    Quas.imports[type].importsLeft += 1;
+  }
+  Quas.ajax({
+    url : path,
+    type : "GET",
+    success : (file) => {
+      Quas.imports[type].content[path] = file;
+      Quas.imports[type].importsLeft -= 1;
+      if(Quas.imports[type].importsLeft == 0){
+        Quas.evalImports(type);
+      }
+    },
+    error : (e) => {
+      Quas.imports[type].importsLeft -= 1;
+    }
+  });
+}
 
-  return str;
+//eval the current imports
+Quas.evalImports = function(type){
+  let bundle = "";
+  if(type == "js"){
+    for(let i in Quas.imports.js.content){
+      bundle +=
+        "/*---------- " + i + " ----------*/\n\n" +
+        Quas.imports.js.content[i].trim() + "\n\n";
+    }
+    bundle = Quas.parseBundle(bundle);
+    Quas.devBundle.js = bundle;
+    bundle += "\nif(typeof ready==='function'){ready();}";
+
+    console.log(bundle);
+    eval(bundle);
+  }
+  else if(type == "css"){
+    for(let i in Quas.imports.css.content){
+      bundle +=
+        "/*---------- " + i + " ----------*/\n\n" +
+        Quas.imports.css.content[i].trim() + "\n\n";
+    }
+    Quas.devBundle.css = bundle;
+    var style = document.createElement("style");
+    style.textContent = bundle;
+    document.getElementsByTagName("head")[0].appendChild(style);
+  }
+}
+
+//for development builds
+Quas.bundle = function(rootFile){
+  Quas.isDevBuild = true;
+  Quas.ajax({
+    url : rootFile,
+    type : "GET",
+    success : (file) => {
+      let lines = file.split("\n");
+      let importRegex = /import+\s".*"|import+\s'.*'|import+\s`.*`/g;
+      let multiLineCommentOpen = false;
+      let finalFile = "";
+      let hasImport = false;
+
+      for(let i=0; i<lines.length; i++){
+        let validLine = "";
+        if(lines[i].indexOf("/*") > -1){
+          multiLineCommentOpen = true;
+          validLine += lines[i].split("/*")[0];
+        }
+
+        if(lines[i].indexOf("*/") > -1){
+          multiLineCommentOpen = false;
+          validLine += lines[i].split("*/")[1];
+        }
+
+        if(!multiLineCommentOpen && validLine == ""){
+          validLine = lines[i].split("//")[0];
+        }
+        else if(!multiLineCommentOpen && validLine != ""){
+          validLine = validLine.split("//")[0];
+        }
+
+        let importMatch = validLine.match(/import+\s".*"|import+\s'.*'|import+\s`.*`/);
+        if(importMatch){
+          hasImport = true;
+          let path = importMatch[0].match(/".*?"/)[0];
+          path = path.substr(1,path.length-2);
+
+          let arr = path.split(".");
+          let extention = arr[arr.length-1];
+
+          if(extention == "js" || extention == "css"){
+            Quas.import(path, extention);
+          }
+          else{ //both
+            Quas.import(path+".js", "js");
+            Quas.import(path+".css", "css");
+          }
+        }
+        else{
+          finalFile += lines[i] + "\n";
+        }
+      }
+/*
+      let imports = file.match(/import+\s".*"|import+\s'.*'|import+\s`.*`/g);
+      if(imports){
+        for(let i=0; i<imports.length; i++){
+          file = file.replace(imports[i], "");
+          let path = imports[i].match(/".*?"/)[0];
+          path = path.substr(1,path.length-2);
+
+          let arr = path.split(".");
+          let extention = arr[arr.length-1];
+
+          if(extention == "js" || extention == "css"){
+            Quas.import(path, extention);
+          }
+          else{ //both
+            Quas.import(path+".js", "js");
+            Quas.import(path+".css", "css");
+          }
+        }
+      }
+      */
+
+      //add root file
+      Quas.imports.js.content[rootFile] = finalFile;
+
+      //if no imports just eval the root
+      if(!hasImport){
+        Quas.evalImports("js");
+      }
+    },
+    error : (e) => {
+      console.error("Root file not found: " + rootFile);
+    }
+  });
+}
+
+//export the bundle
+Quas.export = function(filename, extention){
+  if(!filename){
+    var filename = "bundle";
+  }
+  let types = Quas.devBundle;
+  if(extention !== undefined){
+    types = [extention];
+  }
+
+  for(let i in types){
+    let element = document.createElement('a');
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + Quas.devBundle[types[i]]);
+    element.setAttribute('download', filename+"."+types[i]);
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+  }
 }
