@@ -31,6 +31,7 @@ Quas.parseBundle = function(bundle){
   let open = -1;
   let html = "";
   let tagName = "quas";
+  let inRender = false;
   for(let i=0; i<lines.length; i++){
     //open tag
     let openIndex = lines[i].indexOf("<"+tagName+">");
@@ -49,7 +50,7 @@ Quas.parseBundle = function(bundle){
       if(closeIndex > -1){
         html += lines[i].substr(0, closeIndex);
         let info = Quas.convertToRenderInfo(html);
-        lines[i] = "\treturn " + info + ";" + lines[i].substr(closeIndex + tagName.length + 3);
+        lines[i] = info + lines[i].substr(closeIndex + tagName.length + 3);
         open = -1;
         html = "";
       }
@@ -135,7 +136,7 @@ Quas.jsArr = function(arr, tab){
 
             //function call prop
             if(arr[2][j].match(/\(.*?\)/g)){
-              str += arr[2][j] + ",";
+              str += arr[2][j];
             }
             //text context
             else{
@@ -279,7 +280,9 @@ Quas.convertToRenderInfo = function(html){
 */
 Quas.parseProps = function(str){
   let matches =  str.match(/\{.*?\}/g);
+  let hasFunc = false;
   for(let i in matches){
+
   	let parsed = matches[i].replace("{", '"+');
     parsed = parsed.replace("}", '+"');
     let res = matches[i].substr(1,matches[i].length-2);
@@ -289,12 +292,20 @@ Quas.parseProps = function(str){
     if(char !== "\\"){
       //function
       if(res.match(/\(.*?\)/g)){
+        hasFunc=true;
         return res;
       }
+      else{
       //text component
-      str = str.replace(matches[i], parsed);
+        str = str.replace(matches[i], parsed);
+      }
     }
   }
+
+  if((str.indexOf("\"+") == 0 && str.indexOf("+\"") == str.length-3) || hasFunc){
+    return "\"" + str + "\"";
+  }
+
   return str;
 }
 
@@ -452,27 +463,6 @@ Quas.bundle = function(rootFile){
           finalFile += lines[i] + "\n";
         }
       }
-/*
-      let imports = file.match(/import+\s".*"|import+\s'.*'|import+\s`.*`/g);
-      if(imports){
-        for(let i=0; i<imports.length; i++){
-          file = file.replace(imports[i], "");
-          let path = imports[i].match(/".*?"/)[0];
-          path = path.substr(1,path.length-2);
-
-          let arr = path.split(".");
-          let extention = arr[arr.length-1];
-
-          if(extention == "js" || extention == "css"){
-            Quas.import(path, extention);
-          }
-          else{ //both
-            Quas.import(path+".js", "js");
-            Quas.import(path+".css", "css");
-          }
-        }
-      }
-      */
 
       //add root file
       Quas.imports.js.content[rootFile] = finalFile;

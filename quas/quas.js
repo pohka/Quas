@@ -1,7 +1,13 @@
 /**
   Super class for all components
 */
+
 class Component{
+  constructor(){
+    if(Quas.isDevBuild){
+      Quas.comps.push(this);
+    }
+  }
   /**
     Sets a property and rerenders the component
 
@@ -10,17 +16,36 @@ class Component{
   */
   setProp(k, v){
     this[k] = v;
-    Quas.rerender(this);
+    Quas.render(this);
+  }
+
+  /**
+    Sets multiple properties and rerenders the component
+    e.g. comp.setProps({key:value});
+    @param {JSON} key
+  */
+  setProps(obj){
+    for(let k in obj){
+      this[k] = obj[k];
+    }
+    Quas.render(this);
   }
 
   /**
     removes this component from the DOM tree
   */
   remove(){
-    if(this.el){
-      this.el.parentNode.removeChild(this.el);
-      this.el = undefined;
+    if(this.dom){
+      this.dom.parentNode.removeChild(this.dom);
+      this.dom = undefined;
     }
+  }
+
+  /*
+    returns true if this component has been rendered
+  */
+  isRendered(){
+    return this.dom !== undefined;
   }
 }
 
@@ -34,15 +59,184 @@ class Quas{
     @param {String|HTMLDOMElement} parent
   */
   static render(comp, parent){
-    if(parent.constructor === String){
+    //if parent passed is a query selector string
+    if(parent && parent.constructor === String){
       parent = document.querySelector(parent);
     }
-    if(parent !== null){
-      let info = comp.render();
-      let el = Quas.createEl(info, comp);
-      parent.appendChild(el);
-      comp.el = el;
+    //first time rendering
+    if(!comp.isRendered() && parent !== null){
+      comp.vdom = comp.render();
+      comp.dom = Quas.createDOM(comp.vdom, comp);
+      parent.appendChild(comp.dom);
+      if(comp.onPush){
+        Atlas.addPushListener(comp);
+      }
     }
+    //diff the dom
+    else if(comp.isRendered()){
+      let newVDOM = comp.render();
+      Quas.diffVDOM(comp, comp.dom.parentNode, comp.dom, comp.vdom, newVDOM);
+      comp.vdom = newVDOM;
+    }
+  }
+
+  static diffVDOM(comp, parent, dom, vdom, newVDOM){
+    let returnVal = 0;
+
+    if(!newVDOM){
+      if(parent && dom){
+        parent.removeChild(dom);
+      }
+      return -1;
+    }
+
+    //text node
+    if(newVDOM.constructor == String){
+      if(!vdom){
+        let text = document.createTextNode(newVDOM);
+        parent.append(text);
+      }
+      else if(vdom != newVDOM){
+        parent.replaceChild(document.createTextNode(newVDOM), dom);
+      }
+      return returnVal;
+    }
+
+    //old vdom is text node and new vdom is not a text node
+    else if(vdom && vdom.constructor == String && newVDOM.constructor != String){
+      let newDOM = Quas.createDOM(newVDOM, comp);
+      parent.replaceChild(newDOM, dom);
+      return returnVal;
+    }
+
+    //old vdom doesn't have this new dom element
+    if(!vdom){
+      let newDOM = Quas.createDOM(newVDOM, comp);
+      parent.appendChild(newDOM);
+      returnVal = 1;
+      return returnVal;
+    }
+    else{
+      //diff tags
+      if(vdom[0] != newVDOM[0]){
+        let newDOM = Quas.createDOM(newVDOM, comp);
+        if(!dom){
+          parent.appendChild(newDOM);
+          returnVal = 1;
+        }
+        else{
+          parent.replaceChild(newDOM, dom);
+        }
+        return returnVal;
+      }
+      //same tag
+      else{
+        //clone attrs to keep track of newly added attrs
+        let newAttrs = {};
+        for(let a in newVDOM[1]){
+          newAttrs[a] = newVDOM[1][a];
+        }
+
+        for(let a in vdom[1]){
+          let prefix = a.substr(0,2);
+          let isCustomAttr = (prefix == "q-");
+          let isEvent = (prefix == "on");
+
+          //removed attribute a
+          if(newVDOM[1][a] === undefined){
+            if(isEvent){
+              let eventNames = a.substr(2).split("-on");
+              for(let e in eventNames){
+                dom.removeEventListener(eventNames[e], comp.events[eventNames[e]]);
+                delete comp.events[eventNames[e]];
+              }
+            }
+            else{
+              dom.removeAttribute(a);
+            }
+          }
+          else{
+
+            //custom attr
+            if(isCustomAttr){
+              Quas.evalCustomAttr(a, newVDOM[1][a], newVDOM);
+            }
+            //diff attribute value
+            else if(vdom[1][a] != newVDOM[1][a]){
+              //event
+              if(isEvent){
+                let eventNames = a.substr(2).split("-on");
+                for(let e in eventNames){
+                  if(vdom[1][a] != newVDOM[1][a]){
+                    dom.removeEventListener(eventNames[e], comp.events[eventNames[e]]);
+                    comp.events[eventNames[e]] = (mouseEvent)=>{
+                      newVDOM[1][a](mouseEvent, comp);
+                    }
+                    dom.addEventListener(eventNames[e], comp.events[eventNames[e]]);
+                  }
+                }
+              }
+              //basic attribute
+              else{
+                dom.setAttribute(a, newVDOM[1][a]);
+              }
+            }
+          }
+          delete newAttrs[a];
+        }
+        //all the newly added attributes
+        for(let a in newAttrs){
+          if(a != 0){
+            let prefix = a.substr(0,2);
+            let isCustomAttr = (prefix == "q-");
+            let isEvent = (prefix == "on");
+
+            if(isEvent){
+              let eventNames = a.substr(2).split("-on");
+              for(let e in eventNames){
+                comp.events[eventNames[e]] = (mouseEvent)=>{
+                  newAttrs[a](mouseEvent, comp);
+                }
+                dom.addEventListener(eventNames[e], comp.events[eventNames[e]]);
+              }
+            }
+            else{
+              dom.setAttribute(a, newAttrs[a]);
+            }
+          }
+        }
+      }
+    }
+
+    //children
+    if(dom && returnVal > -1){
+      let oldChildren;
+      if(vdom){
+        oldChildren = vdom[2];
+      }
+      let newChildren;
+      if(newVDOM){
+        newChildren = newVDOM[2];
+      }
+      let change = 0;
+      for(let c=0; (newVDOM && c<newVDOM[2].length) || (vdom && c<vdom[2].length); c++){
+        let nextOldChild;
+        if(oldChildren){
+          nextOldChild = oldChildren[c];
+        }
+        let nextNewChild;
+        if(newChildren){
+          nextNewChild = newChildren[c];
+        }
+        let nextDOM;
+
+        if(dom.childNodes){
+          nextDOM = dom.childNodes[c+change];
+        }
+        change += Quas.diffVDOM(comp, dom, nextDOM, nextOldChild, nextNewChild);
+      }
+    }
+    return returnVal;
   }
 
   /**
@@ -63,19 +257,19 @@ class Quas{
       parent = document.querySelector(parent);
     }
     if(parent !== null){
-      let info = comp.render();
-      let el = Quas.createEl(info, comp);
+      comp.vdom = comp.render();
+      comp.dom = Quas.createDOM(comp.vdom, comp);
       if(target === undefined){
-        parent.appendChild(el);
+        parent.appendChild(comp.dom);
       }
       else if(target === "prepend"){
-        parent.insertBefore(el, parent.childNodes[0]);
+        parent.insertBefore(comp.dom, parent.childNodes[0]);
       }
       else if(target === "replace"){
         while(parent.hasChildNodes()){
           parent.removeChild(parent.childNodes[0]);
         }
-        parent.appendChild(el);
+        parent.appendChild(comp.dom);
       }
       else{
         let arr = target.split(" ");
@@ -89,30 +283,16 @@ class Quas{
         }
 
         if(t !== null){
-          parent.insertBefore(el, t);
+          parent.insertBefore(comp.dom, t);
         }
         else{
-          parent.appendChild(el);
+          parent.appendChild(comp.dom);
         }
       }
-
-      comp.el = el;
     }
-  }
-
-  /**
-    Rerenders a component
-    This will update changes made to props
-
-    @param {Component} component
-  */
-  static rerender(comp){
-    let info = comp.render();
-    let newEl = Quas.createEl(info, comp);
-    let parent = comp.el.parentNode;
-
-    parent.replaceChild(newEl, comp.el);
-    comp.el = newEl;
+    if(comp.onPush){
+      Atlas.addPushListener(comp);
+    }
   }
 
   /**
@@ -132,10 +312,9 @@ class Quas{
 
     @return {HTMLDOMElement}
   */
-  static createEl(info, comp, parent){
+  static createDOM(info, comp, parent){
     //appending the text context
     if(info.constructor === String){
-      console.log();
       info = info.replace(/--\/\(/g, ")"); //escape brakcet, must do a better solution
       parent.appendChild(document.createTextNode(info));
       return;
@@ -146,17 +325,6 @@ class Quas{
     let children = info[2];
     let el = document.createElement(tag);
 
-    //children
-    if(children !== undefined){
-      for(let i in children){
-        let child = Quas.createEl(children[i], comp, el);
-        if(child !== undefined){
-          el.appendChild(child);
-        }
-      }
-    }
-
-
 
 
     //attributes
@@ -165,19 +333,20 @@ class Quas{
       let prefix = a.substr(0,2);
       //custom attribute
       if(prefix === "q-"){
-        let useAttr = Quas.evalCustomAttr(comp, el, a, attrs[a]);
-        if(useAttr){
-          el.setAttribute(a, attrs[a]);
-        }
+        Quas.evalCustomAttr(a, attrs[a], info);
       }
       //event
       else if(prefix === "on"){
         let eventNames = a.substr(2).split("-on");
+        if(!comp.events){
+          comp.events = {};
+        }
         for(let i in eventNames){
-          el.addEventListener(eventNames[i],
-            function(e){
-              attrs[a](e, comp);
-          });
+          comp.events[eventNames[i]] = (e)=>{
+            attrs[a](e, comp);
+          }
+
+          el.addEventListener(eventNames[i], comp.events[eventNames[i]]);
         }
       }
       //attr
@@ -194,6 +363,16 @@ class Quas{
         let id = Atlas.getIDByPath(this.href);
         Atlas.push(id);
       });
+    }
+
+    //children
+    if(children !== undefined){
+      for(let i in children){
+        let child = Quas.createDOM(children[i], comp, el);
+        if(child !== undefined){
+          el.appendChild(child);
+        }
+      }
     }
 
     return el;
@@ -295,7 +474,7 @@ class Quas{
 
     @return {Boolean}
   */
-  static evalCustomAttr(comp, parent, key, data){
+  static evalCustomAttr(key, data, parentVDOM){
     let params = key.split("-");
 
     let command = params[1];
@@ -304,36 +483,27 @@ class Quas{
 
     if(command === "foreach"){
       for(let i in data){
-        let el = document.createElement(params[0]);
+        let vdom = [params[0], {}, []];
         if(params.length == 1){
-          el.textContent = data[i];
+          vdom[2].push(data[i]);
+          parentVDOM[2].push(vdom);
         }
-        else{
-          for(let j in data[i]){
-            let ch = document.createElement(params[1]);
-            ch.textContent = data[i][j];
-            el.appendChild(ch);
-          }
-        }
-        parent.appendChild(el);
       }
     }
     else if(command === "bind"){
       if(params[0] === undefined){
-        let domInfo = data[0](data[1]);
-        let newEl = Quas.createEl(domInfo, comp);
-        parent.appendChild(newEl);
+        let vdom = data[0](data[1]);
+        parentVDOM[2].push(vdom);
       }
       else if(params[0] === "for"){
         for(let o in data[1]){
-          let domInfo = data[0](data[1][o]);
-          let newEl = Quas.createEl(domInfo, comp);
-          parent.appendChild(newEl);
+          let vdom = data[0](data[1][o]);
+          parentVDOM[2].push(vdom);
         }
       }
     }
     else{
-      return Quas.customAttrs[command](comp, parent, params, data);
+      Quas.customAttrs[command](params, data, parentVDOM);
     }
   }
 
@@ -343,7 +513,7 @@ class Quas{
     @param {Component} component
   */
   static remove(comp){
-    comp.el.parentNode.removeChild(comp.el);
+    comp.dom.parentNode.removeChild(comp.dom);
   }
 
   /**
@@ -355,7 +525,7 @@ class Quas{
     @return {HTMLDOMElement}
   */
   static findChild(comp, s){
-    return comp.el.querySelector(s);
+    return comp.dom.querySelector(s);
   }
 
   /**
@@ -366,7 +536,7 @@ class Quas{
     @param {Function} callback
   */
   static eachChild(comp, s, func){
-    [].forEach.call(comp.el.querySelectorAll(s), func);
+    [].forEach.call(comp.dom.querySelectorAll(s), func);
   }
 
   /**
@@ -521,15 +691,15 @@ class Quas{
       for(let type in Quas.trackingEls){
         for(let i in Quas.trackingEls[type]){
           let e = Quas.trackingEls[type][i];
-          let elTop = e.comp.el.offsetTop;
-          let elBot = elTop + e.comp.el.offsetHeight;
+          let elTop = e.comp.dom.offsetTop;
+          let elBot = elTop + e.comp.dom.offsetHeight;
           let currentlyVisible = viewport.bottom - Quas.scrollSafeZone.top > elTop && viewport.top + Quas.scrollSafeZone.bottom < elBot;
           if(e.comp !== undefined){
             if(type === "enter" && !e.visible && currentlyVisible){
-              e.func(e.comp.el);
+              e.func(e.comp.dom);
             }
             else if(type === "exit" && e.visible && !currentlyVisible){
-              e.func(e.comp.el);
+              e.func(e.comp.dom);
             }
           }
           e.visible = currentlyVisible;
@@ -613,7 +783,7 @@ class Quas{
     @return {Boolean}
   */
   static isRendered(comp){
-    return comp.el !== undefined;
+    return comp.dom !== undefined;
   }
 
   /**
@@ -657,6 +827,7 @@ Quas.scrollSafeZone = {"top": 0, "bottom" : 0}; //safezone padding for scroll li
 Quas.isScrollable = true; //true if scrolling is enabled
 Quas.customAttrs = {}; //custom attributes
 Quas.isDevBuild = false; //true if using development mode
+Quas.comps = [];
 
 
 
@@ -699,6 +870,7 @@ class Atlas{
  static push(id){
    let newUrl = window.origin + Atlas.paths[id].path;
    window.history.pushState('','',newUrl);
+   document.body.scrollTop = document.documentElement.scrollTop = 0;
 
   //notify event listeners
   for(let i in Atlas.pushListeners){
