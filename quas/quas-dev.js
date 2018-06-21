@@ -3,19 +3,24 @@ This script is used for transpiling and bundling development builds
 For production use a static build and remember to remove links to this script
 */
 
+Quas.comps = [];
+
+var Dev = {};
+
 //tags that require no closing tag
-Quas.noClosingTag = ["img", "source", "br", "hr", "area", "track", "link", "col", "meta", "base", "embed", "param", "input"];
+Dev.noClosingTag = ["img", "source", "br", "hr", "area", "track", "link", "col", "meta", "base", "embed", "param", "input"];
+
+
 
 //all he imported files
-Quas.imports = {
+Dev.imports = {
   "js" : {
-    content : {
-    },
+    content : [],
     importsLeft : 0,
   }
 };
 
-Quas.devBundle = {};
+Dev.bundle = {};
 
 /**
   Returns the bundle as as javascript valid code
@@ -26,7 +31,7 @@ Quas.devBundle = {};
 
   @return {String}
 */
-Quas.parseBundle = function(bundle){
+Dev.parseBundle = function(bundle){
   let lines = bundle.split("\n");
   let open = -1;
   let html = "";
@@ -49,7 +54,7 @@ Quas.parseBundle = function(bundle){
       let closeIndex = lines[i].indexOf("</"+tagName+">");
       if(closeIndex > -1){
         html += lines[i].substr(0, closeIndex);
-        let info = Quas.convertToRenderInfo(html);
+        let info = Dev.convertHTMLToVDOM(html);
         lines[i] = info + lines[i].substr(closeIndex + tagName.length + 3);
         open = -1;
         html = "";
@@ -76,7 +81,7 @@ Quas.parseBundle = function(bundle){
 
   @return {String}
 */
-Quas.jsArr = function(arr, tab){
+Dev.jsArr = function(arr, tab){
   let str = "";
   if(tab === undefined){
     tab = 1;
@@ -103,7 +108,7 @@ Quas.jsArr = function(arr, tab){
         if(arr[i][key] === ""){
           arr[i][key] = "\"\"";
         }
-        str += "\"" + key + "\":" + Quas.parseProps(arr[i][key]) + ",";
+        str += "\"" + key + "\":" + Dev.parseProps(arr[i][key]) + ",";
       }
       //remove last comma, only if this element has attributes
       if(Object.keys(arr[i]).length>0){
@@ -123,7 +128,7 @@ Quas.jsArr = function(arr, tab){
         for(let j=0; j<arr[2].length; j++){
           //child element
           if(Array.isArray(arr[2][j])){
-            str += Quas.jsArr(arr[2][j], tab);
+            str += Dev.jsArr(arr[2][j], tab);
 
             if(j != arr[2].length-1){
               str += ",\n";
@@ -173,7 +178,7 @@ Quas.jsArr = function(arr, tab){
 
   @return {Sting}
 */
-Quas.convertToRenderInfo = function(html){
+Dev.convertHTMLToVDOM = function(html){
   let info;
   let depth = 0;
   let tagStart = -1;
@@ -198,7 +203,7 @@ Quas.convertToRenderInfo = function(html){
             trimmedText = trimmedText.replace(matches[i], newStr);
           }
 
-          let parseProps = Quas.parseProps(trimmedText);
+          let parseProps = Dev.parseProps(trimmedText);
           parent.push(parseProps);
         }
         text = "";
@@ -256,7 +261,7 @@ Quas.convertToRenderInfo = function(html){
             }
           }
         }
-        if(Quas.noClosingTag.indexOf(tagInfo[0]) == -1){
+        if(Dev.noClosingTag.indexOf(tagInfo[0]) == -1){
           depth++;
         }
       }
@@ -267,8 +272,7 @@ Quas.convertToRenderInfo = function(html){
     }
   }
 
-  //console.log(Quas.jsArr(info));
-  return Quas.jsArr(info);
+  return Dev.jsArr(info);
 }
 
 /**
@@ -278,7 +282,7 @@ Quas.convertToRenderInfo = function(html){
 
   @param {String}
 */
-Quas.parseProps = function(str){
+Dev.parseProps = function(str){
   let matches =  str.match(/\{.*?\}/g);
   let hasFunc = false;
   for(let i in matches){
@@ -338,7 +342,7 @@ String.prototype.trimExcess = function(){
   @param {String[]} content
   @param {String} filename
 */
-Quas.exportToFile = function(content, filename){
+Dev.exportToFile = function(content, filename){
   let text = "";
   for(let i in content){
     text += content[i] + "\n";
@@ -353,57 +357,97 @@ Quas.exportToFile = function(content, filename){
   document.body.removeChild(element);
 }
 
-
-
-Quas.import = function(path, type){
-  if(Quas.imports[type] === undefined){
-    Quas.imports[type] = {
+//imports a file
+Dev.import = function(path, type, key){
+  if(Dev.imports[type] === undefined){
+    Dev.imports[type] = {
       content : {},
       importsLeft : 1
     };
   }
   else{
-    Quas.imports[type].importsLeft += 1;
+    Dev.imports[type].importsLeft += 1;
   }
   Quas.ajax({
     url : path,
     type : "GET",
     success : (file) => {
-      Quas.imports[type].content[path] = file;
-      Quas.imports[type].importsLeft -= 1;
-      if(Quas.imports[type].importsLeft == 0){
-        Quas.evalImports(type);
+      if(type == "js"){
+        Dev.parseImports(path, file, key);
+      }
+      else if(type == "css"){
+        cssContent = Dev.imports[type].content;
+        if(!cssContent[path]){
+          cssContent[path] = file;
+        }
+      }
+
+      Dev.imports[type].importsLeft -= 1;
+
+      //check if all the files loaded of this type have been completed
+      if(Dev.imports[type].importsLeft == 0){
+        Dev.addImports(type);
       }
     },
     error : (e) => {
-      Quas.imports[type].importsLeft -= 1;
+      Dev.imports[type].importsLeft -= 1;
     }
   });
 }
 
-//eval the current imports
-Quas.evalImports = function(type){
+//concatanate and add the current imports
+Dev.addImports = function(type){
   let bundle = "";
   if(type == "js"){
-    for(let i in Quas.imports.js.content){
-      bundle +=
-        "/*---------- " + i + " ----------*/\n\n" +
-        Quas.imports.js.content[i].trim() + "\n\n";
+    let jsContent = Dev.imports.js.content;
+    let keys = "";
+    for(let i=0; i<jsContent.length; i++){
+      //root file is not a module
+      if(jsContent[i].key == "root"){
+        bundle +=
+          "/*---------- " + jsContent[i].path + " ----------*/\n" +
+          jsContent[i].file.trim() + "\n\n";
+      }
+      else{
+        bundle += "/*---------- " + jsContent[i].path + " ----------*/\n";
+
+        //replace all "Quas.export(" with "Quas.modules[key] = ("
+        let exportMatch = jsContent[i].file.match(/Quas\.export\(/);
+
+        if(exportMatch){
+          let setModule = "Quas.modules['" + jsContent[i].key + "'] = (";
+          jsContent[i].file = jsContent[i].file.replace(exportMatch[0], setModule);
+        }
+
+        bundle += jsContent[i].file + "\n";
+        keys +="const " + jsContent[i].key + " = Quas.modules['" + jsContent[i].key + "'];\n" +
+          "if(typeof Quas.modules['" + jsContent[i].key + "'].init =='function'){\n" +
+          "  Quas.modules['" + jsContent[i].key + "'].init('" + jsContent[i].key + "');\n}\n";
+
+      }
     }
-    bundle = Quas.parseBundle(bundle);
-    Quas.devBundle.js = bundle;
+
+    //add all the references to modules to the end
+    //e.g. const Card = Quas.modules["Card"];
+    bundle += keys;
+
+    bundle = Dev.parseBundle(bundle);
+    Dev.bundle.js = bundle;
     bundle += "\nif(typeof ready==='function'){ready();}";
 
     console.log(bundle);
-    eval(bundle);
+    var script = document.createElement("script");
+    script.type = 'text/javascript';
+    script.textContent = bundle;
+    document.getElementsByTagName('head')[0].appendChild(script);
   }
   else if(type == "css"){
-    for(let i in Quas.imports.css.content){
+    for(let i in Dev.imports.css.content){
       bundle +=
         "/*---------- " + i + " ----------*/\n\n" +
-        Quas.imports.css.content[i].trim() + "\n\n";
+        Dev.imports.css.content[i].trim() + "\n\n";
     }
-    Quas.devBundle.css = bundle;
+    Dev.bundle.css = bundle;
     var style = document.createElement("style");
     style.textContent = bundle;
     document.getElementsByTagName("head")[0].appendChild(style);
@@ -411,65 +455,17 @@ Quas.evalImports = function(type){
 }
 
 //for development builds
-Quas.bundle = function(rootFile){
+Quas.main = function(rootFile){
   Quas.isDevBuild = true;
   Quas.ajax({
     url : rootFile,
     type : "GET",
     success : (file) => {
-      let lines = file.split("\n");
-      let importRegex = /import+\s".*"|import+\s'.*'|import+\s`.*`/g;
-      let multiLineCommentOpen = false;
-      let finalFile = "";
-      let hasImport = false;
+      let hasImport = Dev.parseImports(rootFile, file, "root");
 
-      for(let i=0; i<lines.length; i++){
-        let validLine = "";
-        if(lines[i].indexOf("/*") > -1){
-          multiLineCommentOpen = true;
-          validLine += lines[i].split("/*")[0];
-        }
-
-        if(lines[i].indexOf("*/") > -1){
-          multiLineCommentOpen = false;
-          validLine += lines[i].split("*/")[1];
-        }
-
-        if(!multiLineCommentOpen && validLine == ""){
-          validLine = lines[i].split("//")[0];
-        }
-        else if(!multiLineCommentOpen && validLine != ""){
-          validLine = validLine.split("//")[0];
-        }
-
-        let importMatch = validLine.match(/import+\s".*"|import+\s'.*'|import+\s`.*`/);
-        if(importMatch){
-          hasImport = true;
-          let path = importMatch[0].match(/".*?"/)[0];
-          path = path.substr(1,path.length-2);
-
-          let arr = path.split(".");
-          let extention = arr[arr.length-1];
-
-          if(extention == "js" || extention == "css"){
-            Quas.import(path, extention);
-          }
-          else{ //both
-            Quas.import(path+".js", "js");
-            Quas.import(path+".css", "css");
-          }
-        }
-        else{
-          finalFile += lines[i] + "\n";
-        }
-      }
-
-      //add root file
-      Quas.imports.js.content[rootFile] = finalFile;
-
-      //if no imports just eval the root
+      //if no imports just add the root
       if(!hasImport){
-        Quas.evalImports("js");
+        Dev.addImports("js");
       }
     },
     error : (e) => {
@@ -478,19 +474,95 @@ Quas.bundle = function(rootFile){
   });
 }
 
+//checks a javascript file to see if it has any imports
+Dev.parseImports = (filename, file, key) => {
+//  if(key === undefined){
+//  }
+
+  //check if this file key has already been imported
+  for(let i=0; i<Dev.imports.js.content.length; i++){
+    if(Dev.imports.js.content[i].key == key){
+      return false;
+    }
+  }
+
+  let lines = file.split("\n");
+  let importModuleRegex = /import+\s.*?\sfrom+\s".*"|import+\s.*?\sfrom+\s'.*'|import+\s.*?\sfrom+\s`.*`/;
+  let importCssRegex = /import+\s".*"|import+\s'.*'|import+\s`.*`/;
+  let multiLineCommentOpen = false;
+  let parsedFile = "";
+  let hasImport = false;
+
+  for(let i=0; i<lines.length; i++){
+    let validLine = "";
+    if(lines[i].indexOf("/*") > -1){
+      multiLineCommentOpen = true;
+      validLine += lines[i].split("/*")[0];
+    }
+
+    if(lines[i].indexOf("*/") > -1){
+      multiLineCommentOpen = false;
+      validLine += lines[i].split("*/")[1];
+    }
+
+    if(!multiLineCommentOpen && validLine == ""){
+      validLine = lines[i].split("//")[0];
+    }
+    else if(!multiLineCommentOpen && validLine != ""){
+      validLine = validLine.split("//")[0];
+    }
+
+    let importModuleMatch = validLine.match(importModuleRegex);
+    let importCssMatch = validLine.match(importCssRegex);
+    if(importModuleMatch){
+      hasImport = true;
+      let key = importModuleMatch[0].split(/\s/)[1];
+      let path = importModuleMatch[0].match(/".*?"|'.*?'|`.*?`/)[0];
+      path = path.substr(1,path.length-2); //remove quotes
+
+      let arr = path.split(".");
+      let extention = arr[arr.length-1];
+
+      if(extention == "js"){
+        Dev.import(path, extention, key);
+      }
+    }
+    else if(importCssMatch){
+      hasImport = true;
+      let path = importCssMatch[0].match(/".*?"|'.*?'|`.*?`/)[0];
+      path = path.substr(1,path.length-2); //remove quotes
+      let arr = path.split(".");
+      let extention = arr[arr.length-1];
+      Dev.import(path, extention);
+    }
+    else{
+      parsedFile += lines[i] + "\n";
+    }
+  }
+
+  //add file
+  Dev.imports.js.content.push({
+    path : filename,
+    key : key,
+    file : parsedFile
+  });
+
+  return hasImport;
+}
+
 //export the bundle
-Quas.export = function(filename, extention){
+Quas.build = function(filename, extention){
   if(!filename){
     var filename = "bundle";
   }
-  let types = Quas.devBundle;
+  let types = Dev.bundle;
   if(extention !== undefined){
     types = [extention];
   }
 
   for(let i in types){
     let element = document.createElement('a');
-    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + Quas.devBundle[types[i]]);
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + Dev.bundle[types[i]]);
     element.setAttribute('download', filename+"."+types[i]);
     element.style.display = 'none';
     document.body.appendChild(element);

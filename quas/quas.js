@@ -68,8 +68,8 @@ class Quas{
       comp.vdom = comp.render();
       comp.dom = Quas.createDOM(comp.vdom, comp);
       parent.appendChild(comp.dom);
-      if(comp.onPush){
-        Atlas.addPushListener(comp);
+      if(Quas.hasRouter && comp.onPush){
+        Router.addPushListener(comp);
       }
     }
     //diff the dom
@@ -290,8 +290,8 @@ class Quas{
         }
       }
     }
-    if(comp.onPush){
-      Atlas.addPushListener(comp);
+    if(Quas.hasRouter && comp.onPush){
+      Router.addPushListener(comp);
     }
   }
 
@@ -356,12 +356,12 @@ class Quas{
     }
 
     //link target = push
-    if(tag == "a" && attrs.target == "push"){
+    if(Quas.hasRouter && tag == "a" && attrs.target == "push"){
       //add on click eventlistener
       el.addEventListener("click", function(e){
         e.preventDefault();
-        let id = Atlas.getIDByPath(this.href);
-        Atlas.push(id);
+        let id = Router.getIDByPath(this.href);
+        Router.push(id);
       });
     }
 
@@ -817,7 +817,9 @@ class Quas{
     }
   }
 
-
+  static hasRouter(){
+    return (typeof Router !== "undefined");
+  }
 }
 
 Quas.events = []; //all the custom events data
@@ -827,82 +829,9 @@ Quas.scrollSafeZone = {"top": 0, "bottom" : 0}; //safezone padding for scroll li
 Quas.isScrollable = true; //true if scrolling is enabled
 Quas.customAttrs = {}; //custom attributes
 Quas.isDevBuild = false; //true if using development mode
-Quas.comps = [];
+Quas.modules = {};
 
 
-
-//handling of the mapping and changing the page
-class Atlas{
-  //map a path
-  static map(id, path, title, func){
-    Atlas.paths[id] = {
-        "path": path,
-        "title":title
-    };
-  }
-
-//returns the path id of the current page using the URl
- static getCurrentPathID(){
-   let url = location.pathname;
-   for(let id in Atlas.paths){
-     if(Atlas.paths[id].path == url){
-       return id;
-     }
-   }
- }
-
- static currentPathStartsWith(str){
-   return (location.pathname.indexOf(str) > -1);
- }
-
- //returns a id of a matching path to a href
- static getIDByPath(href){
-   //remove origin form href
-   let path = href.replace(window.origin,"");
-   for(let id in Atlas.paths){
-     if(Atlas.paths[id].path == path){
-        return id;
-      }
-   }
- }
-
- //push a new page by the id in Atlas.paths
- static push(id){
-   let newUrl = window.origin + Atlas.paths[id].path;
-   window.history.pushState('','',newUrl);
-   document.body.scrollTop = document.documentElement.scrollTop = 0;
-
-  //notify event listeners
-  for(let i in Atlas.pushListeners){
-    Atlas.pushListeners[i].onPush(Atlas.paths[id].path);
-  }
- }
-
- static pushByPath(path){
-    let newUrl = window.origin + path;
-    window.history.pushState('','',newUrl);
-    for(let i in Atlas.pushListeners){
-      Atlas.pushListeners[i].onPush(path);
-    }
- }
-
- //add a component to listen to an atlas event
- static addPushListener(comp){
-   Atlas.pushListeners.push(comp);
- }
-}
-
-//all the paths mapped to the atlas
-Atlas.paths = {};
-//listeners to events
-Atlas.pushListeners = [];
-
-//listen to back and forward button in browser
-window.addEventListener("popstate", function(e) {
-  for(let i in Atlas.pushListeners){
-    Atlas.pushListeners[i].onPush(e.target.location.href);
-  }
-});
 
 window.onload = function(){
   if(typeof ready === "function" && !Quas.isDevBuild){
