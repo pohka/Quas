@@ -159,7 +159,7 @@ class Quas{
 
             //custom attr
             if(isCustomAttr){
-              Quas.evalCustomAttr(a, newVDOM[1][a], newVDOM);
+              Quas.evalCustomAttr(a, newVDOM[1][a], newVDOM, comp, dom);
             }
             //diff attribute value
             else if(vdom[1][a] != newVDOM[1][a]){
@@ -333,7 +333,7 @@ class Quas{
       let prefix = a.substr(0,2);
       //custom attribute
       if(prefix === "q-"){
-        Quas.evalCustomAttr(a, attrs[a], info);
+        Quas.evalCustomAttr(a, attrs[a], info, comp, el);
       }
       //event
       else if(prefix === "on"){
@@ -474,7 +474,7 @@ class Quas{
 
     @return {Boolean}
   */
-  static evalCustomAttr(key, data, parentVDOM){
+  static evalCustomAttr(key, data, parentVDOM, comp, dom){
     let params = key.split("-");
 
     let command = params[1];
@@ -503,7 +503,7 @@ class Quas{
       }
     }
     else{
-      Quas.customAttrs[command](params, data, parentVDOM);
+      Quas.customAttrs[command](params, data, parentVDOM, comp, dom);
     }
   }
 
