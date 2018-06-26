@@ -3,7 +3,7 @@ This script is used for transpiling and bundling development builds
 For production use a static build and remember to remove links to this script
 */
 
-Quas.comps = [];
+
 
 var Dev = {};
 
@@ -455,13 +455,20 @@ Dev.addImports = function(type){
 }
 
 //for development builds
-Quas.main = function(rootFile){
-  Quas.isDevBuild = true;
+Dev.load = function(){
+  let mainFile;
+  if(!Dev.main){
+    mainFile = "/main.js";
+  }
+  else{
+    mainFile = Dev.main;
+  }
+  
   Quas.ajax({
-    url : rootFile,
+    url : mainFile,
     type : "GET",
     success : (file) => {
-      let hasImport = Dev.parseImports(rootFile, file, "root");
+      let hasImport = Dev.parseImports(mainFile, file, "root");
 
       //if no imports just add the root
       if(!hasImport){
@@ -469,7 +476,7 @@ Quas.main = function(rootFile){
       }
     },
     error : (e) => {
-      console.error("Root file not found: " + rootFile);
+      console.error("Root file not found: " + mainFile);
     }
   });
 }
@@ -551,7 +558,7 @@ Dev.parseImports = (filename, file, key) => {
 }
 
 //export the bundle
-Quas.build = function(filename, extention){
+Dev.build = function(filename, extention){
   if(!filename){
     var filename = "bundle";
   }
@@ -570,3 +577,7 @@ Quas.build = function(filename, extention){
     document.body.removeChild(element);
   }
 }
+
+document.addEventListener("DOMContentLoaded", function(event) {
+  Dev.load();
+});

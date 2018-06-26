@@ -3,9 +3,12 @@
 */
 
 class Component{
-  constructor(){
-    if(Quas.isDevBuild){
-      Quas.comps.push(this);
+  constructor(props){
+    if(props){
+      this.props = props;
+    }
+    else{
+      this.props = {}
     }
   }
   /**
@@ -13,11 +16,6 @@ class Component{
 
     @param {String} key
     @param {?} value
-  */
-  setProp(k, v){
-    this[k] = v;
-    Quas.render(this);
-  }
 
   /**
     Sets multiple properties and rerenders the component
@@ -26,26 +24,25 @@ class Component{
   */
   setProps(obj){
     for(let k in obj){
-      this[k] = obj[k];
+      this.props[k] = obj[k];
     }
     Quas.render(this);
   }
 
-  /**
-    removes this component from the DOM tree
-  */
-  remove(){
-    if(this.dom){
-      this.dom.parentNode.removeChild(this.dom);
-      this.dom = undefined;
-    }
-  }
 
   /*
     returns true if this component has been rendered
   */
-  isRendered(){
+  isMounted(){
     return this.dom !== undefined;
+  }
+
+  unmount(){
+    if(this.dom){
+      this.dom.remove();
+      this.dom = undefined;
+    }
+    this.vdom = undefined;
   }
 }
 
@@ -63,21 +60,53 @@ class Quas{
     if(parent && parent.constructor === String){
       parent = document.querySelector(parent);
     }
+
+
     //first time rendering
-    if(!comp.isRendered() && parent !== null){
+    if(!comp.isMounted() && parent !== null && parent){
       comp.vdom = comp.render();
       comp.dom = Quas.createDOM(comp.vdom, comp);
       parent.appendChild(comp.dom);
-      if(Quas.hasRouter && comp.onPush){
-        Router.addPushListener(comp);
-      }
     }
-    //diff the dom
-    else if(comp.isRendered()){
+
+    //diff the vdom
+    else if(comp.isMounted()){
       let newVDOM = comp.render();
-      Quas.diffVDOM(comp, comp.dom.parentNode, comp.dom, comp.vdom, newVDOM);
+
+      //root tag is different
+      let hasDiff = this.diffRootVDOM(comp, comp.vdom, newVDOM);
+
+      if(!hasDiff){
+        this.diffVDOM(comp, comp.dom.parentNode, comp.dom, comp.vdom, newVDOM);
+      }
       comp.vdom = newVDOM;
     }
+  }
+
+  static diffRootVDOM(comp, vdom, newVDOM){
+    let hasDiff = false;
+    if(newVDOM[0] != comp.vdom[0] || //diff tags
+      Object.keys(vdom[1]).length != Object.keys(newVDOM[1]).length){ //diff attr count
+      hasDiff = true;
+    }
+
+    //diff attrs value
+    if(!hasDiff){
+      for(let key in vdom[1]){
+        if(!(newVDOM[1].hasOwnProperty(key) && vdom[1][key] == newVDOM[1][key])){
+          hasDiff = true;
+          break;
+        }
+      }
+    }
+
+    //swap out the root dom
+    if(hasDiff){
+      let newDOM = Quas.createDOM(newVDOM, comp);
+      comp.dom.parentNode.replaceChild(newDOM, comp.dom);
+      comp.dom = newDOM;
+    }
+    return hasDiff;
   }
 
   static diffVDOM(comp, parent, dom, vdom, newVDOM){
@@ -290,9 +319,6 @@ class Quas{
         }
       }
     }
-    if(Quas.hasRouter && comp.onPush){
-      Router.addPushListener(comp);
-    }
   }
 
   /**
@@ -360,8 +386,13 @@ class Quas{
       //add on click eventlistener
       el.addEventListener("click", function(e){
         e.preventDefault();
-        let id = Router.getIDByPath(this.href);
-        Router.push(id);
+        let path = this.href.replace(window.location.origin, "");
+        let route = Router.findRouteByPath(path);
+        if(!route && Router.route404){
+          route = Router.route404;
+          route.fullpath = path;
+        }
+        Router.push(route);
       });
     }
 
@@ -461,6 +492,46 @@ class Quas{
     }
   }
 
+
+
+  /*
+
+
+    // Default options are marked with *
+    {
+      body: JSON.stringify(data), // must match 'Content-Type' header
+      cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+      credentials: 'same-origin', // include, same-origin, *omit
+      headers: {
+        'user-agent': 'Mozilla/4.0 MDN Example',
+        'content-type': 'application/json'
+      },
+      method: 'POST', // *GET, POST, PUT, DELETE, etc.
+      mode: 'cors', // no-cors, cors, *same-origin
+      redirect: 'follow', // manual, *follow, error
+      referrer: 'no-referrer', // *client, no-referrer
+    }
+  */
+  static fetch(url, type, data) {
+    return fetch(url, data)
+      .then((response) => {
+        if (!response.ok) return new Error(response);
+
+        if(!type || type == "text"){
+          return response.text();
+        }
+        else if(type == "json"){
+          return response.json();
+        }
+        else if(type == "blob"){
+          return response.blob();
+        }
+        else if(type == "buffer"){
+          return response.arrayBuffer();
+        }
+    });
+  }
+
   /**
     Evaluates a custom attribute
 
@@ -505,38 +576,6 @@ class Quas{
     else{
       Quas.customAttrs[command](params, data, parentVDOM, comp, dom);
     }
-  }
-
-  /**
-    Removes a component from the DOM tree
-
-    @param {Component} component
-  */
-  static remove(comp){
-    comp.dom.parentNode.removeChild(comp.dom);
-  }
-
-  /**
-    Find an element with a matching selector, within this components element in thr DOM tree
-
-    @param {Component} component
-    @param {String} selector
-
-    @return {HTMLDOMElement}
-  */
-  static findChild(comp, s){
-    return comp.dom.querySelector(s);
-  }
-
-  /**
-    Call a function for each child specified for the selector
-
-    @param {Component} component
-    @param {String} selector
-    @param {Function} callback
-  */
-  static eachChild(comp, s, func){
-    [].forEach.call(comp.dom.querySelectorAll(s), func);
   }
 
   /**
@@ -775,66 +814,22 @@ class Quas{
     document.cookie = k + "=;expires=Thu, 01 Jan 1970 00:00:01 GMT;path=/";
   }
 
-  /**
-    Returns true if the component is rendered to the DOM tree
-
-    @param {Component} component
-
-    @return {Boolean}
-  */
-  static isRendered(comp){
-    return comp.dom !== undefined;
-  }
-
-  /**
-    Makes the function listen to a custom event
-    The data will be sent to the listeners when broadcasted
-
-    @param {String} eventName
-    @param {Function} callback
-
-  */
-  static addEventListener(eventName, callback){
-    if(Quas.events[eventName] === undefined){
-      Quas.events[eventName] = [];
-    }
-
-    Quas.events[eventName].push(callback);
-  }
-
-  /**
-    Broadcast a custom event to all the listeners
-    data is passed as the first parameter
-
-    @param {String} eventName
-    @param {OBJECT} data - (optional)
-  */
-  static broadcastEvent(e, data){
-    if(Quas.events[e] !== undefined){
-      for(let i in Quas.events[e]){
-        Quas.events[e][i](data);
-      }
-    }
-  }
-
   static hasRouter(){
     return (typeof Router !== "undefined");
   }
 }
 
-Quas.events = []; //all the custom events data
 Quas.trackingEls = {"enter" : [], "exit": []}; //all the scroll tracking events
 Quas.scrollKeys = {37: 1, 38: 1, 39: 1, 40: 1}; //Keys codes that can scroll
 Quas.scrollSafeZone = {"top": 0, "bottom" : 0}; //safezone padding for scroll listeners
 Quas.isScrollable = true; //true if scrolling is enabled
 Quas.customAttrs = {}; //custom attributes
-Quas.isDevBuild = false; //true if using development mode
-Quas.modules = {};
+Quas.modules = {}; //container for all the modules
 
 
 
-window.onload = function(){
-  if(typeof ready === "function" && !Quas.isDevBuild){
+document.addEventListener("DOMContentLoaded", function(event) {
+  if(typeof ready === "function" && typeof Dev == "undefined"){
     ready();
   }
-}
+});
