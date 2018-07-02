@@ -3,14 +3,149 @@ This script is used for transpiling and bundling development builds
 For production use a static build and remember to remove links to this script
 */
 
+/*
+  Object to help manipulate the (AST) Abstract Syntax Tree data of the vdom
+
+structure of vdom:
+ ["tag", { key, "val" }, []]
+ [ tag, attrs, children]
+ */
+const VDOM = {
+  /**
+    ---
+    returns the tag of the given vdom
+    ---
+
+    @param {AST} vdom
+
+    @return {String}
+  */
+  tag : (vdom) => {
+    return vdom[0];
+  },
+  /**
+    ---
+    returns the attributes for the given vdom
+    ---
+
+    @param {AST} vdom
+
+    @return {Object}
+  */
+  attrs : (vdom) => {
+    return vdom[1];
+  },
+
+  /**
+    ---
+    returns all the child nodes of the given vdom
+    ---
+
+    @param {AST} vdom
+
+    @return {Array<AST|String>}
+  */
+  childNodes : (vdom) => {
+    return vdom[2];
+  },
+  /**
+    ---
+    returns the value of an attribute
+    ---
+
+    @param {AST} vdom
+    @param {String} key
+
+    @return  {String}
+  */
+  getAttr : (vdom, key) => {
+    return vdom[1][key];
+  },
+  /**
+    ---
+    Sets an attribute on the given vdom
+    ---
+
+    ```
+    let myVDom = VDOM.createNode("div");
+    VDOM.setAttr(myVDom, "class", "myclass");
+    ```
+
+    @param {AST} vdom
+    @param {String} key
+    @param {String} value
+  */
+  setAttr : (vdom, key, val) => {
+    vdom[1][key] = val;
+  },
+  /**
+    ---
+    Adds a child node to the given AST
+    ---
+
+    @param {AST} vdom
+    @param {AST|String} child
+  */
+  addChild : (vdom, childNode) => {
+    vdom[2].push(childNode);
+  },
+  /**
+    ---
+    returns the last child node of the given AST
+    ---
+
+    @param {AST} vdom
+
+    @return {AST|String}
+  */
+  getLastChild : (vdom) => {
+    return vdom[2][vdom[2].length-1];
+  },
+  /**
+    ---
+    creates a vdom AST
+    ---
+
+    ```
+    //equivilant of: <div id="myid"></div>
+    VDOM.createNode("div", { id : "myid" });
+    ```
+
+    @param {String} tag
+    @param {Object} attributes - (optional)
+    @param {Array<Object>} children - (optional)
+
+    @return {AST}
+  */
+  createNode : (tag, attrs, children) => {
+    if(!attrs){
+      attrs = {};
+    }
+    if(!children){
+      children = []
+    }
+    return [tag, attrs, children];
+  },
+
+  /**
+    ---
+    returns true if the vdom node passed is a text node
+    ---
+
+    @param {AST|String} vdom
+
+    @return {Boolean}
+  */
+  isTextNode : (vdom) => {
+    return !Array.isArray(vdom);
+  }
+}
 
 
-var Dev = {};
+const Dev = {};
 
 //tags that require no closing tag
 Dev.noClosingTag = ["img", "source", "br", "hr", "area", "track", "link", "col", "meta", "base", "embed", "param", "input"];
-
-
 
 //all he imported files
 Dev.imports = {
@@ -22,299 +157,623 @@ Dev.imports = {
 
 Dev.bundle = {};
 
-/**
-  Returns the bundle as as javascript valid code
-  The returned string will have all the HTML syntax transpiled to a render info array
-  which is valid JavaScript syntax
+/*
+  transpiles a javascript file into valid syntax
 
-  @param {Array} bundle
+  @param {String} fileContents
 
   @return {String}
 */
-Dev.parseBundle = function(bundle){
+Dev.transpile = (bundle) => {
   let lines = bundle.split("\n");
-  let open = -1;
-  let html = "";
-  let tagName = "quas";
-  let inRender = false;
+
+  let inCommentBlock = false;
+  let result = "";
+  let quoteRegex = /"(.*?)"|`(.*?)`|'(.*?)'/;
+  let hasCommentBlockChange;
+  let inHtmlBlock = false;
+  let hasHtmlBlockChanged = false;
+  let htmlText = "";
+  let vdom;
+  let depth = 0;
+
+  let tagContent = "";
+  let inMultiLineTag = false;
+  let prevLine = "";
+
+
   for(let i=0; i<lines.length; i++){
-    //open tag
-    let openIndex = lines[i].indexOf("<"+tagName+">");
-    if(openIndex > -1){
-      html += lines[i].substr(openIndex += tagName.length + 2);
-      open = i;
-      lines.splice(i, 1);
-      i--;
+    let lineContents = lines[i].split(quoteRegex).join(" ");
+    let hasCommentBlockChange = false;
+    let curLine = "";
+
+
+    //remove comment block
+    if(!inCommentBlock && lineContents.indexOf(/\/\*(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/) > -1){
+      let arr = lines[i].split(/\/\*(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/);
+      curLine += arr[0];
+      inCommentBlock = true;
+      hasCommentBlockChange = true;
+    }
+    if(inCommentBlock && lineContents.indexOf(/\*\/(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/) > -1){
+      let arr = lines[i].split(/\*\/(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/);
+      curLine += " " + arr[1];
+      inCommentBlock = false;
+      hasCommentBlockChange = true;
     }
 
-    //currently open
-    else if(open > -1){
-
-      //closed tag
-      let closeIndex = lines[i].indexOf("</"+tagName+">");
-      if(closeIndex > -1){
-        html += lines[i].substr(0, closeIndex);
-        let info = Dev.convertHTMLToVDOM(html);
-        lines[i] = info + lines[i].substr(closeIndex + tagName.length + 3);
-        open = -1;
-        html = "";
-      }
-      //still currently open
-      else{
-        //split by "//" out side of quotes
-        let match = lines[i].split(/(?=(?:[^"]*"[^"]*")*[^"]*$)\/\//g);
-        html += match[0];
-        lines.splice(i, 1);
-        i--;
-      }
-    }
-  }
-  bundle = lines.join("\n");
-  return bundle;
-}
-
-/**
-  Returns an array as a javascript valid styntax for the array with indentation
-
-  @param {Array} array
-  @param {Number} indentCount
-
-  @return {String}
-*/
-Dev.jsArr = function(arr, tab){
-  let str = "";
-  if(tab === undefined){
-    tab = 1;
-  }
-
-  for(let t=0; t<tab; t++){
-    str += "  ";
-  }
-  str += "[\n";
-  tab++;
-  for(let i=0; i<arr.length; i++){
-    for(let t=0; t<tab; t++){
-      str += "  ";
-    }
-    //tag
-    if(i == 0){
-      str += '"' + arr[i] + '",\n';
+    //no code blocks, so just use the raw line
+    if(!hasCommentBlockChange){
+      curLine = lines[i];
     }
 
-    //attrs
-    else if(i == 1){
-      str += "{"
-      for(let key in arr[i]){
-        if(arr[i][key] === ""){
-          arr[i][key] = "\"\"";
-        }
-        str += "\"" + key + "\":" + Dev.parseProps(arr[i][key]) + ",";
-      }
-      //remove last comma, only if this element has attributes
-      if(Object.keys(arr[i]).length>0){
-        str = str.substr(0,str.length-1);
-      }
-      str += "}, \n";
-    }
+    if(!inCommentBlock){
+      //remove end of line comment
+      curLine = prevLine.split(/\/\/(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/)[0] + curLine.split(/\/\/(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/)[0];
+      prevLine = "";
 
-    //children
-    else if(i==2){
-      if(arr[2].length == 0){
-        str += "[]";
-      }
-      else{
-        str += "[\n";
-        tab++;
-        for(let j=0; j<arr[2].length; j++){
-          //child element
-          if(Array.isArray(arr[2][j])){
-            str += Dev.jsArr(arr[2][j], tab);
+      //find start of html parse
+      if(!inHtmlBlock && curLine.indexOf("#<") > -1){
+        depth = 0;
+        inHtmlBlock = true;
+        //add js to result
+        let arr = curLine.split("#<");
+        result += arr[0];
+        htmlString = "";
 
-            if(j != arr[2].length-1){
-              str += ",\n";
+        curLine = "<" + arr[1];
+        hasHtmlBlockChanged = true;
+      }
+
+      if(inHtmlBlock){
+        let curLineNoQuotes = curLine.replace(new RegExp(quoteRegex, "g"), "");
+        let change = 0;
+
+        let openBrackets = Dev.matchesForBracket(curLineNoQuotes, "<");
+        change += openBrackets;
+        let closeBrackets = Dev.matchesForBracket(curLineNoQuotes, ">");
+        change -= closeBrackets;
+
+        //has at least 1 full tag on this line
+        if(change == 0 && openBrackets > 0 && closeBrackets > 0){
+          let tags = curLineNoQuotes.match(/<.*?>/g);
+
+          if(tags){
+            for(let t=0; t<tags.length; t++){
+              let tagName = tags[t].substr(1, tags[t].length-2).split(/\s/)[0];
+              //dont count for when no closing tag is required
+              if(Dev.requiresClosingTag(tagName)){
+                //is closing
+                if(tags[t].charAt(1) == "/"){
+                  //if using closing tag when no required
+                  if(Dev.requiresClosingTag(tagName.substr(1))){
+                    depth -= 1;
+                  }
+                }
+                //is opening
+                else{
+                  depth += 1;
+                }
+              }
             }
+          }
+          htmlString += curLine;
+        }
+        else if(change > 0){
+          tagContent = Dev.getStringAfterLastOpenBraket(curLine);
+          inMultiLineTag = true;
+        }
+        //in multiline tag
+        else if(inMultiLineTag){
+
+          //end of multiline
+          if(change < 0){
+            inMultiLineTag = false;
+            //split curline by end of multiLine tag
+            let arr = Dev.splitByEndMultiLineTag(curLine);
+
+            //add tag content for multiline tag
+            htmlString += tagContent + arr[0] + ">";
+
+            //add the rest on the prevLine
+            prevLine = arr[1];
+            tagContent = "";
+            depth += 1;
+          }
+          //within multiline tag, but not ending on this line
+          else{
+            tagContent += curLine;
+          }
+        }
+        else if(!inMultiLineTag && change == 0){
+          htmlString += curLine
+        }
+
+        //end of html block
+        if(!inMultiLineTag && depth <= 0 && !hasHtmlBlockChanged){
+          result += Dev.transpileHTMLBlock(htmlString);
+          let els = lines[i].split(/\<\/.*?\>/);
+          if(els.length > 1){
+            result += els[1];
           }
           else{
-            for(let t=0; t<tab; t++){
-              str += "  ";
-            }
-
-            //function call prop
-            if(arr[2][j].match(/\(.*?\)/g)){
-              str += arr[2][j];
-            }
-            //text context
-            else{
-              str += '"'+ arr[2][j] + '"';
-            }
-            if(j != arr[2].length-1){
-              str += ",\n";
-            }
+            result += els[0];
           }
+          inHtmlBlock = false;
         }
+        if(hasHtmlBlockChanged){
+          hasHtmlBlockChanged = false;
+        }
+      }
 
-        str += "\n";
-        for(let t=0; t<tab-1; t++){
-          str += "  ";
-        }
-        str += "]";
-        tab--;
+      else {
+        result += curLine + "\n";
       }
     }
   }
-  str += "\n";
-  for(let t=0; t<tab-1; t++){
-    str += "  ";
-  }
-  str += "]";
-  return str;
+  return result;
 }
 
-/**
-  Convert HTML syntax to render info as a string
-  with JavaScript valid syntax for an array
-
-  @param {String} htmlString
-
-  @return {Sting}
+/*
+  takes a string with html syntax and returns a valid js array matching the vdom AST
 */
-Dev.convertHTMLToVDOM = function(html){
-  let info;
-  let depth = 0;
-  let tagStart = -1;
+Dev.transpileHTMLBlock = (html) => {
+  let res = Dev.convertHTMLStringToVDOM(html);
+  return Dev.stringifyVDOM(res, 1);
+}
+
+
+/*
+  converts a html string to a vdom AST
+
+  @param {String} html
+
+  @return {AST}
+*/
+Dev.convertHTMLStringToVDOM = (html) =>{
+  let inQuote = false;
+  let quoteType;
+  let char, lastChar = "";
+  let tagContent = "";
+  let insideTag = false;
+  let hasEndedTag = false;
   let text = "";
+  let parent;
+  let root;
+  const escapeChars = ["<", ">"];
+  let changedToQuote = false;
+
+  const states = Object.freeze({
+      other : 0,
+      insideTag : 1,
+    });
+  let state  = states.other;
+  let depth = 0;
+
   for(let i=0; i<html.length; i++){
-    if(html[i] === "<"){
-      tagStart = i;
-      if(info!==undefined && text.trimExcess() !== ""){
-        let parent = info[2];
-        for(let d=1; d<depth; d++){
-            parent = parent[parent.length-1][2];
-        }
+    hasEndedTag = false;
+    changedToQuote = false;
 
-        if(parent !== undefined){
-          //console.log(text);
-          let trimmedText = text.trimExcess();
+    char = html.charAt(i);
+    if(!inQuote && lastChar != "\\" && char.match(/"|'|`/)){
+      inQuote = true;
+      quoteType = char;
+      changedToQuote = true;
+    }
 
-          //escaping round brackets
-          let matches =  trimmedText.match(/\\\)/g);
-          for(let i in matches){
-            let newStr = "--/(";
-            trimmedText = trimmedText.replace(matches[i], newStr);
-          }
+    //parse tags
+    if(!inQuote){
+      //start of tag
+      if(char == "<" && lastChar != "\\"){
+        state = states.insideTag;
+        tagContent = "";
 
-          let parseProps = Dev.parseProps(trimmedText);
-          parent.push(parseProps);
+        //add text node before new child node
+        let trimmed = text.trim();
+        if(trimmed.length > 0){
+          VDOM.addChild(parent, text);
         }
         text = "";
       }
-    }
-    else if(html[i] === ">"){
-      let tagContent = html.substr(tagStart+1, i - 1 - tagStart);
-      tagStart = -1;
+      //end of tag
+      else if(char == ">" && lastChar != "\\"){
+        let tagVDOM = Dev.tagStringToVDOM(tagContent);
+        state = states.other;
+        hasEndedTag = true;
 
-      //split by space but ignore spaces in quotes
-      let tagInfo = tagContent.split(/ +(?=(?:(?:[^"]*"){2})*[^"]*$)/g);
+        //end of opening tag
+        if(tagVDOM){
 
-      //this is a closing tag
-      if(tagInfo[0][0] === "/"){
-        depth--;
-      }
-      //opening tag
-      else{
-        let attrs = {};
-        let events = {};
-
-        for(let v=1; v<tagInfo.length; v++){
-          //events
-          if(tagInfo[v].substr(0,2) === "on"){
-            let arr = tagInfo[v].split("=");
-            if(arr[1] !== undefined){
-              attrs[arr[0]] = arr[1];
+          if(Dev.requiresClosingTag(VDOM.tag(tagVDOM))){
+            depth++;
+            //add root tag
+            if(!root){
+              root = tagVDOM
+              parent = root;
+            }
+            //add child tag and set new parent
+            else{
+              VDOM.addChild(parent, tagVDOM);
+              parent = parent[2][parent[2].length-1];
             }
           }
-          //attrs
+          //no closing tag required
           else{
-            let arr = tagInfo[v].split("=");
-            if(arr[1] !== undefined){
-              attrs[arr[0]] = arr[1];
-            }
-            else{
-              attrs[arr[0]] = "";
-            }
+            VDOM.addChild(parent, tagVDOM);
           }
         }
-
-        //adding root
-        if(info === undefined){
-          info = [tagInfo[0], attrs, []];
-        }
+        //end of closing tag
         else{
-          //find location to add this element
-          let parent = info[2];
-          for(let d=0; d<depth; d++){
-            if(d == depth-1){
-                parent.push([tagInfo[0], attrs, []]);
+          let tagName = tagContent.substr(tagContent.indexOf("/") + 1).trim();
+
+          //set parent to parent node
+          if(Dev.requiresClosingTag(tagName)){
+
+            //add text node before end of node
+            let trimmed = text.trim();
+            if(trimmed.length > 0){
+              VDOM.addChild(parent, text);
+            }
+            text = "";
+
+            depth -= 1;
+
+            //end of root tag
+            if(depth == 0){
+              break;
             }
             else{
-              parent = parent[parent.length-1][2];
+              parent = root;
+              for(let d=1; d<depth; d++){
+                parent = VDOM.getLastChild(parent); //last child
+              }
             }
           }
-        }
-        if(Dev.noClosingTag.indexOf(tagInfo[0]) == -1){
-          depth++;
         }
       }
+
+      //inside tag text e.g. div id="myID"
+      else if(state == states.insideTag){
+        tagContent += char;
+      }
     }
-    //text between tags
-    else if(tagStart == -1){
-      text += html[i];
+
+    //keep track of text between tags
+    if(state == states.other && !hasEndedTag){
+      //check if escapable character
+      if(escapeChars.indexOf(char) > -1 && lastChar == "\\"){
+          text = text.slice(0, -1);
+      }
+      text += char;
     }
+
+
+    if(inQuote){
+      tagContent += char;
+    }
+
+    if(inQuote && !changedToQuote && char == quoteType && lastChar != "\\"){
+      inQuote =false;
+    }
+
+    lastChar = char;
   }
 
-  return Dev.jsArr(info);
+  return root;
 }
 
-/**
-  Parses the props in the HTML syntax
 
-  @param {String} htmlString
+/*
+  converts a vdom to string
 
-  @param {String}
+  @param {AST} vdom
+  @param {Number} startingTabs
+
+  @return {String}
 */
-Dev.parseProps = function(str){
-  let matches =  str.match(/\{.*?\}/g);
-  let hasFunc = false;
-  for(let i in matches){
+Dev.stringifyVDOM = (vdom, tabs) => {
+  if(!Array.isArray(vdom)){
+    let res = Dev.parseProps(vdom.trimExcess())
+    return Dev.tabs(tabs) + res;
+  }
+  let str = "";
+  str += Dev.tabs(tabs) + "[\n";
+  str += Dev.tabs(tabs + 1) + "\"" + VDOM.tag(vdom) + "\",\n";
 
-  	let parsed = matches[i].replace("{", '"+');
-    parsed = parsed.replace("}", '+"');
-    let res = matches[i].substr(1,matches[i].length-2);
-
-    //ignore is using \}
-    let char = matches[i].charAt(matches[i].length-2);
-    if(char !== "\\"){
-      //function
-      if(res.match(/\(.*?\)/g)){
-        hasFunc=true;
-        return res;
-      }
-      else{
-      //text component
-        str = str.replace(matches[i], parsed);
-      }
+  //attributes
+  str += Dev.tabs(tabs + 1) + "{\n";
+  let attrs = VDOM.attrs(vdom);
+  let attrCount = Object.keys(attrs).length;
+  let count = 0;
+  for(let a in attrs){
+    let val = Dev.parseProps(attrs[a]);
+    str += Dev.tabs(tabs + 2) + "\"" + a + "\":" + val;
+    count++;
+    if(count != attrCount){
+      str += ",\n";
     }
   }
+  str += "\n" + Dev.tabs(tabs + 1) + "},\n";
 
-  if((str.indexOf("\"+") == 0 && str.indexOf("+\"") == str.length-3) || hasFunc){
-    return "\"" + str + "\"";
+  //child nodes
+  let children = VDOM.childNodes(vdom);
+  str += Dev.tabs(tabs + 1);
+  str += "[\n";
+  for(let i=0; i<children.length; i++){
+    str += Dev.stringifyVDOM(children[i], tabs+2);
+    if(i < children.length-1){
+      str +=  ",\n";
+    }
   }
+  str += "\n" + Dev.tabs(tabs + 1) + "]"; //close child nodes
+  str += "\n" + Dev.tabs(tabs) + "]"; //close current node
 
   return str;
 }
 
+//helper function for stringifyVDOM() for creating tabs
+Dev.tabs = (num) => {
+  let s = "";
+  for(let i=0; i<num; i++){
+    s += "  ";
+  }
+  return s;
+}
+
+/*
+  parses the props out a string for use with stringifyVDOM()
+
+  @param {String} text
+
+  @return {String}
+*/
+Dev.parseProps = (text) => {
+  let char,
+      lastChar = "",
+      fullText = "",
+      propText = "",
+      inProp = false,
+      openIndex = -1,
+      startsWithProp = false,
+      endsWithProp = false;
+  for(let i=0; i<text.length; i++){
+    let char = text.charAt(i);
+    if(!inProp && char == "{"  && lastChar != "\\"){
+      openIndex = i;
+      inProp = true;
+    }
+    else if(inProp && char == "}" && lastChar != "\\"){
+      inProp = false;
+
+      if(openIndex > 1){
+        fullText += "\"+"
+      }
+      else{
+        startsWithProp = true;
+      }
+      fullText += propText;
+      if(i != text.length-1){
+        fullText += "+\"";
+      }
+      else{
+        endsWithProp = true;
+      }
+      propText = "";
+    }
+    else if(inProp){
+      propText += char;
+    }
+    else{
+      fullText += char;
+    }
+    lastChar = char;
+  }
+  if(!startsWithProp){
+    fullText = "\"" + fullText;
+  }
+  if(!endsWithProp){
+    fullText += "\"";
+  }
+  return fullText;
+}
+
+/*
+  returns true if the tag requires a closing tag
+
+  @param {String} tag
+
+  @param {Boolean}
+*/
+Dev.requiresClosingTag = (tagName) => {
+  return (Dev.noClosingTag.indexOf(tagName) == -1);
+}
+
+
+
+/*
+  converts the text between tags to a vdom AST
+  e.g. div id="myid"   =>   ["div", { id : "myid" }, []]
+
+  @param {String} str
+
+  @return {AST}
+*/
+Dev.tagStringToVDOM = (str) => {
+  str = str.trim();
+  //return undefined if closing tag
+  if(str.charAt(0) == "/"){
+    return;
+  }
+
+  //split by space but no in quotes
+  let arr = Dev.splitBySpaceButNotInQuotes(str);
+  let tagName = arr[0];
+  let vdom = [tagName, {}, []];
+
+  //get all the attrs
+  for(let i=1; i<arr.length; i++){
+    let attr = arr[i].split("=");
+    let key = attr[0];
+    let val = "";
+    if(attr[1]){
+      //remove quotes
+      val = attr[1].substr(1, attr[1].length-2);
+    }
+    VDOM.attrs(vdom)[key] = val;
+  }
+  return vdom;
+}
+
+/*
+  splits a string by /\s+/ spaces, but not if the space(s) are in quotes
+
+  @param {String} str
+
+  @return {Array}
+*/
+Dev.splitBySpaceButNotInQuotes = (str) => {
+  let inQuote = false;
+  let quoteType, char, lastChar = "";
+  let lastCharWasSpace = false, charIsSpace;
+  let el = "";
+  let arr = [];
+  for(let i=0; i<str.length; i++){
+    char = str.charAt(i);
+    if(char.match(/"|'|`/) && lastChar != "\\"){
+      inQuote = !inQuote;
+    }
+
+    charIsSpace = (!inQuote && char.match(/\s/));
+
+    if(charIsSpace && !lastCharWasSpace){
+      arr.push(el);
+      el = "";
+    }
+
+    if(!charIsSpace){
+      el += char;
+    }
+
+    lastChar = char;
+    lastCharWasSpace = charIsSpace;
+  }
+  arr.push(el);
+  return arr;
+}
+
+Dev.calcTagDepthChange = (line) => {
+  //ignore all text in quotes
+ let quoteRegex = /"(.*?)"|`(.*?)`|'(.*?)'/;
+ line = line.split(quoteRegex).join("");
+  let count = 0;
+  let curLineWithoutQuotes = line.split(quoteRegex).join("");
+  let tags = curLineWithoutQuotes.match(/<.*?>/g);
+
+
+  if(tags){
+    for(let t=0; t<tags.length; t++){
+      let tagName = tags[t].substr(1, tags[t].length-2).split(/\s/)[0];
+      //dont count for when no closing tag is required
+      if(Dev.requiresClosingTag(tagName)){
+        if(tags[t].charAt(1) == "/"){
+          //if using closing tag when no required
+          if(Dev.requiresClosingTag(tagName.substr(1))){
+            count -= 1;
+          }
+        }
+        else{
+          count += 1;
+        }
+      }
+    }
+  }
+  return count;
+}
+
+Dev.matchesForBracket = (str, type) =>{
+  let char, lastChar = "";
+  let count = 0;
+  for(let i=0; i<str.length; i++){
+    char = str.charAt(i);
+    if(lastChar != "\\" &&  char == type){
+      count++;
+    }
+    lastChar = char;
+  }
+  return count;
+}
+
+
+/*
+  splits a line by the first occurance of >
+
+  @param {String} line
+
+  @return {Array}
+*/
+Dev.splitByEndMultiLineTag = (line) => {
+  let inQuote = false;
+  let quoteType, char, lastChar = "";
+  for(let i=0; i<line.length; i++){
+    char = line.charAt(i);
+    if(lastChar != "\\"){
+      if(!inQuote && char.match(/"|'|`/)){
+        inQuote = true;
+        quoteType = char;
+      }
+      else if(inQuote && char == quoteType){
+        inQuote = false;
+      }
+      else if(char == ">" && lastChar != "\\"){
+        return [line.substr(0, i), line.substr(i+1)];
+      }
+    }
+
+    lastChar = char;
+  }
+}
+
+/*
+  returns the string after <
+
+  @param {String} line
+
+  @return {String}
+*/
+Dev.getStringAfterLastOpenBraket = (line) => {
+  let indexOfLastBracket = -1;
+  let inQuote = false;
+  let quoteType;
+  let char;
+  let lastChar = "";
+  let quote = /"|`|'/;
+
+  for(let i=0; i<line.length; i++){
+    char = line.charAt(i);
+
+
+    if(!inQuote && char.match(quote)){
+      quoteType = char;
+      inQuote = true;
+    }
+    else if(inQuote && quoteType == char && lastChar != "\\"){
+      inQuote = false;
+    }
+    else if(!inQuote && char == "<" && lastChar != "\\"){
+      indexOfLastBracket = i;
+    }
+
+    lastChar = char;
+  }
+
+  return line.substr(indexOfLastBracket);
+}
+
+
+
+
 /**
-  Returns a string with the excess white spacing removed
+  Returns a string with the excess white spacing removed, for use with text nodes
 
   @return {String}
 */
@@ -322,14 +781,14 @@ String.prototype.trimExcess = function(){
   let end = "";
   let start = "";
 
-  if(this.charAt(0) === " "){
+  if(this.charAt(0) == " "){
     start = " ";
   }
-  if(this.charAt(this.length-1) === " "){
+  if(this.charAt(this.length-1) == " "){
     end = " ";
   }
-  let removedSpace = this.replace(/[\n\r]+|[\s]{2,}/g, '');
-  if(removedSpace === ""){
+  let removedSpace = this.replace(/[\n\r]+|[\s]{2,}/g, ' ');
+  if(removedSpace == ""){
     return "";
   }
   return start + removedSpace + end;
@@ -431,7 +890,7 @@ Dev.addImports = function(type){
     //e.g. const Card = Quas.modules["Card"];
     bundle += keys;
 
-    bundle = Dev.parseBundle(bundle);
+    bundle = Dev.transpile(bundle);
     Dev.bundle.js = bundle;
     bundle += "\nif(typeof ready==='function'){ready();}";
 
@@ -463,7 +922,7 @@ Dev.load = function(){
   else{
     mainFile = Dev.main;
   }
-  
+
   Quas.ajax({
     url : mainFile,
     type : "GET",
@@ -483,9 +942,6 @@ Dev.load = function(){
 
 //checks a javascript file to see if it has any imports
 Dev.parseImports = (filename, file, key) => {
-//  if(key === undefined){
-//  }
-
   //check if this file key has already been imported
   for(let i=0; i<Dev.imports.js.content.length; i++){
     if(Dev.imports.js.content[i].key == key){

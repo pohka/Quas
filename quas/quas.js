@@ -1,8 +1,26 @@
 /**
+  # overview
+  version : 1.0
+*/
+
+
+/**
+  # class
+  ---
   Super class for all components
+  ---
+
+  @prop {Object} props - All the properties for this component
+  @prop {Boolean} isPure - If true the component won't update once mounted
+  @prop {DOMElement} dom - Root DOMElement
+  @prop {Array} vdom - Virtual dom for this component
 */
 
 class Component{
+  /**
+    # func
+    @param {Object} props - All the properties for this component
+  */
   constructor(props){
     if(props){
       this.props = props;
@@ -10,17 +28,24 @@ class Component{
     else{
       this.props = {}
     }
+    this.isPure = false;
   }
-  /**
-    Sets a property and rerenders the component
 
-    @param {String} key
-    @param {?} value
 
   /**
-    Sets multiple properties and rerenders the component
-    e.g. comp.setProps({key:value});
-    @param {JSON} key
+    # function
+    ---
+    Sets the properties and updates the component
+    ---
+
+    @param {Object} props - The properties to change or add
+
+    ```
+    myComp.setProps({
+      name : "john",
+      id : 123
+    });
+    ```
   */
   setProps(obj){
     for(let k in obj){
@@ -30,13 +55,28 @@ class Component{
   }
 
 
-  /*
-    returns true if this component has been rendered
+  /**
+    # func
+    ---
+    Returns true if this component has been mounted to the DOM tree
+    ---
+
+    @return {Boolean}
+
+    ```
+    console.log(comp.isMounted()); //false;
+    Quas.render(comp, "#app");
+    console.log(comp.isMounted()); //true
+    ```
   */
   isMounted(){
     return this.dom !== undefined;
   }
 
+  /**
+    # func
+    Removes the component from the DOM tree
+  */
   unmount(){
     if(this.dom){
       this.dom.remove();
@@ -46,14 +86,38 @@ class Component{
   }
 }
 
+
+/**
+  # class
+  ---
+  Main Library
+  ---
+
+  @prop {Object} modules - all of the imported modules
+  @prop {Array<Object>} customAttrs - the registered custom attributes
+*/
 class Quas{
   /**
-    Renders a component
-    Appends a component to as a child to a HTML DOM element
-    alternatively you can specify the parent with a query selector (#id, .class, etc)
+    # func
+    ---
+    Mounts a component to the DOM tree, however if the Component is already mounted it will update the component
+    ---
 
-    @param {Component} component
-    @param {String|HTMLDOMElement} parent
+    @param {Component} component - component to mount
+    @param {String|DOMElement} parent - the parent node
+
+
+    ```
+    //mount using the query selector (#id, .class, tag)
+    Quas.render(myComp, "#app");
+
+    //alternatively mount using a DOM Element
+    let el = document.querySelector("#app");
+    Quas.render(myComp, el);
+
+    //update the component
+    Quas.render(myComp);
+    ```
   */
   static render(comp, parent){
     //if parent passed is a query selector string
@@ -70,7 +134,7 @@ class Quas{
     }
 
     //diff the vdom
-    else if(comp.isMounted()){
+    else if(comp.isMounted() && !comp.isPure){
       let newVDOM = comp.render();
 
       //root tag is different
@@ -83,6 +147,16 @@ class Quas{
     }
   }
 
+  /*
+    diffs the root virtual dom
+    returns true if a difference was found
+
+     @param {Component} comp
+     @param {Array} currentVDOM
+     @param {Array} newVDOM
+
+     @return {Boolean}
+  */
   static diffRootVDOM(comp, vdom, newVDOM){
     let hasDiff = false;
     if(newVDOM[0] != comp.vdom[0] || //diff tags
@@ -109,6 +183,20 @@ class Quas{
     return hasDiff;
   }
 
+  /*
+    recursively diffs the virtual dom of a component
+    returns:
+    0 - if not change to the node
+    1 - if added a node to the parent
+    -1 - if this node was removed
+
+     @param {Component} component
+     @param {DOMElement} parentNode
+     @param {Array} currentVDOM
+     @param {Array} newVDOM
+
+     @return {Number}
+  */
   static diffVDOM(comp, parent, dom, vdom, newVDOM){
     let returnVal = 0;
 
@@ -248,7 +336,7 @@ class Quas{
         newChildren = newVDOM[2];
       }
       let change = 0;
-      for(let c=0; (newVDOM && c<newVDOM[2].length) || (vdom && c<vdom[2].length); c++){
+      for(let c=0; (newVDOM && newVDOM[2] && c<newVDOM[2].length) || (vdom && vdom[2] && c<vdom[2].length); c++){
         let nextOldChild;
         if(oldChildren){
           nextOldChild = oldChildren[c];
@@ -268,20 +356,25 @@ class Quas{
     return returnVal;
   }
 
-  /**
-    Renders a component with a rule
+  //todo: remove?
+  /*
+    # func
+    ---
+    Mounts the component in a custom place
 
     rule options:
-      prepend     - insert as the first child to the parent
-      replace     - removes all the children and appends the element to the parent
-      #id         - insert after a child with this id. You can also use any value query selector
-      #id before  - insert before a child with this id
+    * prepend     - insert as the first child to the parent
+    * replace     - removes all the children and appends the element to the parent
+    * #id         - insert after a child with this id. You can also use any value query selector
+    * #id before  - insert before a child with this id
+
+    ---
 
     @param {Component} component
-    @param {String|HTMLDOMElement} parent
-    @param {String} rule
+    @param {String|DOMElement} parent -
+    @param {String} rule - the custom rendering rule
   */
-  static renderRule(comp, parent, target){
+  static renderCustom(comp, parent, target){
     if(parent.constructor === String){
       parent = document.querySelector(parent);
     }
@@ -321,22 +414,16 @@ class Quas{
     }
   }
 
+  //todo: split into 2 functions: 1. create the DOM element, 2. add dom to parent
   /**
-    Creates a HTML DOM Element in the DOM tree from a component and
+    Creates a DOM Element using the vdom and adds it as a child to the parent
     returns the newly created element
 
-    renderInfo format:
-    [tag,{attrKey:attrVal},[...]]
-    or
-    [textContent]
+    @param {Array} vdom - description of the element
+    @param {Object} component - the component of the vdom
+    @param {String|DOMElement} parent - (exclude) parent vdom node
 
-    Note: [...] == child element
-
-    @param {Array} renderInfo - description of the element
-    @param {Object} component
-    @param {String|HTMLDOMElement} parent
-
-    @return {HTMLDOMElement}
+    @return {DOMElement}
   */
   static createDOM(info, comp, parent){
     //appending the text context
@@ -382,17 +469,19 @@ class Quas{
     }
 
     //link target = push
-    if(Quas.hasRouter && tag == "a" && attrs.target == "push"){
+    if(Quas.hasModule("Router") && tag == "a" && attrs.target == "push"){
       //add on click eventlistener
       el.addEventListener("click", function(e){
-        e.preventDefault();
-        let path = this.href.replace(window.location.origin, "");
-        let route = Router.findRouteByPath(path);
-        if(!route && Router.route404){
-          route = Router.route404;
-          route.fullpath = path;
+        if(this.target && this.target == "push"){
+          e.preventDefault();
+          let path = this.href.replace(window.location.origin, "");
+          let route = Router.findRouteByPath(path);
+          if(!route && Router.route404){
+            route = Router.route404;
+            route.fullpath = path;
+          }
+          Router.push(route);
         }
-        Router.push(route);
       });
     }
 
@@ -410,20 +499,67 @@ class Quas{
   }
 
   /**
-    Ajax request
+    # func
+    ---
+    An asynchronous HTTP request (AJAX)
 
-    @param {OBJECT} request - request data
-    Layout of request:
+    format of request object:
     {
-      url : "login.php",
+      url : "myfile.php",
       type : "GET|POST",
       data : {
         key : "value"
       },
       return : "json|xml",
-      success : function(result){},
-      error : function(Error){}
+      success : (result)=>{},
+      error : (Error) => {}
     }
+    ---
+
+    @param {Object} requestData - request data
+
+    ```
+    //most basic use to log the contents of a file
+    Quas.ajax({
+      url : "/myfile.txt",
+      success : (result) => {
+        console.log(result);
+      }
+    });
+
+    //requesting and displaying a json file
+    Quas.ajax({
+      url : "/myfile.json",
+      type : "GET", //GET is the default request type
+      return : "json", //return type
+      success : (data) => { //callback
+        //data is a json object
+        for(let i in data){
+          console.log(data[i]);
+        }
+      },
+      error : (err) => { //error callback
+        console.error(err);
+      }
+    });
+
+    //post request example for loading an article by id
+    Quas.ajax({
+      url : "/findArticle.php",
+      type : "POST",
+      data : {
+        articleID : "1234"
+      },
+      return : "json", //return type
+      success : (data) => { //callback
+        console.log(data.author);
+        console.log(data.text);
+      },
+      error : (err) => { //error callback
+        console.error(err);
+      }
+    });
+    ```
   */
   static ajax(req){
     var xhr = new XMLHttpRequest();
@@ -473,13 +609,16 @@ class Quas{
     }
 
     //post requests
-    if(req.type === "POST"){
+    if(req.type == "POST"){
       xhr.open(req.type, req.url, true);
       xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
       xhr.send(kvs);
     }
     //get requests
     else{
+      if(!req.type){
+        req.type = "GET";
+      }
       xhr.open(req.type, req.url + "?" + kvs, true);
 
       //file uploading
@@ -494,10 +633,20 @@ class Quas{
 
 
 
-  /*
+  /**
+    # function
+    ---
+    fetch a resouce asynchronously, similar to Quas.ajax but it uses the fetch api with a promise
+    if the file fails to load, it will throw an error
+    ---
+
+    @param {String} url - url to the resource
+    @param {String} type - (optional) text, json, blob, buffer
+    @param {Object} requestData - (optional) data for the request
 
 
-    // Default options are marked with *
+    ```
+    // Request data format, Default options are marked with *
     {
       body: JSON.stringify(data), // must match 'Content-Type' header
       cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
@@ -511,9 +660,24 @@ class Quas{
       redirect: 'follow', // manual, *follow, error
       referrer: 'no-referrer', // *client, no-referrer
     }
+
+    //fetch and log a text file
+    Quas.fetch("/myfile.txt")
+      .then((result) = >{
+        console.log("myfile.txt:" + result);
+      })
+      .catch((err) => console.error(err));
+
+    //fetch a json file
+    Quas.fetch("/myfile.json", "json")
+      .then((data) =>{
+        console.log("key count: " + Object.keys(data).length);
+      })
+      .catch((err) => console.error(err));
+    ```
   */
-  static fetch(url, type, data) {
-    return fetch(url, data)
+  static fetch(url, type, req) {
+    return fetch(url, req)
       .then((response) => {
         if (!response.ok) return new Error(response);
 
@@ -532,18 +696,15 @@ class Quas{
     });
   }
 
-  /**
+  /*
     Evaluates a custom attribute
 
-    returns true if the custom attribute should be
-    added to the HTML DOM Element
+    @param {String} key the key name of the attr
+    @param {String|?} data the value of the attr
+    @param {Array} parentVDOM the vdom of this node
+    @param {Component} component the componet of this custom attribute
+    @param {DOMElement} dom the com of the component
 
-    @param {Component} component
-    @param {HTMLDOMElement} parent
-    @param {String} key
-    @param {?} data  - this is often a string
-
-    @return {Boolean}
   */
   static evalCustomAttr(key, data, parentVDOM, comp, dom){
     let params = key.split("-");
@@ -552,7 +713,9 @@ class Quas{
     params.splice(0,2);
     let children = [];
 
-    if(command === "foreach"){
+    //creates multiple child nodes of the given type
+    //q-for-li=["item 1","item 2"]
+    if(command === "for"){
       for(let i in data){
         let vdom = [params[0], {}, []];
         if(params.length == 1){
@@ -561,16 +724,24 @@ class Quas{
         }
       }
     }
+    //calls a function and passes the variable as a param
     else if(command === "bind"){
       if(params[0] === undefined){
         let vdom = data[0](data[1]);
         parentVDOM[2].push(vdom);
       }
+      //bind-for, call the function for each variable in the array
       else if(params[0] === "for"){
         for(let o in data[1]){
           let vdom = data[0](data[1][o]);
           parentVDOM[2].push(vdom);
         }
+      }
+    }
+    //appends an array of vdoms to as a child of this node
+    else if(command == "append"){
+      for(let i=0; i<data.length; i++){
+        parentVDOM[2].push(data[i]);
       }
     }
     else{
@@ -579,14 +750,19 @@ class Quas{
   }
 
   /**
-    Returns a json object with the browser info
-    name - browser name,
-    version - browser version,
-    isMobile - true if a mobile browser
+    # func
+    ---
+    Returns an object with the browser info:
+      - name : browser name,
+      - version : browser version,
+      - isMobile : true if a mobile browser
 
-    @return {OBJECT}
+    Note: the isMobile variable might not be 100% accurate
+    ---
+
+    @return {Object}
   */
-  static browserInfo(){
+  static getBrowserInfo(){
     var ua=navigator.userAgent,tem,M=ua.match(/(opera|chrome|safari|firefox|msie|trident(?=\/))\/?\s*(\d+)/i) || [];
     if(/trident/i.test(M[1])){
         tem=/\brv[ :]+(\d+)/g.exec(ua) || [];
@@ -606,11 +782,16 @@ class Quas{
   }
 
   /**
-    Returns the data from the url in as a JSON object
-    Example:
-      www.mysite.com/home?key=val&foo=bar => {key : "val", foo : "bar"}
+    # func
+    ---
+    Returns the data from the url in as an object, it will also decode the URI
+    ---
+    @return {Object}
 
-    @return {OBJECT}
+    ```
+    //url: /home?key=val&foo=bar
+    //=> {key : "val", foo : "bar"}
+    ```
   */
   static getUrlValues(){
     let str = window.location.search;
@@ -629,15 +810,36 @@ class Quas{
   }
 
   /**
+    # func
+    ---
     Set or change variables in the url
-    If the value === "" then the value is removed form the url
+    If the value == "" then the value is removed form the url
     By default the page won't reload the page unless the reload parameter is set to true
 
     Note: values will be encoded so they are allowed to have spaces
+    ---
 
-
-    @param {OBJECT} values
+    @param {OBJECT} values - new url values
     @param {Boolean} reload - (optional)
+
+
+    ```
+    //url: /home
+    Quas.setUrlValues({
+      name:"john"
+    });
+    //updated: /home?name=john
+
+    Quas.setUrlValues({
+      name:""
+    });
+    //updated: /home
+
+    Quas.setUrlValues({
+      search :"the mouse"
+    });
+    //updated: /home?search=the%20mouse
+    ```
   */
   static setUrlValues(newVals, reload){
     let data = Quas.getUrlValues();
@@ -646,7 +848,7 @@ class Quas{
     }
     let str = "?";
     for(let key in data){
-      if(data[key] !== "")
+      if(data[key] != "")
         str += key + "=" + data[key] + "&";
     }
     str = str.slice(0,-1);
@@ -662,172 +864,25 @@ class Quas{
     }
   }
 
-  /**
-    Helper function to prevent default events
-    @param {Event}
-  */
-  static preventDefault(e) {
-   e = e || window.event;
-   if (e.preventDefault)
-       e.preventDefault();
-   e.returnValue = false;
-  }
 
   /**
-    Helper function to prevent default events for keys
-    @param {Event}
+  # func
+  ---
+  Returns true if using the router module
+  ---
+
+  @return {Boolean}
   */
-  static preventDefaultForScrollKeys(e) {
-     if (Quas.scrollKeys[e.keyCode]) {
-         Quas.preventDefault(e);
-         return false;
-     }
-  }
-
-  /**
-    Toggle or set users ability to scroll
-    If enabled is undefined then the scroll ability will be toggled
-    @param {Boolean} enabled - (optional)
-  */
-  static scrollable(enabled){
-    if(enabled === undefined){
-      enabled = !Quas.isScrollable;
-    }
-    if(enabled){
-      window.onwheel = null;
-      window.ontouchmove = null;
-      document.onkeydown = null;
-    }
-    else{
-      window.onwheel = Quas.preventDefault; // modern standard
-      window.ontouchmove  = Quas.preventDefault; // mobile
-      document.onkeydown  = Quas.preventDefaultForScrollKeys; //arrow keys
-    }
-    Quas.isScrollable = enabled;
-  }
-
-  /**
-    enables scroll tracking for using scroll listeners
-
-    The callback function allows you to make custom functionality from an onscroll event
-    it will have 1 parameter for the viewport which has values from the offset of the top of the page
-    viewport = {
-      top : {Number} - minY of the raw viewport
-      bottom : {Number} - maxY of the raw viewport
-    }
-
-    @param {Function} callback - (optional)
-  */
-  static enableScrollTracker(callback){
-    window.addEventListener("scroll", function(){
-      let viewport = {
-        top : window.scrollY,
-        bottom : window.scrollY + window.innerHeight
-      };
-      if(callback !== undefined){
-        callback(viewport);
-      }
-      for(let type in Quas.trackingEls){
-        for(let i in Quas.trackingEls[type]){
-          let e = Quas.trackingEls[type][i];
-          let elTop = e.comp.dom.offsetTop;
-          let elBot = elTop + e.comp.dom.offsetHeight;
-          let currentlyVisible = viewport.bottom - Quas.scrollSafeZone.top > elTop && viewport.top + Quas.scrollSafeZone.bottom < elBot;
-          if(e.comp !== undefined){
-            if(type === "enter" && !e.visible && currentlyVisible){
-              e.func(e.comp.dom);
-            }
-            else if(type === "exit" && e.visible && !currentlyVisible){
-              e.func(e.comp.dom);
-            }
-          }
-          e.visible = currentlyVisible;
-        }
-      }
-    });
-  }
-
-  /**
-    Makes a component listen to a scroll event
-    such as entering or exiting the visiblity of the viewport
-
-    @param {String} eventName - enter|exit
-    @param {Component} component
-    @param {Function} callback
-  */
-  static onScroll(type, comp, callback){
-    Quas.trackingEls[type].push({
-      comp : comp,
-      func : callback,
-      visible: false
-    });
-  }
-
-  /**
-    Returns a cookie value by key
-    @param {String} key
-
-    @return {String}
-  */
-  static getCookie(key){
-    var name = key + "=";
-    var decodedCookie = decodeURIComponent(document.cookie);
-    var ca = decodedCookie.split(';');
-    for(var i = 0; i <ca.length; i++) {
-        var c = ca[i];
-        while (c.charAt(0) == ' ') {
-            c = c.substring(1);
-        }
-        if (c.indexOf(name) == 0) {
-            return c.substring(name.length, c.length);
-        }
-    }
-  }
-
-  /**
-  Sets a cookie
-
-  @param {String} key
-  @param {String} value
-  @param {Date} date - (optional) default is 12hrs from now
-  @param {String} path - (optional) default is "/"
-  */
-  static setCookie(k, v, date, path){
-    if(path === undefined){
-      path = "/";
-    }
-    //12hrs if not defined
-    if(date === undefined){
-      date = new Date();
-      var expireTime = date.getTime() + 43200000;
-      date.setTime(expireTime);
-    }
-     document.cookie = k + "=" + v + ";expires="+ date.toGMTString() +";path="+ path;
-  }
-
-  /**
-    Removes a cookie by key
-
-    @param {String} key
-  */
-  static clearCookie(k){
-    document.cookie = k + "=;expires=Thu, 01 Jan 1970 00:00:01 GMT;path=/";
-  }
-
-  static hasRouter(){
-    return (typeof Router !== "undefined");
+  static hasModule(name){
+    return (typeof Quas.modules[name] !== "undefined");
   }
 }
 
-Quas.trackingEls = {"enter" : [], "exit": []}; //all the scroll tracking events
-Quas.scrollKeys = {37: 1, 38: 1, 39: 1, 40: 1}; //Keys codes that can scroll
-Quas.scrollSafeZone = {"top": 0, "bottom" : 0}; //safezone padding for scroll listeners
-Quas.isScrollable = true; //true if scrolling is enabled
 Quas.customAttrs = {}; //custom attributes
 Quas.modules = {}; //container for all the modules
 
 
-
+//calls the ready function once the document is loaded
 document.addEventListener("DOMContentLoaded", function(event) {
   if(typeof ready === "function" && typeof Dev == "undefined"){
     ready();

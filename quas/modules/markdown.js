@@ -15,8 +15,21 @@ todo:
 - video
 */
 
-
+/**
+  # module
+  ---
+  Handling markdown
+  ---
+*/
 Quas.export({
+  /**
+    ---
+    Parses markdown text and returns a virtual dom
+    ---
+
+    @param {String} text - plain text
+    @return {Array}
+  */
   parseToVDOM : (text)=>{
     let vdoms = [];
     let lines = text.split("\n");

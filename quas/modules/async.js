@@ -1,4 +1,22 @@
-//asyncronously load image files
+
+
+/**
+  # module
+  ---
+  Asyncronously loading files
+
+  adds custom attribute for "q-async" which currently just loads images
+  ---
+
+
+  ```
+  <quas>
+    <div>
+      <img q-async-imgsrc="/images/1.png"></img>
+    </div>
+  </quas>
+  ```
+*/
 Quas.export({
   init : ()=>{
     Quas.async = {};
